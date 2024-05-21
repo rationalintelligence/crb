@@ -2,13 +2,13 @@
 //!
 //! The crate contains a trait and an implementation of a sender.
 
-use crate::notifier::Notifier;
+use crate::notifier::EventNotifier;
 use anyhow::Error;
 use std::fmt;
 use std::sync::Arc;
 
 /// An abstract sender.
-pub trait EventSender<M>: Send + Sync {
+pub trait Sender<M>: Send + Sync {
     /// Sends an event (data) to a recipient.
     fn send(&self, input: M) -> Result<(), Error>;
 }
@@ -19,7 +19,7 @@ pub trait EventSender<M>: Send + Sync {
 #[derive(Debug)]
 pub struct EmptySender;
 
-impl<M> EventSender<M> for EmptySender {
+impl<M> Sender<M> for EmptySender {
     fn send(&self, _msg: M) -> Result<(), Error> {
         Ok(())
     }
@@ -28,7 +28,7 @@ impl<M> EventSender<M> for EmptySender {
 /// A wrapper to convert any function to a sender.
 pub struct FuncSender<F>(F);
 
-impl<F, IN> EventSender<IN> for FuncSender<F>
+impl<F, IN> Sender<IN> for FuncSender<F>
 where
     F: Fn(IN) -> Result<(), Error>,
     F: Send + Sync,
@@ -38,12 +38,12 @@ where
     }
 }
 
-/// A universal cloneable wrapper for `EventSender`.
-pub struct Sender<M> {
-    recipient: Arc<dyn EventSender<M>>,
+/// A universal cloneable wrapper for `Sender`.
+pub struct EventSender<M> {
+    recipient: Arc<dyn Sender<M>>,
 }
 
-impl<M> Clone for Sender<M> {
+impl<M> Clone for EventSender<M> {
     fn clone(&self) -> Self {
         Self {
             recipient: self.recipient.clone(),
@@ -51,25 +51,25 @@ impl<M> Clone for Sender<M> {
     }
 }
 
-impl<M> fmt::Debug for Sender<M> {
+impl<M> fmt::Debug for EventSender<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Sender")
+        write!(f, "EventSender")
     }
 }
 
-impl<M> Sender<M> {
+impl<M> EventSender<M> {
     /// Wraps a sender with a reference counter.
     pub fn new<E>(sender: E) -> Self
     where
-        E: EventSender<M> + 'static,
+        E: Sender<M> + 'static,
     {
         Self {
             recipient: Arc::new(sender),
         }
     }
 
-    /// Changes `Sender` to another input type.
-    pub fn reform<F, IN>(&self, func: F) -> Sender<IN>
+    /// Changes `EventSender` to another input type.
+    pub fn reform<F, IN>(&self, func: F) -> EventSender<IN>
     where
         F: Fn(IN) -> M,
         F: Send + Sync + 'static,
@@ -80,16 +80,16 @@ impl<M> Sender<M> {
             let output = func(input);
             recipient.send(output)
         });
-        Sender::new(func_sender)
+        EventSender::new(func_sender)
     }
 
-    /// Send an event using inner `EventSender`.
+    /// Send an event using inner `Sender`.
     pub fn send(&self, msg: M) -> Result<(), Error> {
         self.recipient.send(msg)
     }
 
     /// Creates a sender with pre-created message.
-    pub fn to_notifier(self, message: M) -> Notifier<M> {
-        Notifier::new_with_sender(self, message)
+    pub fn to_notifier(self, message: M) -> EventNotifier<M> {
+        EventNotifier::new_with_sender(self, message)
     }
 }

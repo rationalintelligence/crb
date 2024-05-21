@@ -5,28 +5,28 @@ use anyhow::Error;
 use std::sync::Arc;
 
 /// A notifier that send an associated message to the sender.
-pub struct Notifier<M> {
+pub struct EventNotifier<M> {
     message: M,
-    sender: Sender<M>,
+    sender: EventSender<M>,
 }
 
-impl<M> Notifier<M> {
+impl<M> EventNotifier<M> {
     /// Create a new notifier instance.
     pub fn new<S>(sender: S, message: M) -> Self
     where
-        S: EventSender<M> + 'static,
+        S: Sender<M> + 'static,
     {
-        let sender = Sender::new(sender);
+        let sender = EventSender::new(sender);
         Self { message, sender }
     }
 
     /// reates a new notifier instance.
-    pub fn new_with_sender(sender: Sender<M>, message: M) -> Self {
+    pub fn new_with_sender(sender: EventSender<M>, message: M) -> Self {
         Self { message, sender }
     }
 }
 
-impl<M> Notifier<M>
+impl<M> EventNotifier<M>
 where
     M: Clone,
 {
@@ -36,7 +36,7 @@ where
     }
 }
 
-impl<M> Notifier<M>
+impl<M> EventNotifier<M>
 where
     M: Clone + Send + Sync + 'static,
 {
@@ -53,12 +53,12 @@ where
 // TODO: `DropNotifier` must be used to hooks
 
 /// An abstract notifier.
-pub trait EventNotifier: Send + Sync {
+pub trait Notifier: Send + Sync {
     /// Send a notification to the recipient.
     fn notify(&self) -> Result<(), Error>;
 }
 
-impl<M> EventNotifier for Notifier<M>
+impl<M> Notifier for EventNotifier<M>
 where
     M: Clone + Send + Sync + 'static,
 {
@@ -69,7 +69,7 @@ where
 
 /// A notifier without a particular type.
 pub struct AnyNotifier {
-    notifier: Arc<dyn EventNotifier>,
+    notifier: Arc<dyn Notifier>,
 }
 
 impl AnyNotifier {

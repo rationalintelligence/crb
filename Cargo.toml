@@ -1,9 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "crb",
-    "crb-core",
-    "crb-send",
+    "crates/*",
 ]
 
 [workspace.package]

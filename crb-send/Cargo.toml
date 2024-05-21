@@ -1,0 +1,8 @@
+[package]
+name = "crb-send"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true

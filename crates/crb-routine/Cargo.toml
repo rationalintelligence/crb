@@ -1,0 +1,8 @@
+[package]
+name = "crb-routine"
+description = "CRB | async actor framework | routine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]

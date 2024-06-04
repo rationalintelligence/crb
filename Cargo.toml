@@ -12,7 +12,7 @@ license = "MIT"
 [workspace.dependencies]
 anyhow = "1.0.86"
 async-trait = "0.1.80"
-crb-core.path = "crates/crb-core"
+crb-core = { version = "0.0.5", path = "crates/crb-core" }
 derive_more = "0.99.17"
 futures = "0.3.30"
 log = "0.4.21"

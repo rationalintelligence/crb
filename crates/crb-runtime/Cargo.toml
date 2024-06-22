@@ -1,6 +1,6 @@
 [package]
-name = "crb"
-description = "CRB | Composable Runtime Blocks"
+name = "crb-runtime"
+description = "CRB | Composable Runtime Blocks | Runtime"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

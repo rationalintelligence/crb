@@ -1,9 +1,10 @@
 [package]
 name = "crb-task"
-description = "CRB | async actor framework | task"
+description = "CRB | Composable Runtime Blocks | Task"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 
 [dependencies]
 anyhow.workspace = true

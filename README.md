@@ -1,6 +1,5 @@
-# CRB | Async Actor Framework for Rust
+# CRB | Composable Runtime Blocks
 
-CRB is a framework designed for building full-stack async Rust apps.
+The **CRB framework** is a new approach to creating modular asynchronous applications in Rust, allowing you to build truly large applications.
 
-For development updates and more details, you can follow the channel:
-https://t.me/therustmonkcell
+To support the project, subscribe to [Knowledge.Dev](https://knowledge.dev/) – interactive lessons for learning idomatic Rust. The reader application itself uses these actors for both the backend and the UI.

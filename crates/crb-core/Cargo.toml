@@ -1,9 +1,10 @@
 [package]
 name = "crb-core"
-description = "CRB | async actor framework | core"
+description = "CRB | Composable Runtime Blocks | Core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 
 [dependencies]
 derive_more.workspace = true

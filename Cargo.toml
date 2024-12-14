@@ -5,17 +5,17 @@ members = [
 ]
 
 [workspace.package]
-version = "0.0.6"
+version = "0.0.7"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/opencrab/crb"
+repository = "https://github.com/rationalintelligence/crb"
 
 [workspace.dependencies]
-anyhow = "1.0.86"
-async-trait = "0.1.80"
-crb-core = { version = "0.0.6", path = "crates/crb-core" }
-derive_more = "0.99.18"
-futures = "0.3.30"
-log = "0.4.21"
-thiserror = "1.0.61"
-tokio = "1.38.0"
+anyhow = "1.0.94"
+async-trait = "0.1.83"
+crb-core.path = "crates/crb-core"
+derive_more = { version = "1.0.0", features = ["full"] }
+futures = "0.3.31"
+log = "0.4.22"
+thiserror = "2.0.7"
+tokio = "1.42.0"

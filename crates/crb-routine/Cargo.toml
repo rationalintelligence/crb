@@ -7,3 +7,9 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+crb-core.workspace = true
+futures.workspace = true
+log.workspace = true
+thiserror.workspace = true

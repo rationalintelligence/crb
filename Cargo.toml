@@ -13,7 +13,7 @@ repository = "https://github.com/rationalintelligence/crb"
 [workspace.dependencies]
 anyhow = "1.0.94"
 async-trait = "0.1.83"
-crb-core.path = "crates/crb-core"
+crb-core = { version = "0.0.7", path = "crates/crb-core" }
 derive_more = { version = "1.0.0", features = ["full"] }
 futures = "0.3.31"
 log = "0.4.22"

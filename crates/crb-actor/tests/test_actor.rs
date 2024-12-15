@@ -1,6 +1,6 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_actor::{Actor, ActorSession, Standalone, OnEvent};
+use crb_actor::{Actor, ActorSession, OnEvent, Standalone};
 
 struct TestActor;
 

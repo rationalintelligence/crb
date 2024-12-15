@@ -1,10 +1,9 @@
-use crate::message::{MessageFor, Envelope};
+use crate::message::{Envelope, MessageFor};
 use crate::Actor;
 use anyhow::Error;
 use crb_core::{mpsc, watch};
-use crb_runtime::interruptor::Controller;
 use crb_runtime::context::{Context, ManagedContext};
-
+use crb_runtime::interruptor::Controller;
 
 pub struct ActorRuntime<T: Actor> {
     actor: T,
@@ -106,14 +105,13 @@ pub struct Address<A: ?Sized> {
 
 impl<A: Actor> Address<A> {
     pub fn send(&self, msg: impl MessageFor<A>) -> Result<(), Error> {
-        self.msg_tx.send(Box::new(msg))
+        self.msg_tx
+            .send(Box::new(msg))
             .map_err(|_| Error::msg("Can't send the message to the actor"))
     }
 
     pub async fn join(&mut self) -> Result<(), Error> {
-        self.status_rx
-            .wait_for(ActorStatus::is_done)
-            .await?;
+        self.status_rx.wait_for(ActorStatus::is_done).await?;
         Ok(())
     }
 }
@@ -129,16 +127,22 @@ impl<A> Clone for Address<A> {
 
 pub trait Standalone: Actor {
     fn spawn(self) -> Address<Self>
-    where Self::Context: From<ActorSession<Self>>;
+    where
+        Self::Context: From<ActorSession<Self>>;
 }
 
 impl<T: Actor + 'static> Standalone for T {
     fn spawn(self) -> Address<Self>
-    where Self::Context: From<ActorSession<Self>> {
+    where
+        Self::Context: From<ActorSession<Self>>,
+    {
         let context = ActorSession::new();
         let address = context.address().clone();
         let context = T::Context::from(context);
-        let runtime = ActorRuntime { actor: self, context };
+        let runtime = ActorRuntime {
+            actor: self,
+            context,
+        };
         crb_core::spawn(runtime.entrypoint());
         address
     }

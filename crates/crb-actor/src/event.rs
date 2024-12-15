@@ -1,6 +1,6 @@
-use crate::Actor;
-use crate::runtime::Address;
 use crate::message::MessageFor;
+use crate::runtime::Address;
+use crate::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 
@@ -19,7 +19,7 @@ pub trait OnEvent<E>: Actor {
     type Error: Into<Error> + Send + 'static;
     async fn handle(&mut self, event: E, ctx: &mut Self::Context) -> Result<(), Self::Error>;
 
-    async fn fallback (&mut self, err: Self::Error, _ctx: &mut Self::Context) -> Result<(), Error> {
+    async fn fallback(&mut self, err: Self::Error, _ctx: &mut Self::Context) -> Result<(), Error> {
         Err(err.into())
     }
 }

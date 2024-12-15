@@ -12,6 +12,7 @@ pub struct ActorRuntime<T: Actor> {
 
 impl<T: Actor> ActorRuntime<T> {
     pub async fn entrypoint(mut self) {
+        // TODO: Add errors collector
         if let Err(err) = self.actor.initialize(&mut self.context).await {
             log::error!("Initialization of the actor failed: {err}");
         }

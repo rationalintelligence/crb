@@ -1,6 +1,6 @@
 //! A runtime for composable blocks.
 
-use crate::context::{Context, Label};
+use crate::context::Context;
 use crate::interruptor::Interruptor;
 use async_trait::async_trait;
 

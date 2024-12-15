@@ -19,4 +19,4 @@ derive_more = { version = "1.0.0", features = ["full"] }
 futures = "0.3.31"
 log = "0.4.22"
 thiserror = "2.0.7"
-tokio = "1.42.0"
+tokio = { version = "1.42.0", features = ["full"] }

@@ -1,11 +1,12 @@
 pub mod message;
 pub mod runtime;
 
+pub use runtime::{ActorContext, Standalone};
+
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_runtime::context::ManagedContext;
 use crb_runtime::interruptor::Interruptor;
-use runtime::ActorContext;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::ops::DerefMut;

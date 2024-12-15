@@ -1,9 +1,9 @@
 //! A runtime for composable blocks.
 
 use crate::context::{Context, Label};
+use crate::interruptor::Interruptor;
 use anyhow::Error;
 use async_trait::async_trait;
-use futures::stream::AbortHandle;
 
 /// A runtime that can be executed as
 /// a standalone activity.
@@ -18,7 +18,7 @@ pub trait StandaloneRuntime<T> {
 
 /// A runtime that can be executed by a supervisor.
 #[async_trait]
-pub trait SupervisedRuntime<T>
+pub trait SupervisedRuntime
 where
     Self: Send + 'static,
 {
@@ -37,18 +37,4 @@ where
 
     /// Gets a reference to a context.
     fn context(&self) -> &Self::Context;
-}
-
-/// The interruptor used internally by a supervisor
-/// context or by a standalone routine.
-pub trait Interruptor: Send + 'static {
-    /// Interrupte a trackable runtime.
-    fn interrupt_trackable(&self) -> Result<(), Error>;
-}
-
-impl Interruptor for AbortHandle {
-    fn interrupt_trackable(&self) -> Result<(), Error> {
-        self.abort();
-        Ok(())
-    }
 }

@@ -14,6 +14,7 @@ repository = "https://github.com/rationalintelligence/crb"
 anyhow = "1.0.94"
 async-trait = "0.1.83"
 crb-core = { version = "0.0.7", path = "crates/crb-core" }
+crb-runtime = { version = "0.0.7", path = "crates/crb-runtime" }
 derive_more = { version = "1.0.0", features = ["full"] }
 futures = "0.3.31"
 log = "0.4.22"

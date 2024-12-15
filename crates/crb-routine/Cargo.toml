@@ -10,6 +10,7 @@ repository.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 crb-core.workspace = true
+crb-runtime.workspace = true
 futures.workspace = true
 log.workspace = true
 thiserror.workspace = true

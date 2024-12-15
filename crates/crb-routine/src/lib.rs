@@ -1,9 +1,12 @@
+mod runtime;
+
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{
     time::{sleep, timeout, Duration},
     watch,
 };
+use crb_runtime::context::Context;
 use futures::{
     future::{select, Either},
     FutureExt,
@@ -30,7 +33,7 @@ async fn just_done(mut status: watch::Receiver<Status>) {
 
 #[async_trait]
 pub trait Routine: Sized + Send + 'static {
-    type Context: Send + AsMut<TaskContext>;
+    type Context: Context + AsMut<TaskContext>;
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, Error> {
@@ -51,6 +54,7 @@ pub trait Routine: Sized + Send + 'static {
         &mut self,
         _ctx: &mut Self::Context,
     ) -> Result<Self::Output, Error> {
+        // TODO: Use a flag instead of the channel
         loop {
             let routine_result = self.repeatable_routine().await;
             match routine_result {

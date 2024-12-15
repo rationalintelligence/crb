@@ -1,6 +1,6 @@
 //! A context for composable blocks.
 
-use crate::interruptor::BasicController;
+use crate::interruptor::Controller;
 use std::fmt;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -23,7 +23,7 @@ pub trait Context: Send {
 ///
 /// It could be interrupted and contains a method to check a life status of a composable block.
 pub trait BasicContext: Context {
-    fn controller(&self) -> &BasicController;
+    fn controller(&self) -> &Controller;
     /// Marks a context as interrupted.
     fn shutdown(&mut self);
 }

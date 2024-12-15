@@ -4,7 +4,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::{sleep, timeout, Duration, Elapsed};
 use crb_runtime::context::Context;
-use crb_runtime::interruptor::{BasicController, RegistrationTaken};
+use crb_runtime::interruptor::{Controller, RegistrationTaken};
 use futures::stream::{Abortable, Aborted};
 use std::ops::DerefMut;
 use thiserror::Error;
@@ -80,7 +80,7 @@ pub trait Routine: Sized + Send + 'static {
 }
 
 pub struct TaskContext {
-    controller: BasicController,
+    controller: Controller,
     /// Interval between repeatable routine calls
     interval: Duration,
 }
@@ -91,3 +91,5 @@ impl TaskContext {
         self.interval = interval;
     }
 }
+
+//TODO: Impl Maneagable Context

@@ -45,13 +45,13 @@ impl ActiveFlag {
 pub struct RegistrationTaken;
 
 #[derive(Debug, Deref)]
-pub struct BasicController {
+pub struct Controller {
     pub registration: Option<AbortRegistration>,
     #[deref]
     pub interruptor: BasicInterruptor,
 }
 
-impl Default for BasicController {
+impl Default for Controller {
     fn default() -> Self {
         let (handle, registration) = AbortHandle::new_pair();
         let interruptor = BasicInterruptor {
@@ -65,7 +65,7 @@ impl Default for BasicController {
     }
 }
 
-impl BasicController {
+impl Controller {
     pub fn interruptor(&self) -> Box<dyn Interruptor> {
         Box::new(self.interruptor.clone())
     }

@@ -6,6 +6,7 @@ use crb_core::time::{sleep, timeout, Duration, Elapsed};
 use crb_runtime::context::Context;
 use crb_runtime::interruptor::{BasicController, RegistrationTaken};
 use futures::stream::{Abortable, Aborted};
+use std::ops::DerefMut;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -24,11 +25,11 @@ pub enum TaskError {
 
 #[async_trait]
 pub trait Routine: Sized + Send + 'static {
-    type Context: Context + AsMut<TaskContext>;
+    type Context: Context + DerefMut<Target = TaskContext>;
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, TaskError> {
-        let reg = ctx.as_mut().controller.take_registration()?;
+        let reg = ctx.controller.take_registration()?;
         // TODO: Get time limit from the context (and make it ajustable in real-time)
         let time_limit = self.time_limit().await;
         let fut = timeout(time_limit, self.interruptable_routine(ctx));
@@ -40,7 +41,7 @@ pub trait Routine: Sized + Send + 'static {
         &mut self,
         ctx: &mut Self::Context,
     ) -> Result<Self::Output, TaskError> {
-        while ctx.as_mut().controller.is_active() {
+        while ctx.controller.is_active() {
             let routine_result = self.repeatable_routine().await;
             match routine_result {
                 Ok(Some(output)) => {
@@ -68,7 +69,7 @@ pub trait Routine: Sized + Send + 'static {
     }
 
     async fn routine_wait(&mut self, _succeed: bool, ctx: &mut Self::Context) {
-        let duration = ctx.as_mut().interval;
+        let duration = ctx.interval;
         sleep(duration).await
     }
 

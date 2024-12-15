@@ -16,7 +16,7 @@ where
     type Context = T::Context;
 
     fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        todo!()
+        self.context.as_mut().controller.interruptor()
     }
 
     async fn routine(mut self) {

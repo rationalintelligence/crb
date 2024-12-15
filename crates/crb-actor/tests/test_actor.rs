@@ -28,8 +28,8 @@ async fn test_actor() -> Result<(), Error> {
     let print = Print("Hello, World!".into());
     /*
     addr.event(print)?;
-    addr.interrupt()?;
     */
+    addr.interrupt()?;
     addr.join().await?;
     Ok(())
 }

@@ -1,5 +1,6 @@
 pub mod message;
 pub mod runtime;
+pub mod interrupt;
 
 pub use runtime::{Standalone, ActorContext, ActorSession};
 

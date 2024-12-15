@@ -12,6 +12,23 @@ pub struct ActorRuntime<T: Actor> {
     context: T::Context,
 }
 
+#[async_trait]
+impl<T: Actor> SupervisedRuntime for ActorRuntime<T> {
+    type Context = T::Context;
+
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+        self.context.controller().interruptor()
+    }
+
+    async fn routine(self) {
+        self.entrypoint().await
+    }
+
+    fn context(&self) -> &Self::Context {
+        &self.context
+    }
+}
+
 impl<T: Actor> ActorRuntime<T> {
     pub fn new(actor: T) -> Self
     where
@@ -37,23 +54,6 @@ impl<T: Actor> ActorRuntime<T> {
         if let Err(err) = self.context.session().status_tx.send(ActorStatus::Done) {
             log::error!("Can't change the status of the terminated actor: {err}");
         }
-    }
-}
-
-#[async_trait]
-impl<T: Actor> SupervisedRuntime for ActorRuntime<T> {
-    type Context = T::Context;
-
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        self.context.controller().interruptor()
-    }
-
-    async fn routine(self) {
-        self.entrypoint().await
-    }
-
-    fn context(&self) -> &Self::Context {
-        &self.context
     }
 }
 

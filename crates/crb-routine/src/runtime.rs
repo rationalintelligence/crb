@@ -35,6 +35,14 @@ impl<T> RoutineRuntime<T>
 where
     T: Routine,
 {
+    pub fn new(routine: T) -> Self
+    where
+        T::Context: Default,
+    {
+        let context = T::Context::default();
+        Self { routine, context }
+    }
+
     async fn entrypoint(mut self) {
         let mut ctx = self.context;
         // log::info!(target: ctx.label(), "Task started");
@@ -89,5 +97,23 @@ pub trait TaskContext: Context {
 impl TaskContext for TaskSession {
     fn session(&mut self) -> &mut TaskSession {
         self
+    }
+}
+
+pub trait Standalone: Routine {
+    fn spawn(self)
+    where
+        Self::Context: Default;
+}
+
+impl<T: Routine + 'static> Standalone for T {
+    fn spawn(self)
+    where
+        Self::Context: Default,
+    {
+        let mut runtime = RoutineRuntime::new(self);
+        let address = runtime.context.session().address().clone();
+        crb_core::spawn(runtime.entrypoint());
+        address
     }
 }

@@ -109,6 +109,8 @@ impl<A: Actor> Tracker<A> {
         }
     }
 
+    // TODO: pub fn register_activity(interruptor)
+
     pub fn spawn_trackable<B>(
         &mut self,
         mut trackable: B,
@@ -119,6 +121,19 @@ impl<A: Actor> Tracker<A> {
     {
         let interruptor = trackable.get_interruptor();
         let addr = trackable.context().address().clone();
+
+        // Registers an activity
+        let activity = Activity {
+            group: group.clone(),
+            interruptor,
+        };
+        let activity_id = self.activities.insert(activity);
+        self.groups
+            .entry(group)
+            .or_default()
+            .ids
+            .insert(activity_id);
+
         // TODO: Add to the tracker
         let fut = async move {
             // TODO: How to use it?

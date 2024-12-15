@@ -38,7 +38,7 @@ impl Actor for Supervisor {
 #[tokio::test]
 async fn test_actor() -> Result<(), Error> {
     let mut addr = Supervisor.spawn();
-    addr.interrupt();
+    addr.interrupt()?;
     addr.join().await?;
     Ok(())
 }

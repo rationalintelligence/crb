@@ -171,7 +171,7 @@ impl<S: Actor> Tracker<S> {
                     // Send an interruption signal to all active members of the group.
                     for id in group.ids.iter() {
                         if let Some(activity) = self.activities.get_mut(*id) {
-                            activity.interrupt();
+                            if let Err(err) = activity.interrupt() {}
                         }
                     }
                 }
@@ -207,7 +207,7 @@ where
         let fut = async move {
             trackable.routine().await;
             // This notification equals calling `detach_trackable`
-            detacher.detach();
+            if let Err(err) = detacher.detach() {}
         };
         crb_core::spawn(fut);
         addr

@@ -22,7 +22,7 @@ pub trait Context: Send {
 /// The main features of composable block's context.
 ///
 /// It could be interrupted and contains a method to check a life status of a composable block.
-pub trait BasicContext: Context {
+pub trait ManagedContext: Context {
     fn controller(&self) -> &Controller;
     /// Marks a context as interrupted.
     fn shutdown(&mut self);

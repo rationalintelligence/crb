@@ -19,14 +19,26 @@ impl Interruptor for AbortHandle {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ActiveFlag {
+    flag: Arc<AtomicBool>,
+}
+
+impl ActiveFlag {
+    pub fn is_active(&self) -> bool {
+        self.flag.load(Ordering::Relaxed)
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct BasicInterruptor {
-    active: Arc<AtomicBool>,
+    active: ActiveFlag,
     handle: AbortHandle,
 }
 
 impl Interruptor for BasicInterruptor {
     fn interrupt_trackable(&self, force: bool) -> Result<(), Error> {
-        self.active.store(false, Ordering::Relaxed);
+        self.active.flag.store(false, Ordering::Relaxed);
         if force {
             self.handle.abort();
         }

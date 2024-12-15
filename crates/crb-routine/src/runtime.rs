@@ -32,7 +32,7 @@ where
     type Context = T::Context;
 
     fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        self.context.controller.interruptor()
+        self.context.session().controller.interruptor()
     }
 
     async fn routine(mut self) {
@@ -50,13 +50,13 @@ where
     }
 }
 
-pub struct TaskSession {
+pub struct RoutineSession {
     controller: Controller,
     /// Interval between repeatable routine calls
     interval: Duration,
 }
 
-impl TaskSession {
+impl RoutineSession {
     /// Set repeat interval.
     pub fn set_interval(&mut self, interval: Duration) {
         self.interval = interval;
@@ -67,7 +67,7 @@ impl TaskSession {
     }
 }
 
-impl Context for TaskSession {
+impl Context for RoutineSession {
     // TODO: TaskAddress that uses a controller internally
     type Address = ();
 
@@ -76,22 +76,22 @@ impl Context for TaskSession {
     }
 }
 
-impl ManagedContext for TaskSession {
+impl ManagedContext for RoutineSession {
     fn controller(&mut self) -> &mut Controller {
         &mut self.controller
     }
 
     fn shutdown(&mut self) {
-        // self.msg_rx.close();
+        self.controller.stop(false).ok();
     }
 }
 
-pub trait TaskContext: Context {
-    fn session(&mut self) -> &mut TaskSession;
+pub trait RoutineContext: Context {
+    fn session(&mut self) -> &mut RoutineSession;
 }
 
-impl TaskContext for TaskSession {
-    fn session(&mut self) -> &mut TaskSession {
+impl RoutineContext for RoutineSession {
+    fn session(&mut self) -> &mut RoutineSession {
         self
     }
 }

@@ -1,8 +1,10 @@
+pub mod interrupt;
+pub mod event;
 pub mod message;
 pub mod runtime;
-pub mod interrupt;
 
 pub use runtime::{Standalone, ActorContext, ActorSession};
+pub use event::OnEvent;
 
 use anyhow::Error;
 use async_trait::async_trait;

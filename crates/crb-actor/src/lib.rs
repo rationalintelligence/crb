@@ -2,10 +2,13 @@ pub mod message;
 pub mod context;
 pub mod runtime;
 
+use context::Address;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_runtime::context::ManagedContext;
 use crb_runtime::interruptor::Interruptor;
+use crb_runtime::context::Context;
+use runtime::ActorRuntime;
 use context::ActorContext;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -38,5 +41,22 @@ pub trait Actor: Sized + Send + 'static {
 
     async fn finalize(&mut self, _ctx: &mut Self::Context) -> Result<(), Error> {
         Ok(())
+    }
+}
+
+pub trait Standalone: Actor {
+    fn spawn(self) -> Address<Self>
+    where Self::Context: From<ActorContext<Self>>;
+}
+
+impl<T: Actor + 'static> Standalone for T {
+    fn spawn(self) -> Address<Self>
+    where Self::Context: From<ActorContext<Self>> {
+        let context = ActorContext::new();
+        let address = context.address().clone();
+        let context = T::Context::from(context);
+        let runtime = ActorRuntime { actor: self, context };
+        crb_core::spawn(runtime.entrypoint());
+        address
     }
 }

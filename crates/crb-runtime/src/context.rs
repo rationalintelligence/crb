@@ -12,8 +12,8 @@ pub trait Context: Send {
     /// An address to interact with the context.
     type Address: Send + Clone;
 
-    /// A label that used for logging all events around the context.
-    fn label(&self) -> &Label;
+    // A label that used for logging all events around the context.
+    // fn label(&self) -> &Label;
 
     /// A reference to an address.
     fn address(&self) -> &Self::Address;
@@ -28,6 +28,7 @@ pub trait ManagedContext: Context {
     fn shutdown(&mut self);
 }
 
+/*
 /// `Label` is a `Context` for cases when
 /// context is not necessary, but for many
 /// runtimes at least `Label` is required
@@ -43,6 +44,7 @@ impl Context for Label {
         &()
     }
 }
+*/
 
 /// A unique label of an activity.
 ///

@@ -4,6 +4,7 @@ use crate::context::{Context, Label};
 use crate::interruptor::Interruptor;
 use async_trait::async_trait;
 
+/*
 /// A runtime that can be executed as
 /// a standalone activity.
 #[async_trait]
@@ -14,6 +15,7 @@ pub trait StandaloneRuntime<T> {
     /// Run routine in place.
     async fn run(self);
 }
+*/
 
 /// A runtime that can be executed by a supervisor.
 #[async_trait]

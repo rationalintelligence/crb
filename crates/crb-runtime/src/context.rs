@@ -8,10 +8,12 @@ use std::sync::Arc;
 ///
 /// It could be interrupted and contains a method to check a life status of a composable block.
 pub trait BasicContext: Context {
+    // TODO: Replace all these methods to `controller() ->`
     /// The flag is context alive.
     fn is_alive(&self) -> bool;
     /// Marks a context as interrupted.
     fn shutdown(&mut self);
+    fn stop(&mut self);
 }
 
 /// `Label` is a `Context` for cases when

@@ -10,12 +10,15 @@ use crb_runtime::context::Context;
 use crb_runtime::interruptor::BasicController;
 use futures::{
     future::{select, Either},
+    stream::{Abortable, Aborted},
     FutureExt,
 };
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TaskError {
+    #[error("task was aborted")]
+    Aborted(#[from] Aborted),
     #[error("task was interrupted")]
     Interrupted,
     #[error("time for task execution elapsed")]
@@ -24,65 +27,53 @@ pub enum TaskError {
     Failed(#[from] Error),
 }
 
-async fn just_done(mut status: watch::Receiver<Status>) {
-    while status.changed().await.is_ok() {
-        if *status.borrow() == Status::Stop {
-            break;
-        }
-    }
-}
-
 #[async_trait]
 pub trait Routine: Sized + Send + 'static {
     type Context: Context + AsMut<TaskContext>;
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, Error> {
-        let receiver = ctx.as_mut().stop_receiver.clone();
+        let reg = ctx.as_mut().controller.take_registration()?;
+        // TODO: Get time limit from the context (and make it ajustable in real-time)
         let time_limit = self.time_limit().await;
         let fut = timeout(time_limit, self.interruptable_routine(ctx));
-        let fut = Box::pin(fut);
-        let interrupt = Box::pin(just_done(receiver).fuse());
-        let either = select(interrupt, fut).await;
-        let output = match either {
-            Either::Left((_done, _rem_fut)) => Err(TaskError::Interrupted),
-            Either::Right((output, _rem_fut)) => Ok(output),
-        };
-        output??
+        let output = Abortable::new(fut, reg).await???;
+        Ok(output)
     }
 
     async fn interruptable_routine(
         &mut self,
-        _ctx: &mut Self::Context,
+        ctx: &mut Self::Context,
     ) -> Result<Self::Output, Error> {
-        // TODO: Use a flag instead of the channel
-        loop {
+        while ctx.as_mut().controller.is_active() {
             let routine_result = self.repeatable_routine().await;
             match routine_result {
                 Ok(Some(output)) => {
-                    break Ok(output);
+                    return Ok(output);
                 }
                 Ok(None) => {
-                    self.routine_wait(true).await;
+                    self.routine_wait(true, ctx).await;
                 }
                 Err(err) => {
                     // TODO: Report about the error
-                    self.routine_wait(false).await;
+                    self.routine_wait(false, ctx).await;
                 }
             }
         }
+        Err(TaskError::Interrupted.into())
     }
 
     async fn repeatable_routine(&mut self) -> Result<Option<Self::Output>, Error> {
         Ok(None)
     }
 
+    // TODO: Use context instead
     async fn time_limit(&mut self) -> Option<Duration> {
         None
     }
 
-    async fn routine_wait(&mut self, _succeed: bool) {
-        let duration = Duration::from_secs(5);
+    async fn routine_wait(&mut self, _succeed: bool, ctx: &mut Self::Context) {
+        let duration = ctx.as_mut().interval;
         sleep(duration).await
     }
 
@@ -92,13 +83,15 @@ pub trait Routine: Sized + Send + 'static {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub(crate) enum Status {
-    Alive,
-    Stop,
+pub struct TaskContext {
+    controller: BasicController,
+    /// Interval between repeatable routine calls
+    interval: Duration,
 }
 
-pub struct TaskContext {
-    stop_receiver: watch::Receiver<Status>,
-    controller: BasicController,
+impl TaskContext {
+    /// Set repeat interval.
+    pub fn set_interval(&mut self, interval: Duration) {
+        self.interval = interval;
+    }
 }

@@ -1,4 +1,5 @@
 use anyhow::Error;
+use derive_more::Deref;
 use futures::stream::{AbortHandle, AbortRegistration};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -43,9 +44,10 @@ impl ActiveFlag {
 #[error("The registration has taken already")]
 pub struct RegistrationTaken;
 
-#[derive(Debug)]
+#[derive(Debug, Deref)]
 pub struct BasicController {
     pub registration: Option<AbortRegistration>,
+    #[deref]
     pub interruptor: BasicInterruptor,
 }
 
@@ -73,8 +75,9 @@ impl BasicController {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deref)]
 pub struct BasicInterruptor {
+    #[deref]
     active: ActiveFlag,
     handle: AbortHandle,
 }

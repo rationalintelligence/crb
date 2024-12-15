@@ -2,10 +2,11 @@ pub mod event;
 pub mod interrupt;
 pub mod message;
 pub mod runtime;
-pub mod tracker;
+// pub mod tracker;
 
 pub use event::OnEvent;
 pub use runtime::{ActorContext, ActorSession, Standalone};
+// pub use tracker::TrackableSession;
 
 use anyhow::Error;
 use async_trait::async_trait;
@@ -25,7 +26,7 @@ pub trait Actor: Sized + Send + 'static {
 
     async fn interrupt(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
         // Closes the channel
-        ctx.shutdown();
+        ctx.session().shutdown();
         Ok(())
     }
 
@@ -34,7 +35,7 @@ pub trait Actor: Sized + Send + 'static {
             envelope.handle(self, ctx).await?;
         } else {
             // Terminates the runtime when the channel has drained
-            ctx.controller().stop(false)?;
+            ctx.session().controller().stop(false)?;
         }
         Ok(())
     }

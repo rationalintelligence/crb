@@ -1,10 +1,20 @@
 use crate::Actor;
+use crate::runtime::{ActorSession, ActorContext};
 use anyhow::Error;
 use crb_runtime::interruptor::Interruptor;
+use crb_runtime::context::{ManagedContext, Context};
 use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use typed_slab::TypedSlab;
+
+pub struct TrackableSession<T: Actor> {
+    session: ActorSession<T>,
+    tracker: Tracker<T>,
+}
+
+impl<T: Actor> ActorContext<T> for TrackableSession<T> {
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
 pub struct ActivityId(usize);

@@ -1,5 +1,4 @@
 use crate::message::{Envelope, MessageFor};
-use crate::tracker::Tracker;
 use crate::Actor;
 use anyhow::Error;
 use crb_core::{mpsc, watch};
@@ -17,7 +16,7 @@ impl<T: Actor> ActorRuntime<T> {
         if let Err(err) = self.actor.initialize(&mut self.context).await {
             log::error!("Initialization of the actor failed: {err}");
         }
-        while self.context.controller().is_active() {
+        while self.context.session().controller().is_active() {
             if let Err(err) = self.actor.event(&mut self.context).await {
                 log::error!("Event handling for the actor failed: {err}");
             }
@@ -43,29 +42,26 @@ impl ActorStatus {
     }
 }
 
-pub struct ActorSession<T: Actor> {
+pub struct ActorSession<T> {
     // TODO: wrap to AddressJoint, and hide
     msg_rx: mpsc::UnboundedReceiver<Envelope<T>>,
     pub status_tx: watch::Sender<ActorStatus>,
 
     controller: Controller,
     address: Address<T>,
-    tracker: Tracker<T>,
 }
 
-impl<T: Actor> ActorSession<T> {
+impl<T> ActorSession<T> {
     pub fn new() -> Self {
         let (msg_tx, msg_rx) = mpsc::unbounded_channel();
         let (status_tx, status_rx) = watch::channel(ActorStatus::Active);
         let controller = Controller::default();
         let address = Address { msg_tx, status_rx };
-        let tracker = Tracker::new();
         Self {
             msg_rx,
             status_tx,
             controller,
             address,
-            tracker,
         }
     }
 
@@ -74,7 +70,7 @@ impl<T: Actor> ActorSession<T> {
     }
 }
 
-impl<T: Actor> Context for ActorSession<T> {
+impl<T> Context for ActorSession<T> {
     type Address = Address<T>;
 
     fn address(&self) -> &Self::Address {
@@ -82,7 +78,7 @@ impl<T: Actor> Context for ActorSession<T> {
     }
 }
 
-impl<T: Actor> ManagedContext for ActorSession<T> {
+impl<T> ManagedContext for ActorSession<T> {
     fn controller(&self) -> &Controller {
         &self.controller
     }
@@ -92,11 +88,11 @@ impl<T: Actor> ManagedContext for ActorSession<T> {
     }
 }
 
-pub trait ActorContext<T: Actor>: ManagedContext {
+pub trait ActorContext<T>: Send {
     fn session(&mut self) -> &mut ActorSession<T>;
 }
 
-impl<T: Actor> ActorContext<T> for ActorSession<T> {
+impl<T> ActorContext<T> for ActorSession<T> {
     fn session(&mut self) -> &mut ActorSession<T> {
         self
     }

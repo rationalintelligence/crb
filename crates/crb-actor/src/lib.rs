@@ -18,6 +18,7 @@ use std::hash::Hash;
 #[async_trait]
 pub trait Actor: Sized + Send + 'static {
     type Context: ActorContext<Self>;
+    // TODO: Move to the supervisor
     type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;
 
     async fn initialize(&mut self, _ctx: &mut Self::Context) -> Result<(), Error> {

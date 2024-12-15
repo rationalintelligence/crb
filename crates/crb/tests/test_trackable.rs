@@ -1,6 +1,7 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_actor::{Actor, ActorSession, OnEvent, Standalone, SupervisorSession};
+use crb_actor::{Actor, ActorSession, OnEvent, Standalone};
+use crb_supervisor::SupervisorSession;
 
 struct Printer;
 

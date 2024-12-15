@@ -25,7 +25,8 @@ pub enum TaskError {
 
 #[async_trait]
 pub trait Routine: Sized + Send + 'static {
-    type Context: Context + DerefMut<Target = TaskContext>;
+    // TODO: Use TaskSession (as a trait) and add TaskSession
+    type Context: Context + DerefMut<Target = TaskSession>;
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, TaskError> {
@@ -79,17 +80,34 @@ pub trait Routine: Sized + Send + 'static {
     }
 }
 
-pub struct TaskContext {
+pub struct TaskSession {
     controller: Controller,
     /// Interval between repeatable routine calls
     interval: Duration,
 }
 
-impl TaskContext {
+impl TaskSession {
     /// Set repeat interval.
     pub fn set_interval(&mut self, interval: Duration) {
         self.interval = interval;
     }
 }
 
-//TODO: Impl Maneagable Context
+impl Context for TaskSession {
+    // TODO: TaskAddress that uses a controller internally
+    type Address = ();
+
+    fn address(&self) -> &Self::Address {
+        &()
+    }
+}
+
+pub trait TaskContext: Context {
+    fn session(&mut self) -> &mut TaskSession;
+}
+
+impl TaskContext for TaskSession {
+    fn session(&mut self) -> &mut TaskSession {
+        self
+    }
+}

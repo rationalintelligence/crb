@@ -7,6 +7,7 @@ use crb_core::{
     watch,
 };
 use crb_runtime::context::Context;
+use crb_runtime::interruptor::BasicController;
 use futures::{
     future::{select, Either},
     FutureExt,
@@ -99,4 +100,5 @@ pub(crate) enum Status {
 
 pub struct TaskContext {
     stop_receiver: watch::Receiver<Status>,
+    controller: BasicController,
 }

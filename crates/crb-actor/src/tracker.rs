@@ -1,4 +1,4 @@
-use crate::runtime::{ActorContext, ActorSession};
+use crate::runtime::{ActorContext, ActorRuntime, ActorSession, Address};
 use crate::Actor;
 use anyhow::Error;
 use crb_runtime::context::{Context, ManagedContext};
@@ -13,18 +13,34 @@ pub struct TrackableSession<T: Actor> {
     tracker: Tracker<T>,
 }
 
+impl<T: Actor> Default for TrackableSession<T> {
+    fn default() -> Self {
+        Self {
+            session: ActorSession::default(),
+            tracker: Tracker::new(),
+        }
+    }
+}
+
 impl<T: Actor> ActorContext<T> for TrackableSession<T> {
     fn session(&mut self) -> &mut ActorSession<T> {
         &mut self.session
     }
 }
 
-impl<T: Actor> From<ActorSession<T>> for TrackableSession<T> {
-    fn from(session: ActorSession<T>) -> Self {
-        Self {
-            session,
-            tracker: Tracker::new(),
-        }
+impl<S: Actor> TrackableSession<S> {
+    pub fn spawn_actor<A>(&mut self, input: A, group: S::GroupBy) -> Address<A>
+    where
+        A: Actor,
+        A::Context: Default,
+        S: Actor,
+    {
+        let runtime = ActorRuntime::<A>::new(input);
+        /*
+        let addr = self.spawn_trackable(runtime, group);
+        addr
+        */
+        todo!()
     }
 }
 

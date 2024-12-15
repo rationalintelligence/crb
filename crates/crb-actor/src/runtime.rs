@@ -11,6 +11,15 @@ pub struct ActorRuntime<T: Actor> {
 }
 
 impl<T: Actor> ActorRuntime<T> {
+    pub fn new(actor: T) -> Self
+    where
+        T::Context: Default,
+    {
+        let mut context = T::Context::default();
+        let address = context.session().address().clone();
+        Self { actor, context }
+    }
+
     pub async fn entrypoint(mut self) {
         // TODO: Add errors collector
         if let Err(err) = self.actor.initialize(&mut self.context).await {
@@ -49,6 +58,12 @@ pub struct ActorSession<T> {
 
     controller: Controller,
     address: Address<T>,
+}
+
+impl<T> Default for ActorSession<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T> ActorSession<T> {
@@ -128,21 +143,16 @@ impl<A> Clone for Address<A> {
 pub trait Standalone: Actor {
     fn spawn(self) -> Address<Self>
     where
-        Self::Context: From<ActorSession<Self>>;
+        Self::Context: Default;
 }
 
 impl<T: Actor + 'static> Standalone for T {
     fn spawn(self) -> Address<Self>
     where
-        Self::Context: From<ActorSession<Self>>,
+        Self::Context: Default,
     {
-        let context = ActorSession::new();
-        let address = context.address().clone();
-        let context = T::Context::from(context);
-        let runtime = ActorRuntime {
-            actor: self,
-            context,
-        };
+        let mut runtime = ActorRuntime::new(self);
+        let address = runtime.context.session().address().clone();
         crb_core::spawn(runtime.entrypoint());
         address
     }

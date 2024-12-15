@@ -6,7 +6,7 @@ pub mod tracker;
 
 pub use event::OnEvent;
 pub use runtime::{ActorContext, ActorSession, Standalone};
-pub use tracker::TrackableSession;
+pub use tracker::SupervisorSession;
 
 use anyhow::Error;
 use async_trait::async_trait;

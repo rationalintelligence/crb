@@ -1,11 +1,11 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_actor::{Actor, OnEvent, Standalone, TrackableSession};
+use crb_actor::{Actor, OnEvent, Standalone, SupervisorSession};
 
 struct TestActor;
 
 impl Actor for TestActor {
-    type Context = TrackableSession<Self>;
+    type Context = SupervisorSession<Self>;
     type GroupBy = ();
 }
 

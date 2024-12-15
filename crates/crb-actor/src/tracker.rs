@@ -9,12 +9,12 @@ use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use typed_slab::TypedSlab;
 
-pub struct TrackableSession<T: Actor> {
+pub struct SupervisorSession<T: Actor> {
     session: ActorSession<T>,
     tracker: Tracker<T>,
 }
 
-impl<T: Actor> Default for TrackableSession<T> {
+impl<T: Actor> Default for SupervisorSession<T> {
     fn default() -> Self {
         Self {
             session: ActorSession::default(),
@@ -23,7 +23,7 @@ impl<T: Actor> Default for TrackableSession<T> {
     }
 }
 
-impl<T: Actor> Context for TrackableSession<T> {
+impl<T: Actor> Context for SupervisorSession<T> {
     type Address = Address<T>;
 
     fn address(&self) -> &Self::Address {
@@ -31,7 +31,7 @@ impl<T: Actor> Context for TrackableSession<T> {
     }
 }
 
-impl<T: Actor> ManagedContext for TrackableSession<T> {
+impl<T: Actor> ManagedContext for SupervisorSession<T> {
     fn controller(&self) -> &Controller {
         self.session.controller()
     }
@@ -41,13 +41,13 @@ impl<T: Actor> ManagedContext for TrackableSession<T> {
     }
 }
 
-impl<T: Actor> ActorContext<T> for TrackableSession<T> {
+impl<T: Actor> ActorContext<T> for SupervisorSession<T> {
     fn session(&mut self) -> &mut ActorSession<T> {
         &mut self.session
     }
 }
 
-impl<S: Actor> TrackableSession<S> {
+impl<S: Actor> SupervisorSession<S> {
     pub fn spawn_actor<A>(
         &mut self,
         input: A,
@@ -117,7 +117,17 @@ impl<A: Actor> Tracker<A> {
     where
         B: SupervisedRuntime,
     {
-        todo!()
+        let interruptor = trackable.get_interruptor();
+        let addr = trackable.context().address().clone();
+        // TODO: Add to the tracker
+        let fut = async move {
+            // TODO: How to use it?
+            // let label = trackable.context().label();
+            // TODO: Use `address` here instead.
+            trackable.routine().await;
+        };
+        crb_core::spawn(fut);
+        addr
     }
 }
 

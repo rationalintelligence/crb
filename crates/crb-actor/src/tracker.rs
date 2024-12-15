@@ -11,6 +11,10 @@ use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use typed_slab::TypedSlab;
 
+pub trait SupervisorContext<A: Actor> {
+    fn session(&mut self) -> &mut SupervisorSession<A>;
+}
+
 pub struct SupervisorSession<T: Actor> {
     session: ActorSession<T>,
     tracker: Tracker<T>,
@@ -46,6 +50,12 @@ impl<T: Actor> ManagedContext for SupervisorSession<T> {
 impl<T: Actor> ActorContext<T> for SupervisorSession<T> {
     fn session(&mut self) -> &mut ActorSession<T> {
         &mut self.session
+    }
+}
+
+impl<A: Actor> SupervisorContext<A> for SupervisorSession<A> {
+    fn session(&mut self) -> &mut SupervisorSession<A> {
+        self
     }
 }
 
@@ -236,18 +246,14 @@ struct DetachTrackable<S: Actor> {
 #[async_trait]
 impl<S> MessageFor<S> for DetachTrackable<S>
 where
-    // TODO: Make it more flexible, to allow using wrappers
-    S: Actor<Context = SupervisorSession<S>>,
+    S: Actor,
+    S::Context: SupervisorContext<S>,
 {
     async fn handle(self: Box<Self>, _actor: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
-        ctx.detach_trackable(&self.rel);
+        SupervisorContext::session(ctx)
+            .tracker
+            .unregister_activity(&self.rel);
         Ok(())
-    }
-}
-
-impl<S: Actor> SupervisorSession<S> {
-    fn detach_trackable(&mut self, rel: &SupervisedBy<S>) {
-        self.tracker.unregister_activity(rel);
     }
 }
 
@@ -258,7 +264,8 @@ pub struct DetacherFor<S: Actor> {
 
 impl<S> DetacherFor<S>
 where
-    S: Actor<Context = SupervisorSession<S>>,
+    S: Actor,
+    S::Context: SupervisorContext<S>,
 {
     pub fn detach(self) -> Result<(), Error> {
         let msg = DetachTrackable { rel: self.rel };

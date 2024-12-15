@@ -48,7 +48,9 @@ impl<T: Actor> SupervisedRuntime for ActorRuntime<T> {
         self.context.controller().interruptor()
     }
 
-    async fn routine(self) {}
+    async fn routine(self) {
+        self.entrypoint().await
+    }
 
     fn context(&self) -> &Self::Context {
         &self.context
@@ -119,7 +121,7 @@ impl<T> ManagedContext for ActorSession<T> {
     }
 }
 
-pub trait ActorContext<T>: ManagedContext {
+pub trait ActorContext<T>: ManagedContext<Address = Address<T>> {
     fn session(&mut self) -> &mut ActorSession<T>;
 }
 

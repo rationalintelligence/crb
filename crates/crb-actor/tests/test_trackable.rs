@@ -1,18 +1,18 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_actor::{Actor, OnEvent, Standalone, SupervisorSession};
+use crb_actor::{Actor, ActorSession, OnEvent, Standalone, SupervisorSession};
 
-struct TestActor;
+struct Printer;
 
-impl Actor for TestActor {
-    type Context = SupervisorSession<Self>;
+impl Actor for Printer {
+    type Context = ActorSession<Self>;
     type GroupBy = ();
 }
 
 struct Print(pub String);
 
 #[async_trait]
-impl OnEvent<Print> for TestActor {
+impl OnEvent<Print> for Printer {
     type Error = Error;
     async fn handle(&mut self, event: Print, _ctx: &mut Self::Context) -> Result<(), Error> {
         println!("{}", event.0);
@@ -20,12 +20,25 @@ impl OnEvent<Print> for TestActor {
     }
 }
 
+struct Supervisor;
+
+#[async_trait]
+impl Actor for Supervisor {
+    type Context = SupervisorSession<Self>;
+    type GroupBy = ();
+
+    async fn initialize(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
+        let printer = ctx.spawn_actor(Printer, ());
+        let print = Print("Hello, Trackable!".into());
+        printer.event(print)?;
+        Ok(())
+    }
+}
+
 #[tokio::test]
 async fn test_actor() -> Result<(), Error> {
-    let mut addr = TestActor.spawn();
-    let print = Print("Hello, Trackable!".into());
-    addr.event(print)?;
-    addr.interrupt()?;
+    let mut addr = Supervisor.spawn();
+    addr.interrupt();
     addr.join().await?;
     Ok(())
 }

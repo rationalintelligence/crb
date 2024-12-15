@@ -1,6 +1,8 @@
+use crate::message::MessageFor;
 use crate::runtime::{ActorContext, ActorRuntime, ActorSession, Address};
 use crate::Actor;
 use anyhow::Error;
+use async_trait::async_trait;
 use crb_runtime::context::{Context, ManagedContext};
 use crb_runtime::interruptor::{Controller, Interruptor};
 use crb_runtime::runtime::SupervisedRuntime;
@@ -87,6 +89,7 @@ impl Group {
 pub struct Tracker<T: Actor> {
     groups: BTreeMap<T::GroupBy, Group>,
     activities: TypedSlab<ActivityId, Activity<T>>,
+    terminating: bool,
 }
 
 impl<A: Actor> Tracker<A> {
@@ -94,6 +97,7 @@ impl<A: Actor> Tracker<A> {
         Self {
             groups: BTreeMap::new(),
             activities: TypedSlab::new(),
+            terminating: false,
         }
     }
 
@@ -109,7 +113,64 @@ impl<A: Actor> Tracker<A> {
         }
     }
 
-    // TODO: pub fn register_activity(interruptor)
+    pub fn terminate_all(&mut self) {
+        self.try_terminate_next();
+    }
+
+    fn register_activity(
+        &mut self,
+        group: A::GroupBy,
+        interruptor: Box<dyn Interruptor>,
+    ) -> TrackerRelation<A> {
+        let activity = Activity {
+            group: group.clone(),
+            interruptor,
+        };
+        let id = self.activities.insert(activity);
+        let group_record = self.groups.entry(group.clone()).or_default();
+        group_record.ids.insert(id);
+        if group_record.interrupted {
+            // Interrupt if the group is terminating
+            self.activities.get_mut(id).map(Activity::interrupt);
+        }
+        TrackerRelation { id, group }
+    }
+
+    fn unregister_activity(&mut self, rel: &TrackerRelation<A>) {
+        if let Some(activity) = self.activities.remove(rel.id) {
+            // TODO: check rel.group == activity.group ?
+            if let Some(group) = self.groups.get_mut(&activity.group) {
+                group.ids.remove(&rel.id);
+            }
+        }
+        if self.terminating {
+            self.try_terminate_next();
+        }
+    }
+
+    fn existing_groups(&self) -> Vec<A::GroupBy> {
+        self.groups.keys().rev().cloned().collect()
+    }
+
+    fn try_terminate_next(&mut self) {
+        self.terminating = true;
+        for group_name in self.existing_groups() {
+            if let Some(group) = self.groups.get_mut(&group_name) {
+                if !group.interrupted {
+                    group.interrupted = true;
+                    // Send an interruption signal to all active members of the group.
+                    for id in group.ids.iter() {
+                        if let Some(activity) = self.activities.get_mut(*id) {
+                            activity.interrupt();
+                        }
+                    }
+                }
+                if !group.is_finished() {
+                    break;
+                }
+            }
+        }
+    }
 
     pub fn spawn_trackable<B>(
         &mut self,
@@ -122,24 +183,12 @@ impl<A: Actor> Tracker<A> {
         let interruptor = trackable.get_interruptor();
         let addr = trackable.context().address().clone();
 
-        // Registers an activity
-        let activity = Activity {
-            group: group.clone(),
-            interruptor,
-        };
-        let activity_id = self.activities.insert(activity);
-        self.groups
-            .entry(group)
-            .or_default()
-            .ids
-            .insert(activity_id);
+        self.register_activity(group, interruptor);
 
-        // TODO: Add to the tracker
         let fut = async move {
-            // TODO: How to use it?
-            // let label = trackable.context().label();
-            // TODO: Use `address` here instead.
             trackable.routine().await;
+            // This notification equals calling `detach_trackable`
+            // detacher.detach();
         };
         crb_core::spawn(fut);
         addr
@@ -154,5 +203,32 @@ struct Activity<T: Actor> {
 impl<T: Actor> Activity<T> {
     fn interrupt(&mut self) -> Result<(), Error> {
         self.interruptor.stop(false)
+    }
+}
+
+struct TrackerRelation<A: Actor> {
+    id: ActivityId,
+    group: A::GroupBy,
+}
+
+struct DetachTrackable<A: Actor> {
+    rel: TrackerRelation<A>,
+}
+
+#[async_trait]
+impl<A> MessageFor<A> for DetachTrackable<A>
+where
+    // TODO: Make it more flexible, to allow using wrappers
+    A: Actor<Context = SupervisorSession<A>>,
+{
+    async fn handle(self: Box<Self>, _actor: &mut A, ctx: &mut A::Context) -> Result<(), Error> {
+        ctx.detach_trackable(&self.rel);
+        Ok(())
+    }
+}
+
+impl<A: Actor> SupervisorSession<A> {
+    fn detach_trackable(&mut self, rel: &TrackerRelation<A>) {
+        self.tracker.unregister_activity(rel);
     }
 }

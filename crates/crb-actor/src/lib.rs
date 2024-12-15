@@ -10,8 +10,6 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_runtime::context::ManagedContext;
 use crb_runtime::interruptor::Interruptor;
-use std::fmt::Debug;
-use std::hash::Hash;
 
 #[async_trait]
 pub trait Actor: Sized + Send + 'static {

@@ -1,16 +1,16 @@
+use anyhow::Error;
+use async_trait::async_trait;
 use crb_actor::message::MessageFor;
 use crb_actor::runtime::{ActorContext, ActorRuntime, ActorSession, Address};
 use crb_actor::Actor;
-use anyhow::Error;
-use async_trait::async_trait;
 use crb_runtime::context::{Context, ManagedContext};
 use crb_runtime::interruptor::{Controller, Interruptor};
 use crb_runtime::runtime::SupervisedRuntime;
 use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
-use typed_slab::TypedSlab;
 use std::fmt::Debug;
 use std::hash::Hash;
+use typed_slab::TypedSlab;
 
 pub trait Supervisor: Actor {
     type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;

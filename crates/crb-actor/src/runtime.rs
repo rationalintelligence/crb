@@ -1,9 +1,11 @@
 use crate::message::{Envelope, MessageFor};
 use crate::Actor;
 use anyhow::Error;
+use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_runtime::context::{Context, ManagedContext};
-use crb_runtime::interruptor::Controller;
+use crb_runtime::interruptor::{Controller, Interruptor};
+use crb_runtime::runtime::SupervisedRuntime;
 
 pub struct ActorRuntime<T: Actor> {
     actor: T,
@@ -36,6 +38,21 @@ impl<T: Actor> ActorRuntime<T> {
         if let Err(err) = self.context.session().status_tx.send(ActorStatus::Done) {
             log::error!("Can't change the status of the terminated actor: {err}");
         }
+    }
+}
+
+#[async_trait]
+impl<T: Actor> SupervisedRuntime for ActorRuntime<T> {
+    type Context = T::Context;
+
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+        self.context.controller().interruptor()
+    }
+
+    async fn routine(self) {}
+
+    fn context(&self) -> &Self::Context {
+        &self.context
     }
 }
 
@@ -103,7 +120,7 @@ impl<T> ManagedContext for ActorSession<T> {
     }
 }
 
-pub trait ActorContext<T>: Send {
+pub trait ActorContext<T>: ManagedContext {
     fn session(&mut self) -> &mut ActorSession<T>;
 }
 

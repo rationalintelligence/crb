@@ -2,7 +2,8 @@ use crate::runtime::{ActorContext, ActorRuntime, ActorSession, Address};
 use crate::Actor;
 use anyhow::Error;
 use crb_runtime::context::{Context, ManagedContext};
-use crb_runtime::interruptor::Interruptor;
+use crb_runtime::interruptor::{Controller, Interruptor};
+use crb_runtime::runtime::SupervisedRuntime;
 use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
@@ -22,6 +23,24 @@ impl<T: Actor> Default for TrackableSession<T> {
     }
 }
 
+impl<T: Actor> Context for TrackableSession<T> {
+    type Address = Address<T>;
+
+    fn address(&self) -> &Self::Address {
+        self.session.address()
+    }
+}
+
+impl<T: Actor> ManagedContext for TrackableSession<T> {
+    fn controller(&self) -> &Controller {
+        self.session.controller()
+    }
+
+    fn shutdown(&mut self) {
+        self.session.shutdown();
+    }
+}
+
 impl<T: Actor> ActorContext<T> for TrackableSession<T> {
     fn session(&mut self) -> &mut ActorSession<T> {
         &mut self.session
@@ -29,18 +48,18 @@ impl<T: Actor> ActorContext<T> for TrackableSession<T> {
 }
 
 impl<S: Actor> TrackableSession<S> {
-    pub fn spawn_actor<A>(&mut self, input: A, group: S::GroupBy) -> Address<A>
+    pub fn spawn_actor<A>(
+        &mut self,
+        input: A,
+        group: S::GroupBy,
+    ) -> <A::Context as Context>::Address
     where
         A: Actor,
         A::Context: Default,
         S: Actor,
     {
         let runtime = ActorRuntime::<A>::new(input);
-        /*
-        let addr = self.spawn_trackable(runtime, group);
-        addr
-        */
-        todo!()
+        self.tracker.spawn_trackable(runtime, group)
     }
 }
 
@@ -70,7 +89,7 @@ pub struct Tracker<T: Actor> {
     activities: TypedSlab<ActivityId, Activity<T>>,
 }
 
-impl<T: Actor> Tracker<T> {
+impl<A: Actor> Tracker<A> {
     pub fn new() -> Self {
         Self {
             groups: BTreeMap::new(),
@@ -78,7 +97,7 @@ impl<T: Actor> Tracker<T> {
         }
     }
 
-    pub fn terminate_group(&mut self, group: T::GroupBy) {
+    pub fn terminate_group(&mut self, group: A::GroupBy) {
         if let Some(group) = self.groups.get(&group) {
             for id in group.ids.iter() {
                 if let Some(activity) = self.activities.get_mut(*id) {
@@ -88,6 +107,17 @@ impl<T: Actor> Tracker<T> {
                 }
             }
         }
+    }
+
+    pub fn spawn_trackable<B>(
+        &mut self,
+        mut trackable: B,
+        group: A::GroupBy,
+    ) -> <B::Context as Context>::Address
+    where
+        B: SupervisedRuntime,
+    {
+        todo!()
     }
 }
 

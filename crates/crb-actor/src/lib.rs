@@ -1,7 +1,7 @@
 pub mod message;
 pub mod runtime;
 
-pub use runtime::{ActorContext, Standalone};
+pub use runtime::{Standalone, ActorContext, ActorSession};
 
 use anyhow::Error;
 use async_trait::async_trait;
@@ -9,11 +9,10 @@ use crb_runtime::context::ManagedContext;
 use crb_runtime::interruptor::Interruptor;
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::DerefMut;
 
 #[async_trait]
 pub trait Actor: Sized + Send + 'static {
-    type Context: ManagedContext + DerefMut<Target = ActorContext<Self>>;
+    type Context: ActorContext<Self>;
     type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;
 
     async fn initialize(&mut self, _ctx: &mut Self::Context) -> Result<(), Error> {
@@ -27,7 +26,7 @@ pub trait Actor: Sized + Send + 'static {
     }
 
     async fn event(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
-        if let Some(envelope) = ctx.next_envelope().await {
+        if let Some(envelope) = ctx.session().next_envelope().await {
             envelope.handle(self, ctx).await?;
         } else {
             // Terminates the runtime when the channel has drained

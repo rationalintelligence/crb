@@ -5,6 +5,7 @@ use crb_core::{mpsc, watch};
 use crb_runtime::interruptor::Controller;
 use crb_runtime::context::{Context, ManagedContext};
 
+
 pub struct ActorRuntime<T: Actor> {
     actor: T,
     context: T::Context,
@@ -24,7 +25,7 @@ impl<T: Actor> ActorRuntime<T> {
         if let Err(err) = self.actor.finalize(&mut self.context).await {
             log::error!("Finalization of the actor failed: {err}");
         }
-        if let Err(err) = self.context.status_tx.send(ActorStatus::Done) {
+        if let Err(err) = self.context.session().status_tx.send(ActorStatus::Done) {
             log::error!("Can't change the status of the terminated actor: {err}");
         }
     }
@@ -42,7 +43,7 @@ impl ActorStatus {
     }
 }
 
-pub struct ActorContext<T> {
+pub struct ActorSession<T> {
     // TODO: wrap to AddressJoint, and hide
     msg_rx: mpsc::UnboundedReceiver<Envelope<T>>,
     pub status_tx: watch::Sender<ActorStatus>,
@@ -51,7 +52,7 @@ pub struct ActorContext<T> {
     address: Address<T>,
 }
 
-impl<T> ActorContext<T> {
+impl<T> ActorSession<T> {
     pub fn new() -> Self {
         let (msg_tx, msg_rx) = mpsc::unbounded_channel();
         let (status_tx, status_rx) = watch::channel(ActorStatus::Active);
@@ -70,7 +71,7 @@ impl<T> ActorContext<T> {
     }
 }
 
-impl<T> Context for ActorContext<T> {
+impl<T> Context for ActorSession<T> {
     type Address = Address<T>;
 
     fn address(&self) -> &Self::Address {
@@ -78,13 +79,23 @@ impl<T> Context for ActorContext<T> {
     }
 }
 
-impl<T> ManagedContext for ActorContext<T> {
+impl<T> ManagedContext for ActorSession<T> {
     fn controller(&self) -> &Controller {
         &self.controller
     }
 
     fn shutdown(&mut self) {
         self.msg_rx.close();
+    }
+}
+
+pub trait ActorContext<T>: ManagedContext {
+    fn session(&mut self) -> &mut ActorSession<T>;
+}
+
+impl<T> ActorContext<T> for ActorSession<T> {
+    fn session(&mut self) -> &mut ActorSession<T> {
+        self
     }
 }
 
@@ -118,13 +129,13 @@ impl<A> Clone for Address<A> {
 
 pub trait Standalone: Actor {
     fn spawn(self) -> Address<Self>
-    where Self::Context: From<ActorContext<Self>>;
+    where Self::Context: From<ActorSession<Self>>;
 }
 
 impl<T: Actor + 'static> Standalone for T {
     fn spawn(self) -> Address<Self>
-    where Self::Context: From<ActorContext<Self>> {
-        let context = ActorContext::new();
+    where Self::Context: From<ActorSession<Self>> {
+        let context = ActorSession::new();
         let address = context.address().clone();
         let context = T::Context::from(context);
         let runtime = ActorRuntime { actor: self, context };

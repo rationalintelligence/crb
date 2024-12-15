@@ -11,7 +11,9 @@ anyhow.workspace = true
 async-trait.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
+derive_more.workspace = true
 log.workspace = true
+typed-slab = "0.2.0"
 
 [dev-dependencies]
 tokio.workspace = true

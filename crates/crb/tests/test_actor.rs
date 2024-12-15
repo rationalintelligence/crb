@@ -6,7 +6,6 @@ struct TestActor;
 
 impl Actor for TestActor {
     type Context = ActorSession<Self>;
-    type GroupBy = ();
 }
 
 struct Print(pub String);

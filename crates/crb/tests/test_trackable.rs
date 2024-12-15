@@ -1,13 +1,12 @@
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_actor::{Actor, ActorSession, OnEvent, Standalone};
-use crb_supervisor::SupervisorSession;
+use crb_supervisor::{SupervisorSession, Supervisor};
 
 struct Printer;
 
 impl Actor for Printer {
     type Context = ActorSession<Self>;
-    type GroupBy = ();
 }
 
 struct Print(pub String);
@@ -21,12 +20,11 @@ impl OnEvent<Print> for Printer {
     }
 }
 
-struct Supervisor;
+struct Main;
 
 #[async_trait]
-impl Actor for Supervisor {
+impl Actor for Main {
     type Context = SupervisorSession<Self>;
-    type GroupBy = ();
 
     async fn initialize(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
         let printer = ctx.spawn_actor(Printer, ());
@@ -36,9 +34,13 @@ impl Actor for Supervisor {
     }
 }
 
+impl Supervisor for Main {
+    type GroupBy = ();
+}
+
 #[tokio::test]
 async fn test_actor() -> Result<(), Error> {
-    let mut addr = Supervisor.spawn();
+    let mut addr = Main.spawn();
     addr.interrupt()?;
     addr.join().await?;
     Ok(())

@@ -16,16 +16,16 @@ pub trait Supervisor: Actor {
     type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;
 }
 
-pub trait SupervisorContext<A: Actor> {
-    fn session(&mut self) -> &mut SupervisorSession<A>;
+pub trait SupervisorContext<S: Supervisor> {
+    fn session(&mut self) -> &mut SupervisorSession<S>;
 }
 
-pub struct SupervisorSession<T: Actor> {
-    session: ActorSession<T>,
-    tracker: Tracker<T>,
+pub struct SupervisorSession<S: Supervisor> {
+    session: ActorSession<S>,
+    tracker: Tracker<S>,
 }
 
-impl<T: Actor> Default for SupervisorSession<T> {
+impl<S: Supervisor> Default for SupervisorSession<S> {
     fn default() -> Self {
         Self {
             session: ActorSession::default(),
@@ -34,7 +34,7 @@ impl<T: Actor> Default for SupervisorSession<T> {
     }
 }
 
-impl<T: Actor> Context for SupervisorSession<T> {
+impl<T: Supervisor> Context for SupervisorSession<T> {
     type Address = Address<T>;
 
     fn address(&self) -> &Self::Address {
@@ -42,7 +42,7 @@ impl<T: Actor> Context for SupervisorSession<T> {
     }
 }
 
-impl<T: Actor> ManagedContext for SupervisorSession<T> {
+impl<T: Supervisor> ManagedContext for SupervisorSession<T> {
     fn controller(&mut self) -> &mut Controller {
         self.session.controller()
     }
@@ -52,19 +52,19 @@ impl<T: Actor> ManagedContext for SupervisorSession<T> {
     }
 }
 
-impl<T: Actor> ActorContext<T> for SupervisorSession<T> {
+impl<T: Supervisor> ActorContext<T> for SupervisorSession<T> {
     fn session(&mut self) -> &mut ActorSession<T> {
         &mut self.session
     }
 }
 
-impl<A: Actor> SupervisorContext<A> for SupervisorSession<A> {
+impl<A: Supervisor> SupervisorContext<A> for SupervisorSession<A> {
     fn session(&mut self) -> &mut SupervisorSession<A> {
         self
     }
 }
 
-impl<S: Actor> SupervisorSession<S> {
+impl<S: Supervisor> SupervisorSession<S> {
     pub fn spawn_actor<A>(
         &mut self,
         input: A,
@@ -73,7 +73,7 @@ impl<S: Actor> SupervisorSession<S> {
     where
         A: Actor,
         A::Context: Default,
-        S: Actor<Context = SupervisorSession<S>>,
+        S: Supervisor<Context = SupervisorSession<S>>,
     {
         let runtime = ActorRuntime::<A>::new(input);
         self.spawn_trackable(runtime, group)
@@ -95,13 +95,13 @@ impl Group {
     }
 }
 
-pub struct Tracker<T: Actor> {
+pub struct Tracker<T: Supervisor> {
     groups: BTreeMap<T::GroupBy, Group>,
     activities: TypedSlab<ActivityId, Activity<T>>,
     terminating: bool,
 }
 
-impl<S: Actor> Tracker<S> {
+impl<S: Supervisor> Tracker<S> {
     pub fn new() -> Self {
         Self {
             groups: BTreeMap::new(),
@@ -184,7 +184,7 @@ impl<S: Actor> Tracker<S> {
 
 impl<S> SupervisorSession<S>
 where
-    S: Actor,
+    S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
     // TODO: Add the `spawn_child` method
@@ -216,23 +216,23 @@ where
     }
 }
 
-struct Activity<T: Actor> {
+struct Activity<T: Supervisor> {
     group: T::GroupBy,
     interruptor: Box<dyn Interruptor>,
 }
 
-impl<T: Actor> Activity<T> {
+impl<T: Supervisor> Activity<T> {
     fn interrupt(&mut self) -> Result<(), Error> {
         self.interruptor.stop(false)
     }
 }
 
-struct SupervisedBy<S: Actor> {
+struct SupervisedBy<S: Supervisor> {
     id: ActivityId,
     group: S::GroupBy,
 }
 
-impl<S: Actor> Clone for SupervisedBy<S> {
+impl<S: Supervisor> Clone for SupervisedBy<S> {
     fn clone(&self) -> Self {
         Self {
             id: self.id.clone(),
@@ -241,14 +241,14 @@ impl<S: Actor> Clone for SupervisedBy<S> {
     }
 }
 
-struct DetachTrackable<S: Actor> {
+struct DetachTrackable<S: Supervisor> {
     rel: SupervisedBy<S>,
 }
 
 #[async_trait]
 impl<S> MessageFor<S> for DetachTrackable<S>
 where
-    S: Actor,
+    S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
     async fn handle(self: Box<Self>, _actor: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
@@ -259,14 +259,14 @@ where
     }
 }
 
-pub struct DetacherFor<S: Actor> {
+pub struct DetacherFor<S: Supervisor> {
     rel: SupervisedBy<S>,
     supervisor: <S::Context as Context>::Address,
 }
 
 impl<S> DetacherFor<S>
 where
-    S: Actor,
+    S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
     pub fn detach(self) -> Result<(), Error> {

@@ -11,11 +11,11 @@ use thiserror::Error;
 /// context or by a standalone routine.
 pub trait Interruptor: Send + 'static {
     /// Interrupte a trackable runtime.
-    fn interrupt_trackable(&self, force: bool) -> Result<(), Error>;
+    fn stop(&self, force: bool) -> Result<(), Error>;
 }
 
 impl Interruptor for AbortHandle {
-    fn interrupt_trackable(&self, _force: bool) -> Result<(), Error> {
+    fn stop(&self, _force: bool) -> Result<(), Error> {
         self.abort();
         Ok(())
     }
@@ -83,7 +83,7 @@ pub struct BasicInterruptor {
 }
 
 impl Interruptor for BasicInterruptor {
-    fn interrupt_trackable(&self, force: bool) -> Result<(), Error> {
+    fn stop(&self, force: bool) -> Result<(), Error> {
         self.active.flag.store(false, Ordering::Relaxed);
         if force {
             self.handle.abort();

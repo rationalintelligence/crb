@@ -3,11 +3,11 @@ mod runtime;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{
-    time::{sleep, timeout, Duration},
+    time::{sleep, timeout, Duration, Elapsed},
     watch,
 };
 use crb_runtime::context::Context;
-use crb_runtime::interruptor::BasicController;
+use crb_runtime::interruptor::{BasicController, RegistrationTaken};
 use futures::{
     future::{select, Either},
     stream::{Abortable, Aborted},
@@ -22,7 +22,9 @@ pub enum TaskError {
     #[error("task was interrupted")]
     Interrupted,
     #[error("time for task execution elapsed")]
-    Timeout,
+    Timeout(#[from] Elapsed),
+    #[error("can't register a task: {0}")]
+    Registration(#[from] RegistrationTaken),
     #[error("task failed: {0}")]
     Failed(#[from] Error),
 }
@@ -32,7 +34,7 @@ pub trait Routine: Sized + Send + 'static {
     type Context: Context + AsMut<TaskContext>;
     type Output: Send;
 
-    async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, Error> {
+    async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, TaskError> {
         let reg = ctx.as_mut().controller.take_registration()?;
         // TODO: Get time limit from the context (and make it ajustable in real-time)
         let time_limit = self.time_limit().await;
@@ -44,7 +46,7 @@ pub trait Routine: Sized + Send + 'static {
     async fn interruptable_routine(
         &mut self,
         ctx: &mut Self::Context,
-    ) -> Result<Self::Output, Error> {
+    ) -> Result<Self::Output, TaskError> {
         while ctx.as_mut().controller.is_active() {
             let routine_result = self.repeatable_routine().await;
             match routine_result {
@@ -60,7 +62,7 @@ pub trait Routine: Sized + Send + 'static {
                 }
             }
         }
-        Err(TaskError::Interrupted.into())
+        Err(TaskError::Interrupted)
     }
 
     async fn repeatable_routine(&mut self) -> Result<Option<Self::Output>, Error> {

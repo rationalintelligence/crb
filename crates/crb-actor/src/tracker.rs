@@ -1,8 +1,8 @@
+use crate::runtime::{ActorContext, ActorSession};
 use crate::Actor;
-use crate::runtime::{ActorSession, ActorContext};
 use anyhow::Error;
+use crb_runtime::context::{Context, ManagedContext};
 use crb_runtime::interruptor::Interruptor;
-use crb_runtime::context::{ManagedContext, Context};
 use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
@@ -14,6 +14,18 @@ pub struct TrackableSession<T: Actor> {
 }
 
 impl<T: Actor> ActorContext<T> for TrackableSession<T> {
+    fn session(&mut self) -> &mut ActorSession<T> {
+        &mut self.session
+    }
+}
+
+impl<T: Actor> From<ActorSession<T>> for TrackableSession<T> {
+    fn from(session: ActorSession<T>) -> Self {
+        Self {
+            session,
+            tracker: Tracker::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]

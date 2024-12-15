@@ -23,7 +23,7 @@ impl OnEvent<Print> for TestActor {
 #[tokio::test]
 async fn test_actor() -> Result<(), Error> {
     let mut addr = TestActor.spawn();
-    let print = Print("Hello, World!".into());
+    let print = Print("Hello, Trackable!".into());
     addr.event(print)?;
     addr.interrupt()?;
     addr.join().await?;

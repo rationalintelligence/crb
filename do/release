@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+# cargo set-version --workspace --bump $@
+cargo workspaces publish --allow-branch trunk --all

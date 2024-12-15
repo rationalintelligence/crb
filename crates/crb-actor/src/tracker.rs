@@ -38,7 +38,7 @@ impl<T: Actor> Context for SupervisorSession<T> {
 }
 
 impl<T: Actor> ManagedContext for SupervisorSession<T> {
-    fn controller(&self) -> &Controller {
+    fn controller(&mut self) -> &mut Controller {
         self.session.controller()
     }
 

@@ -3,9 +3,10 @@ mod runtime;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::{sleep, timeout, Duration, Elapsed};
-use crb_runtime::context::Context;
-use crb_runtime::interruptor::{Controller, RegistrationTaken};
+use crb_runtime::context::ManagedContext;
+use crb_runtime::interruptor::RegistrationTaken;
 use futures::stream::{Abortable, Aborted};
+use runtime::TaskSession;
 use std::ops::DerefMut;
 use thiserror::Error;
 
@@ -26,11 +27,11 @@ pub enum TaskError {
 #[async_trait]
 pub trait Routine: Sized + Send + 'static {
     // TODO: Use TaskSession (as a trait) and add TaskSession
-    type Context: Context + DerefMut<Target = TaskSession>;
+    type Context: ManagedContext + DerefMut<Target = TaskSession>;
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, TaskError> {
-        let reg = ctx.controller.take_registration()?;
+        let reg = ctx.controller().take_registration()?;
         // TODO: Get time limit from the context (and make it ajustable in real-time)
         let time_limit = self.time_limit().await;
         let fut = timeout(time_limit, self.interruptable_routine(ctx));
@@ -42,7 +43,7 @@ pub trait Routine: Sized + Send + 'static {
         &mut self,
         ctx: &mut Self::Context,
     ) -> Result<Self::Output, TaskError> {
-        while ctx.controller.is_active() {
+        while ctx.controller().is_active() {
             let routine_result = self.repeatable_routine().await;
             match routine_result {
                 Ok(Some(output)) => {
@@ -70,44 +71,12 @@ pub trait Routine: Sized + Send + 'static {
     }
 
     async fn routine_wait(&mut self, _succeed: bool, ctx: &mut Self::Context) {
-        let duration = ctx.interval;
+        let duration = ctx.interval();
         sleep(duration).await
     }
 
     async fn finalize(&mut self, result: Result<Self::Output, TaskError>) -> Result<(), Error> {
         result?;
         Ok(())
-    }
-}
-
-pub struct TaskSession {
-    controller: Controller,
-    /// Interval between repeatable routine calls
-    interval: Duration,
-}
-
-impl TaskSession {
-    /// Set repeat interval.
-    pub fn set_interval(&mut self, interval: Duration) {
-        self.interval = interval;
-    }
-}
-
-impl Context for TaskSession {
-    // TODO: TaskAddress that uses a controller internally
-    type Address = ();
-
-    fn address(&self) -> &Self::Address {
-        &()
-    }
-}
-
-pub trait TaskContext: Context {
-    fn session(&mut self) -> &mut TaskSession;
-}
-
-impl TaskContext for TaskSession {
-    fn session(&mut self) -> &mut TaskSession {
-        self
     }
 }

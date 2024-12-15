@@ -112,8 +112,8 @@ impl<T> Context for ActorSession<T> {
 }
 
 impl<T> ManagedContext for ActorSession<T> {
-    fn controller(&self) -> &Controller {
-        &self.controller
+    fn controller(&mut self) -> &mut Controller {
+        &mut self.controller
     }
 
     fn shutdown(&mut self) {

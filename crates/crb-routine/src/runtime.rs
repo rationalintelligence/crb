@@ -1,5 +1,8 @@
 use crate::Routine;
 use async_trait::async_trait;
+use crb_core::time::Duration;
+use crb_runtime::context::{Context, ManagedContext};
+use crb_runtime::interruptor::Controller;
 use crb_runtime::interruptor::Interruptor;
 use crb_runtime::runtime::SupervisedRuntime;
 
@@ -40,5 +43,51 @@ where
             // log::error!(target: ctx.label(), "Finalize of the task failed: {}", err);
         }
         // log::info!(target: ctx.label(), "Task finished");
+    }
+}
+
+pub struct TaskSession {
+    controller: Controller,
+    /// Interval between repeatable routine calls
+    interval: Duration,
+}
+
+impl TaskSession {
+    /// Set repeat interval.
+    pub fn set_interval(&mut self, interval: Duration) {
+        self.interval = interval;
+    }
+
+    pub fn interval(&self) -> Duration {
+        self.interval
+    }
+}
+
+impl Context for TaskSession {
+    // TODO: TaskAddress that uses a controller internally
+    type Address = ();
+
+    fn address(&self) -> &Self::Address {
+        &()
+    }
+}
+
+impl ManagedContext for TaskSession {
+    fn controller(&mut self) -> &mut Controller {
+        &mut self.controller
+    }
+
+    fn shutdown(&mut self) {
+        // self.msg_rx.close();
+    }
+}
+
+pub trait TaskContext: Context {
+    fn session(&mut self) -> &mut TaskSession;
+}
+
+impl TaskContext for TaskSession {
+    fn session(&mut self) -> &mut TaskSession {
+        self
     }
 }

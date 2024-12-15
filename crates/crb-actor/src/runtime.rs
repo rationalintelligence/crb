@@ -17,8 +17,7 @@ impl<T: Actor> ActorRuntime<T> {
     where
         T::Context: Default,
     {
-        let mut context = T::Context::default();
-        let address = context.session().address().clone();
+        let context = T::Context::default();
         Self { actor, context }
     }
 

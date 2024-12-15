@@ -197,7 +197,7 @@ where
         let fut = async move {
             trackable.routine().await;
             // This notification equals calling `detach_trackable`
-            // detacher.detach();
+            detacher.detach();
         };
         crb_core::spawn(fut);
         addr

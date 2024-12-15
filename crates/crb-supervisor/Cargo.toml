@@ -1,5 +1,6 @@
 [package]
 name = "crb-supervisor"
+description = "CRB | Composable Runtime Blocks | Supervisor"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

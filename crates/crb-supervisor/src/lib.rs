@@ -34,15 +34,15 @@ impl<S: Supervisor> Default for SupervisorSession<S> {
     }
 }
 
-impl<T: Supervisor> Context for SupervisorSession<T> {
-    type Address = Address<T>;
+impl<S: Supervisor> Context for SupervisorSession<S> {
+    type Address = Address<S>;
 
     fn address(&self) -> &Self::Address {
         self.session.address()
     }
 }
 
-impl<T: Supervisor> ManagedContext for SupervisorSession<T> {
+impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
     fn controller(&mut self) -> &mut Controller {
         self.session.controller()
     }
@@ -52,14 +52,14 @@ impl<T: Supervisor> ManagedContext for SupervisorSession<T> {
     }
 }
 
-impl<T: Supervisor> ActorContext<T> for SupervisorSession<T> {
-    fn session(&mut self) -> &mut ActorSession<T> {
+impl<S: Supervisor> ActorContext<S> for SupervisorSession<S> {
+    fn session(&mut self) -> &mut ActorSession<S> {
         &mut self.session
     }
 }
 
-impl<A: Supervisor> SupervisorContext<A> for SupervisorSession<A> {
-    fn session(&mut self) -> &mut SupervisorSession<A> {
+impl<S: Supervisor> SupervisorContext<S> for SupervisorSession<S> {
+    fn session(&mut self) -> &mut SupervisorSession<S> {
         self
     }
 }
@@ -95,9 +95,9 @@ impl Group {
     }
 }
 
-pub struct Tracker<T: Supervisor> {
-    groups: BTreeMap<T::GroupBy, Group>,
-    activities: TypedSlab<ActivityId, Activity<T>>,
+pub struct Tracker<S: Supervisor> {
+    groups: BTreeMap<S::GroupBy, Group>,
+    activities: TypedSlab<ActivityId, Activity<S>>,
     terminating: bool,
 }
 
@@ -216,12 +216,12 @@ where
     }
 }
 
-struct Activity<T: Supervisor> {
-    group: T::GroupBy,
+struct Activity<S: Supervisor> {
+    group: S::GroupBy,
     interruptor: Box<dyn Interruptor>,
 }
 
-impl<T: Supervisor> Activity<T> {
+impl<S: Supervisor> Activity<S> {
     fn interrupt(&mut self) -> Result<(), Error> {
         self.interruptor.stop(false)
     }

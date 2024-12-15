@@ -58,10 +58,10 @@ impl<S: Actor> SupervisorSession<S> {
     where
         A: Actor,
         A::Context: Default,
-        S: Actor,
+        S: Actor<Context = SupervisorSession<S>>,
     {
         let runtime = ActorRuntime::<A>::new(input);
-        self.tracker.spawn_trackable(runtime, group)
+        self.spawn_trackable(runtime, group)
     }
 }
 
@@ -92,7 +92,7 @@ pub struct Tracker<T: Actor> {
     terminating: bool,
 }
 
-impl<A: Actor> Tracker<A> {
+impl<S: Actor> Tracker<S> {
     pub fn new() -> Self {
         Self {
             groups: BTreeMap::new(),
@@ -101,7 +101,7 @@ impl<A: Actor> Tracker<A> {
         }
     }
 
-    pub fn terminate_group(&mut self, group: A::GroupBy) {
+    pub fn terminate_group(&mut self, group: S::GroupBy) {
         if let Some(group) = self.groups.get(&group) {
             for id in group.ids.iter() {
                 if let Some(activity) = self.activities.get_mut(*id) {
@@ -119,9 +119,9 @@ impl<A: Actor> Tracker<A> {
 
     fn register_activity(
         &mut self,
-        group: A::GroupBy,
+        group: S::GroupBy,
         interruptor: Box<dyn Interruptor>,
-    ) -> TrackerRelation<A> {
+    ) -> SupervisedBy<S> {
         let activity = Activity {
             group: group.clone(),
             interruptor,
@@ -133,10 +133,10 @@ impl<A: Actor> Tracker<A> {
             // Interrupt if the group is terminating
             self.activities.get_mut(id).map(Activity::interrupt);
         }
-        TrackerRelation { id, group }
+        SupervisedBy { id, group }
     }
 
-    fn unregister_activity(&mut self, rel: &TrackerRelation<A>) {
+    fn unregister_activity(&mut self, rel: &SupervisedBy<S>) {
         if let Some(activity) = self.activities.remove(rel.id) {
             // TODO: check rel.group == activity.group ?
             if let Some(group) = self.groups.get_mut(&activity.group) {
@@ -148,7 +148,7 @@ impl<A: Actor> Tracker<A> {
         }
     }
 
-    fn existing_groups(&self) -> Vec<A::GroupBy> {
+    fn existing_groups(&self) -> Vec<S::GroupBy> {
         self.groups.keys().rev().cloned().collect()
     }
 
@@ -171,11 +171,16 @@ impl<A: Actor> Tracker<A> {
             }
         }
     }
+}
 
+impl<S> SupervisorSession<S>
+where
+    S: Actor<Context = SupervisorSession<S>>,
+{
     pub fn spawn_trackable<B>(
         &mut self,
         mut trackable: B,
-        group: A::GroupBy,
+        group: S::GroupBy,
     ) -> <B::Context as Context>::Address
     where
         B: SupervisedRuntime,
@@ -183,7 +188,11 @@ impl<A: Actor> Tracker<A> {
         let interruptor = trackable.get_interruptor();
         let addr = trackable.context().address().clone();
 
-        self.register_activity(group, interruptor);
+        let rel = self.tracker.register_activity(group, interruptor);
+        let detacher = DetacherFor {
+            supervisor: self.address().clone(),
+            rel,
+        };
 
         let fut = async move {
             trackable.routine().await;
@@ -206,29 +215,53 @@ impl<T: Actor> Activity<T> {
     }
 }
 
-struct TrackerRelation<A: Actor> {
+struct SupervisedBy<S: Actor> {
     id: ActivityId,
-    group: A::GroupBy,
+    group: S::GroupBy,
 }
 
-struct DetachTrackable<A: Actor> {
-    rel: TrackerRelation<A>,
+impl<S: Actor> Clone for SupervisedBy<S> {
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id.clone(),
+            group: self.group.clone(),
+        }
+    }
+}
+
+struct DetachTrackable<S: Actor> {
+    rel: SupervisedBy<S>,
 }
 
 #[async_trait]
-impl<A> MessageFor<A> for DetachTrackable<A>
+impl<S> MessageFor<S> for DetachTrackable<S>
 where
     // TODO: Make it more flexible, to allow using wrappers
-    A: Actor<Context = SupervisorSession<A>>,
+    S: Actor<Context = SupervisorSession<S>>,
 {
-    async fn handle(self: Box<Self>, _actor: &mut A, ctx: &mut A::Context) -> Result<(), Error> {
+    async fn handle(self: Box<Self>, _actor: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
         ctx.detach_trackable(&self.rel);
         Ok(())
     }
 }
 
-impl<A: Actor> SupervisorSession<A> {
-    fn detach_trackable(&mut self, rel: &TrackerRelation<A>) {
+impl<S: Actor> SupervisorSession<S> {
+    fn detach_trackable(&mut self, rel: &SupervisedBy<S>) {
         self.tracker.unregister_activity(rel);
+    }
+}
+
+pub struct DetacherFor<S: Actor> {
+    rel: SupervisedBy<S>,
+    supervisor: <S::Context as Context>::Address,
+}
+
+impl<S> DetacherFor<S>
+where
+    S: Actor<Context = SupervisorSession<S>>,
+{
+    pub fn detach(self) -> Result<(), Error> {
+        let msg = DetachTrackable { rel: self.rel };
+        self.supervisor.send(msg)
     }
 }

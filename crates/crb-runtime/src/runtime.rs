@@ -4,19 +4,6 @@ use crate::context::Context;
 use crate::interruptor::Interruptor;
 use async_trait::async_trait;
 
-/*
-/// A runtime that can be executed as
-/// a standalone activity.
-#[async_trait]
-pub trait StandaloneRuntime<T> {
-    /// Returns a runtime that has to be used in an async context.
-    fn new(input: T, label: Label) -> Self;
-
-    /// Run routine in place.
-    async fn run(self);
-}
-*/
-
 /// A runtime that can be executed by a supervisor.
 #[async_trait]
 pub trait SupervisedRuntime
@@ -38,4 +25,13 @@ where
 
     /// Gets a reference to a context.
     fn context(&self) -> &Self::Context;
+}
+
+pub trait StandaloneRuntime: SupervisedRuntime + Sized {
+    /// Run routine in place.
+    fn spawn(self) -> <Self::Context as Context>::Address {
+        let address = self.context().address().clone();
+        crb_core::spawn(self.routine());
+        address
+    }
 }

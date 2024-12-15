@@ -2,7 +2,6 @@
 
 use crate::context::{Context, Label};
 use crate::interruptor::Interruptor;
-use anyhow::Error;
 use async_trait::async_trait;
 
 /// A runtime that can be executed as

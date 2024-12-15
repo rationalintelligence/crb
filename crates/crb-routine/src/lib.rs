@@ -2,17 +2,10 @@ mod runtime;
 
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_core::{
-    time::{sleep, timeout, Duration, Elapsed},
-    watch,
-};
+use crb_core::time::{sleep, timeout, Duration, Elapsed};
 use crb_runtime::context::Context;
 use crb_runtime::interruptor::{BasicController, RegistrationTaken};
-use futures::{
-    future::{select, Either},
-    stream::{Abortable, Aborted},
-    FutureExt,
-};
+use futures::stream::{Abortable, Aborted};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

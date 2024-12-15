@@ -185,8 +185,11 @@ impl<S: Actor> Tracker<S> {
 
 impl<S> SupervisorSession<S>
 where
-    S: Actor<Context = SupervisorSession<S>>,
+    S: Actor,
+    S::Context: SupervisorContext<S>,
 {
+    // TODO: Add the `spawn_child` method
+
     pub fn spawn_trackable<B>(
         &mut self,
         mut trackable: B,

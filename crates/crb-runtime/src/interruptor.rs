@@ -24,6 +24,14 @@ pub struct ActiveFlag {
     flag: Arc<AtomicBool>,
 }
 
+impl Default for ActiveFlag {
+    fn default() -> Self {
+        Self {
+            flag: Arc::new(AtomicBool::new(true)),
+        }
+    }
+}
+
 impl ActiveFlag {
     pub fn is_active(&self) -> bool {
         self.flag.load(Ordering::Relaxed)
@@ -34,6 +42,15 @@ impl ActiveFlag {
 pub struct BasicInterruptor {
     active: ActiveFlag,
     handle: AbortHandle,
+}
+
+impl BasicInterruptor {
+    pub fn new(handle: AbortHandle) -> Self {
+        Self {
+            active: ActiveFlag::default(),
+            handle,
+        }
+    }
 }
 
 impl Interruptor for BasicInterruptor {

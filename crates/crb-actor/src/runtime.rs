@@ -12,23 +12,6 @@ pub struct ActorRuntime<T: Actor> {
     context: T::Context,
 }
 
-#[async_trait]
-impl<T: Actor> SupervisedRuntime for ActorRuntime<T> {
-    type Context = T::Context;
-
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        self.context.controller().interruptor()
-    }
-
-    async fn routine(self) {
-        self.entrypoint().await
-    }
-
-    fn context(&self) -> &Self::Context {
-        &self.context
-    }
-}
-
 impl<T: Actor> ActorRuntime<T> {
     pub fn new(actor: T) -> Self
     where
@@ -37,8 +20,17 @@ impl<T: Actor> ActorRuntime<T> {
         let context = T::Context::default();
         Self { actor, context }
     }
+}
 
-    pub async fn entrypoint(mut self) {
+#[async_trait]
+impl<T: Actor> SupervisedRuntime for ActorRuntime<T> {
+    type Context = T::Context;
+
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+        self.context.controller().interruptor()
+    }
+
+    async fn routine(mut self) {
         // TODO: Add errors collector
         if let Err(err) = self.actor.initialize(&mut self.context).await {
             log::error!("Initialization of the actor failed: {err}");
@@ -54,6 +46,10 @@ impl<T: Actor> ActorRuntime<T> {
         if let Err(err) = self.context.session().status_tx.send(ActorStatus::Done) {
             log::error!("Can't change the status of the terminated actor: {err}");
         }
+    }
+
+    fn context(&self) -> &Self::Context {
+        &self.context
     }
 }
 
@@ -171,7 +167,7 @@ impl<T: Actor + 'static> Standalone for T {
     {
         let mut runtime = ActorRuntime::new(self);
         let address = runtime.context.session().address().clone();
-        crb_core::spawn(runtime.entrypoint());
+        crb_core::spawn(runtime.routine());
         address
     }
 }

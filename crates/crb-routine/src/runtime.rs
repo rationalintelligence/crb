@@ -11,6 +11,19 @@ struct RoutineRuntime<T: Routine> {
     context: T::Context,
 }
 
+impl<T> RoutineRuntime<T>
+where
+    T: Routine,
+{
+    pub fn new(routine: T) -> Self
+    where
+        T::Context: Default,
+    {
+        let context = T::Context::default();
+        Self { routine, context }
+    }
+}
+
 #[async_trait]
 impl<T> SupervisedRuntime for RoutineRuntime<T>
 where
@@ -23,27 +36,6 @@ where
     }
 
     async fn routine(mut self) {
-        self.entrypoint().await;
-    }
-
-    fn context(&self) -> &Self::Context {
-        &self.context
-    }
-}
-
-impl<T> RoutineRuntime<T>
-where
-    T: Routine,
-{
-    pub fn new(routine: T) -> Self
-    where
-        T::Context: Default,
-    {
-        let context = T::Context::default();
-        Self { routine, context }
-    }
-
-    async fn entrypoint(mut self) {
         let mut ctx = self.context;
         // log::info!(target: ctx.label(), "Task started");
         let result = self.routine.routine(&mut ctx).await;
@@ -51,6 +43,10 @@ where
             // log::error!(target: ctx.label(), "Finalize of the task failed: {}", err);
         }
         // log::info!(target: ctx.label(), "Task finished");
+    }
+
+    fn context(&self) -> &Self::Context {
+        &self.context
     }
 }
 
@@ -113,7 +109,7 @@ impl<T: Routine + 'static> Standalone for T {
     {
         let mut runtime = RoutineRuntime::new(self);
         let address = runtime.context.session().address().clone();
-        crb_core::spawn(runtime.entrypoint());
+        crb_core::spawn(runtime.routine());
         address
     }
 }

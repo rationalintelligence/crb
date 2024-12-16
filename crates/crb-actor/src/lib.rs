@@ -8,8 +8,7 @@ pub use runtime::{ActorContext, ActorSession, Standalone};
 
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_runtime::context::ManagedContext;
-use crb_runtime::interruptor::Interruptor;
+use crb_runtime::{Interruptor, ManagedContext};
 
 #[async_trait]
 pub trait Actor: Sized + Send + 'static {

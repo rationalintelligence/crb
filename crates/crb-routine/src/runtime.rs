@@ -1,10 +1,7 @@
 use crate::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
-use crb_runtime::context::{Context, ManagedContext};
-use crb_runtime::interruptor::Controller;
-use crb_runtime::interruptor::Interruptor;
-use crb_runtime::runtime::SupervisedRuntime;
+use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runnable};
 
 struct RoutineRuntime<T: Routine> {
     routine: T,
@@ -25,7 +22,7 @@ where
 }
 
 #[async_trait]
-impl<T> SupervisedRuntime for RoutineRuntime<T>
+impl<T> Runnable for RoutineRuntime<T>
 where
     T: Routine,
 {

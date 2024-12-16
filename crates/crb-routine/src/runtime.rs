@@ -1,11 +1,12 @@
 use crate::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
-use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runnable};
+use crb_runtime::{Context, Controller, Failures, Interruptor, ManagedContext, Runtime};
 
 struct RoutineRuntime<T: Routine> {
     routine: T,
     context: T::Context,
+    failures: Failures,
 }
 
 impl<T> RoutineRuntime<T>
@@ -16,13 +17,16 @@ where
     where
         T::Context: Default,
     {
-        let context = T::Context::default();
-        Self { routine, context }
+        Self {
+            routine,
+            context: T::Context::default(),
+            failures: Failures::default(),
+        }
     }
 }
 
 #[async_trait]
-impl<T> Runnable for RoutineRuntime<T>
+impl<T> Runtime for RoutineRuntime<T>
 where
     T: Routine,
 {
@@ -32,14 +36,12 @@ where
         self.context.session().controller.interruptor()
     }
 
-    async fn routine(mut self) {
+    async fn routine(mut self) -> Failures {
         let mut ctx = self.context;
-        // log::info!(target: ctx.label(), "Task started");
         let result = self.routine.routine(&mut ctx).await;
-        if let Err(err) = self.routine.finalize(result).await {
-            // log::error!(target: ctx.label(), "Finalize of the task failed: {}", err);
-        }
-        // log::info!(target: ctx.label(), "Task finished");
+        let result = self.routine.finalize(result).await;
+        self.failures.put(result);
+        self.failures
     }
 
     fn context(&self) -> &Self::Context {
@@ -106,7 +108,7 @@ impl<T: Routine + 'static> Standalone for T {
     {
         let mut runtime = RoutineRuntime::new(self);
         let address = runtime.context.session().address().clone();
-        crb_core::spawn(runtime.routine());
+        crb_core::spawn(runtime.entrypoint());
         address
     }
 }

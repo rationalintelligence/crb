@@ -3,11 +3,12 @@ use crate::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
-use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runnable};
+use crb_runtime::{Context, Controller, Failures, Interruptor, ManagedContext, Runtime};
 
 pub struct ActorRuntime<T: Actor> {
     actor: T,
     context: T::Context,
+    failures: Failures,
 }
 
 impl<T: Actor> ActorRuntime<T> {
@@ -15,35 +16,43 @@ impl<T: Actor> ActorRuntime<T> {
     where
         T::Context: Default,
     {
-        let context = T::Context::default();
-        Self { actor, context }
+        Self {
+            actor,
+            context: T::Context::default(),
+            failures: Failures::default(),
+        }
     }
 }
 
 #[async_trait]
-impl<T: Actor> Runnable for ActorRuntime<T> {
+impl<T: Actor> Runtime for ActorRuntime<T> {
     type Context = T::Context;
 
     fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
         self.context.controller().interruptor()
     }
 
-    async fn routine(mut self) {
-        // TODO: Add errors collector
-        if let Err(err) = self.actor.initialize(&mut self.context).await {
-            log::error!("Initialization of the actor failed: {err}");
-        }
+    async fn routine(mut self) -> Failures {
+        let result = self.actor.initialize(&mut self.context).await;
+        self.failures.put(result);
+
         while self.context.session().controller().is_active() {
-            if let Err(err) = self.actor.event(&mut self.context).await {
-                log::error!("Event handling for the actor failed: {err}");
-            }
+            let result = self.actor.event(&mut self.context).await;
+            self.failures.put(result);
         }
-        if let Err(err) = self.actor.finalize(&mut self.context).await {
-            log::error!("Finalization of the actor failed: {err}");
-        }
-        if let Err(err) = self.context.session().status_tx.send(ActorStatus::Done) {
-            log::error!("Can't change the status of the terminated actor: {err}");
-        }
+
+        let result = self.actor.finalize(&mut self.context).await;
+        self.failures.put(result);
+
+        let result = self
+            .context
+            .session()
+            .status_tx
+            .send(ActorStatus::Done)
+            .map_err(|_| Error::msg("Can't set actor's status to `Done`"));
+        self.failures.put(result);
+
+        self.failures
     }
 
     fn context(&self) -> &Self::Context {
@@ -165,7 +174,7 @@ impl<T: Actor + 'static> Standalone for T {
     {
         let mut runtime = ActorRuntime::new(self);
         let address = runtime.context.session().address().clone();
-        crb_core::spawn(runtime.routine());
+        crb_core::spawn(runtime.entrypoint());
         address
     }
 }

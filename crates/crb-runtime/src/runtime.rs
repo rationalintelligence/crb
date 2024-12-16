@@ -1,34 +1,32 @@
-use crate::context::ManagedContext;
+//! A runtime for composable blocks.
+
+use crate::context::Context;
+use crate::error::Failures;
 use crate::interruptor::Interruptor;
-use crate::runnable::Runnable;
+use async_trait::async_trait;
 
-pub struct Runtime<R: Runnable> {
-    task: R,
-    context: R::Context,
-}
+/// A runtime that can be executed by a supervisor.
+#[async_trait]
+pub trait Runtime: Sized + Send + 'static {
+    /// Type of the composable block's contenxt.
+    type Context: Context;
 
-impl<R: Runnable> Runtime<R> {
-    pub fn new(task: R) -> Self
-    where
-        R::Context: Default,
-    {
-        let context = R::Context::default();
-        Self { task, context }
+    /// Used by a lifetime tracker of the supervisor to stop it.
+    /// It's the separate type that wraps address made by a runtime.
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor>;
+
+    /// Interruptor can interrupt this routine.
+    ///
+    /// The `notifier` is passed by a reference to fully avoid cloning
+    /// or passing it somewhere to let it outlive this trackable object.
+    async fn routine(self) -> Failures;
+
+    async fn entrypoint(self) {
+        self.routine().await;
     }
 
-    pub async fn run(self) {
-        // self.task.entrypoint(self.context).await
-    }
+    // async fn entrypoint(self, context: Self::Context);
 
-    // Consider to remove
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor>
-    where
-        R::Context: ManagedContext,
-    {
-        self.context.controller().interruptor()
-    }
-
-    fn context(&self) -> &R::Context {
-        &self.context
-    }
+    /// Gets a reference to a context.
+    fn context(&self) -> &Self::Context;
 }

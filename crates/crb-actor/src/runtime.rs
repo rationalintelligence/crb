@@ -47,6 +47,7 @@ impl<T: Actor> Runtime for ActorRuntime<T> {
         let result = self
             .context
             .session()
+            .joint
             .status_tx
             .send(ActorStatus::Done)
             .map_err(|_| Error::msg("Can't set actor's status to `Done`"));
@@ -72,13 +73,15 @@ impl ActorStatus {
     }
 }
 
-pub struct ActorSession<T> {
-    // TODO: wrap to AddressJoint, and hide
-    msg_rx: mpsc::UnboundedReceiver<Envelope<T>>,
+struct AddressJoint<A> {
+    msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
     pub status_tx: watch::Sender<ActorStatus>,
+}
 
+pub struct ActorSession<A> {
+    joint: AddressJoint<A>,
     controller: Controller,
-    address: Address<T>,
+    address: Address<A>,
 }
 
 impl<T> Default for ActorSession<T> {
@@ -93,16 +96,17 @@ impl<T> ActorSession<T> {
         let (status_tx, status_rx) = watch::channel(ActorStatus::Active);
         let controller = Controller::default();
         let address = Address { msg_tx, status_rx };
+        let joint = AddressJoint { msg_rx, status_tx };
         Self {
-            msg_rx,
-            status_tx,
+            joint,
             controller,
             address,
         }
     }
 
+    // TODO: Move the method to joint
     pub async fn next_envelope(&mut self) -> Option<Envelope<T>> {
-        self.msg_rx.recv().await
+        self.joint.msg_rx.recv().await
     }
 }
 
@@ -120,7 +124,7 @@ impl<T> ManagedContext for ActorSession<T> {
     }
 
     fn shutdown(&mut self) {
-        self.msg_rx.close();
+        self.joint.msg_rx.close();
     }
 }
 

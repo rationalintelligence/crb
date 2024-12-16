@@ -5,7 +5,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.0.13"
+version = "0.0.14"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/rationalintelligence/crb"
@@ -13,12 +13,12 @@ repository = "https://github.com/rationalintelligence/crb"
 [workspace.dependencies]
 anyhow = "1.0.94"
 async-trait = "0.1.83"
-crb-actor = { version = "0.0.13", path = "crates/crb-actor" }
-crb-core = { version = "0.0.13", path = "crates/crb-core" }
-crb-routine = { version = "0.0.13", path = "crates/crb-routine" }
-crb-runtime = { version = "0.0.13", path = "crates/crb-runtime" }
-crb-supervisor = { version = "0.0.13", path = "crates/crb-supervisor" }
-crb-task = { version = "0.0.13", path = "crates/crb-task" }
+crb-actor = { version = "0.0.14", path = "crates/crb-actor" }
+crb-core = { version = "0.0.14", path = "crates/crb-core" }
+crb-routine = { version = "0.0.14", path = "crates/crb-routine" }
+crb-runtime = { version = "0.0.14", path = "crates/crb-runtime" }
+crb-supervisor = { version = "0.0.14", path = "crates/crb-supervisor" }
+crb-task = { version = "0.0.14", path = "crates/crb-task" }
 derive_more = { version = "1.0.0", features = ["full"] }
 futures = "0.3.31"
 log = "0.4.22"

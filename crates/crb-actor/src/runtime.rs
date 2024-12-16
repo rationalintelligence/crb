@@ -73,9 +73,15 @@ impl ActorStatus {
     }
 }
 
-struct AddressJoint<A> {
+pub struct AddressJoint<A> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
-    pub status_tx: watch::Sender<ActorStatus>,
+    status_tx: watch::Sender<ActorStatus>,
+}
+
+impl<A> AddressJoint<A> {
+    pub async fn next_envelope(&mut self) -> Option<Envelope<A>> {
+        self.msg_rx.recv().await
+    }
 }
 
 pub struct ActorSession<A> {
@@ -90,7 +96,7 @@ impl<T> Default for ActorSession<T> {
     }
 }
 
-impl<T> ActorSession<T> {
+impl<A> ActorSession<A> {
     pub fn new() -> Self {
         let (msg_tx, msg_rx) = mpsc::unbounded_channel();
         let (status_tx, status_rx) = watch::channel(ActorStatus::Active);
@@ -104,9 +110,8 @@ impl<T> ActorSession<T> {
         }
     }
 
-    // TODO: Move the method to joint
-    pub async fn next_envelope(&mut self) -> Option<Envelope<T>> {
-        self.joint.msg_rx.recv().await
+    pub fn joint(&mut self) -> &mut AddressJoint<A> {
+        &mut self.joint
     }
 }
 

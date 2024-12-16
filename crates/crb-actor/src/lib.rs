@@ -25,7 +25,8 @@ pub trait Actor: Sized + Send + 'static {
     }
 
     async fn event(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
-        if let Some(envelope) = ctx.session().next_envelope().await {
+        let envelope = ctx.session().joint().next_envelope();
+        if let Some(envelope) = envelope.await {
             envelope.handle(self, ctx).await?;
         } else {
             // Terminates the runtime when the channel has drained

@@ -9,7 +9,10 @@ repository.workspace = true
 [dependencies]
 crb-actor.workspace = true
 crb-core.workspace = true
+crb-routine.workspace = true
+crb-runtime.workspace = true
 crb-supervisor.workspace = true
+crb-task.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

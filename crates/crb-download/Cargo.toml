@@ -1,0 +1,15 @@
+[package]
+name = "crb-download"
+description = "CRB | Composable Runtime Blocks | Downloader"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+bytes = "1.9.0"
+derive_more.workspace = true
+futures.workspace = true
+reqwest = { version = "0.12.9", features = ["stream"] }

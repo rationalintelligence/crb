@@ -1,14 +1,19 @@
 use crate::progress::ProgressCalc;
-use anyhow::Error;
+use anyhow::{Error, Result};
 use bytes::Bytes;
 use derive_more::Deref;
 use futures::{
     ready,
     task::{Context, Poll},
-    Future, Stream,
+    Future, Stream, StreamExt,
 };
-use reqwest::{Body, Client, Response, StatusCode};
+use reqwest::{Client, Response};
 use std::pin::Pin;
+use tempfile::tempfile;
+use tokio::{
+    fs::File,
+    io::{AsyncSeekExt, AsyncWriteExt},
+};
 
 #[derive(Deref)]
 pub struct Downloader {
@@ -18,12 +23,22 @@ pub struct Downloader {
 }
 
 impl Downloader {
-    pub async fn download(url: &str) -> Self {
+    pub fn new(url: &str) -> Self {
         let resp = Client::new().get(url).send();
         Self {
             progress: ProgressCalc::new(None),
             state: State::Request(Box::pin(resp)),
         }
+    }
+
+    pub async fn download(mut self) -> Result<File> {
+        let tmp = tempfile()?;
+        let mut file = File::from_std(tmp);
+        while let Some(chunk) = self.next().await {
+            file.write_all(&chunk?).await?;
+        }
+        file.rewind().await?;
+        Ok(file)
     }
 }
 

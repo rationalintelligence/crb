@@ -297,3 +297,15 @@ where
         <T as Runtime>::entrypoint(self).await
     }
 }
+
+#[async_trait]
+impl ClosedRuntime for Box<dyn ClosedRuntime> {
+    fn get_interruptor(&mut self) -> Interruptor {
+        (*self).get_interruptor()
+    }
+
+    async fn entrypoint(self) {
+        // TODO: Recursion, fix
+        self.entrypoint().await
+    }
+}

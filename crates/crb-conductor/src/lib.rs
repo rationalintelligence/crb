@@ -6,6 +6,7 @@ pub use actor::ConductedActor;
 
 use async_trait::async_trait;
 use crb_actor::{Actor, ActorSession};
+use crb_supervisor::{ClosedRuntime, Supervisor, SupervisorSession};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -15,8 +16,12 @@ pub struct Conductor {
     routes: TypedDashMap,
 }
 
+impl Supervisor for Conductor {
+    type GroupBy = ();
+}
+
 impl Actor for Conductor {
-    type Context = ActorSession<Self>;
+    type Context = SupervisorSession<Self>;
 }
 
 #[async_trait]
@@ -58,6 +63,8 @@ impl<M: 'static> TypedMapKey for MessageRoute<M> {
 
 trait OnInputRuntimeGenerator: Send + Sync {
     type Input;
+
+    fn generate(&self, input: Self::Input) -> Box<dyn ClosedRuntime>;
 }
 
 #[async_trait]
@@ -66,7 +73,13 @@ where
     M: Send + Sync + Clone + 'static,
 {
     fn on_input(&mut self, message: M, ctx: &mut Self::Context) {
-        self.routes.get(&MessageRoute::<M>::this());
+        let generators = self.routes.get(&MessageRoute::<M>::this());
+        if let Some(generators) = generators {
+            for generator in generators.iter() {
+                let runtime = generator.generate(message.clone());
+                ctx.spawn_trackable(runtime, ());
+            }
+        }
         // TODO: Use the routing table to forward a message
     }
 }

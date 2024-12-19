@@ -6,9 +6,9 @@ use crb_core::{mpsc, watch};
 use crb_runtime::{Context, Controller, Failures, Interruptor, ManagedContext, Runtime};
 
 pub struct ActorRuntime<T: Actor> {
-    actor: T,
-    context: T::Context,
-    failures: Failures,
+    pub actor: T,
+    pub context: T::Context,
+    pub failures: Failures,
 }
 
 impl<T: Actor> ActorRuntime<T> {
@@ -22,17 +22,8 @@ impl<T: Actor> ActorRuntime<T> {
             failures: Failures::default(),
         }
     }
-}
 
-#[async_trait]
-impl<T: Actor> Runtime for ActorRuntime<T> {
-    type Context = T::Context;
-
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        self.context.controller().interruptor()
-    }
-
-    async fn routine(mut self) -> Failures {
+    pub async fn perform(&mut self) {
         let result = self.actor.initialize(&mut self.context).await;
         self.failures.put(result);
 
@@ -52,7 +43,19 @@ impl<T: Actor> Runtime for ActorRuntime<T> {
             .send(ActorStatus::Done)
             .map_err(|_| Error::msg("Can't set actor's status to `Done`"));
         self.failures.put(result);
+    }
+}
 
+#[async_trait]
+impl<T: Actor> Runtime for ActorRuntime<T> {
+    type Context = T::Context;
+
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+        self.context.controller().interruptor()
+    }
+
+    async fn routine(mut self) -> Failures {
+        self.perform().await;
         self.failures
     }
 

@@ -1,3 +1,4 @@
+use crate::destination::Tempfile;
 use crate::progress::ProgressCalc;
 use anyhow::{Error, Result};
 use bytes::Bytes;
@@ -9,11 +10,6 @@ use futures::{
 };
 use reqwest::{Client, Response};
 use std::pin::Pin;
-use tempfile::tempfile;
-use tokio::{
-    fs::File,
-    io::{AsyncSeekExt, AsyncWriteExt},
-};
 
 #[derive(Deref)]
 pub struct Downloader {
@@ -31,14 +27,13 @@ impl Downloader {
         }
     }
 
-    pub async fn download(mut self) -> Result<File> {
-        let tmp = tempfile()?;
-        let mut file = File::from_std(tmp);
+    pub async fn download(mut self) -> Result<Tempfile> {
+        let mut dest = Tempfile::create().await?;
         while let Some(chunk) = self.next().await {
-            file.write_all(&chunk?).await?;
+            dest.write_chunk(&chunk?).await?;
         }
-        file.rewind().await?;
-        Ok(file)
+        dest.finalize().await?;
+        Ok(dest)
     }
 }
 

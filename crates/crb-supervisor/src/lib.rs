@@ -8,6 +8,7 @@ use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
+use std::ops::DerefMut;
 use typed_slab::TypedSlab;
 
 pub trait Supervisor: Actor {
@@ -301,10 +302,10 @@ where
 #[async_trait]
 impl ClosedRuntime for Box<dyn ClosedRuntime> {
     fn get_interruptor(&mut self) -> Interruptor {
-        (*self).get_interruptor()
+        self.deref_mut().get_interruptor()
     }
 
     async fn routine(&mut self) {
-        (*self).routine().await
+        self.deref_mut().routine().await
     }
 }

@@ -1,8 +1,8 @@
-use crate::{Conductor, OnInputMessage};
+use crate::{Conductor, MessageToRoute};
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::{Actor, Address};
-use crb_runtime::{Context, Failures, Interruptor, Runtime};
+use crb_runtime::{Context, Interruptor, Runtime};
 
 pub trait ConductedActor: Actor {
     type Input: Send;
@@ -40,7 +40,7 @@ where
         let mut runtime = ActorRuntime::new(actor);
         runtime.routine().await;
         let message = runtime.actor.output();
-        let msg = OnInputMessage { message };
+        let msg = MessageToRoute { message };
         self.conductor.send(msg);
         // TODO: Send the output
     }

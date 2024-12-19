@@ -1,12 +1,8 @@
 pub mod actor;
-/*
-
-pub use actor::ConductedActor;
-*/
 
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_actor::{Actor, ActorSession, MessageFor};
+use crb_actor::{Actor, MessageFor};
 use crb_supervisor::{ClosedRuntime, Supervisor, SupervisorSession};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
@@ -32,7 +28,7 @@ impl<M> Hash for MessageRoute<M> {
 }
 
 impl<M> PartialEq for MessageRoute<M> {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         true
     }
 }
@@ -59,34 +55,12 @@ trait OnInputRuntimeGenerator: Send + Sync {
     fn generate(&self, input: Self::Input) -> Box<dyn ClosedRuntime>;
 }
 
-#[async_trait]
-impl<M> OnInput<M> for Conductor
-where
-    M: Send + Sync + Clone + 'static,
-{
-    fn on_input(&mut self, message: M, ctx: &mut Self::Context) -> Result<(), Error> {
-        let generators = self.routes.get(&MessageRoute::<M>::this());
-        if let Some(generators) = generators {
-            for generator in generators.iter() {
-                let runtime = generator.generate(message.clone());
-                ctx.spawn_trackable(runtime, ());
-            }
-        }
-        Ok(())
-    }
-}
-
-#[async_trait]
-trait OnInput<M>: Actor {
-    fn on_input(&mut self, message: M, ctx: &mut Self::Context) -> Result<(), Error>;
-}
-
-struct OnInputMessage<M> {
+struct MessageToRoute<M> {
     message: M,
 }
 
 #[async_trait]
-impl<M> MessageFor<Conductor> for OnInputMessage<M>
+impl<M> MessageFor<Conductor> for MessageToRoute<M>
 where
     M: Clone + Sync + Send + 'static,
 {
@@ -95,6 +69,13 @@ where
         actor: &mut Conductor,
         ctx: &mut SupervisorSession<Conductor>,
     ) -> Result<(), Error> {
-        actor.on_input(self.message, ctx)
+        let generators = actor.routes.get(&MessageRoute::<M>::this());
+        if let Some(generators) = generators {
+            for generator in generators.iter() {
+                let runtime = generator.generate(self.message.clone());
+                ctx.spawn_trackable(runtime, ());
+            }
+        }
+        Ok(())
     }
 }

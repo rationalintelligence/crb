@@ -74,7 +74,7 @@ impl<S: Supervisor> SupervisorSession<S> {
         S: Supervisor<Context = SupervisorSession<S>>,
     {
         let runtime = ActorRuntime::<A>::new(input);
-        self.spawn_trackable(runtime, group)
+        self.spawn_runtime(runtime, group)
     }
 }
 
@@ -185,20 +185,24 @@ where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
-    // TODO: Add the `spawn_child` method
-
-    pub fn spawn_trackable<B>(
+    pub fn spawn_runtime<B>(
         &mut self,
-        mut trackable: B,
+        trackable: B,
         group: S::GroupBy,
     ) -> <B::Context as Context>::Address
     where
         B: Runtime,
     {
-        // TODO: Get them as a pair in a single method?
-        let interruptor = trackable.get_interruptor();
         let addr = trackable.address();
+        self.spawn_trackable(trackable, group);
+        addr
+    }
 
+    pub fn spawn_trackable<B>(&mut self, mut trackable: B, group: S::GroupBy)
+    where
+        B: ClosedRuntime,
+    {
+        let interruptor = trackable.get_interruptor();
         let rel = self.tracker.register_activity(group, interruptor);
         let detacher = DetacherFor {
             supervisor: self.address().clone(),
@@ -206,12 +210,11 @@ where
         };
 
         let fut = async move {
-            trackable.routine().await;
+            trackable.entrypoint().await;
             // This notification equals calling `detach_trackable`
             if let Err(err) = detacher.detach() {}
         };
         crb_core::spawn(fut);
-        addr
     }
 }
 
@@ -271,5 +274,26 @@ where
     pub fn detach(self) -> Result<(), Error> {
         let msg = DetachTrackable { rel: self.rel };
         self.supervisor.send(msg)
+    }
+}
+
+/// A runtime without an address
+#[async_trait]
+pub trait ClosedRuntime: Send + 'static {
+    fn get_interruptor(&mut self) -> Interruptor;
+    async fn entrypoint(self);
+}
+
+#[async_trait]
+impl<T> ClosedRuntime for T
+where
+    T: Runtime,
+{
+    fn get_interruptor(&mut self) -> Interruptor {
+        <T as Runtime>::get_interruptor(self)
+    }
+
+    async fn entrypoint(self) {
+        <T as Runtime>::entrypoint(self).await
     }
 }

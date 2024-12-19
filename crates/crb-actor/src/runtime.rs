@@ -58,7 +58,7 @@ impl<T: Actor> Runtime for ActorRuntime<T> {
         self.context.address().clone()
     }
 
-    async fn routine(mut self) {
+    async fn routine(&mut self) {
         self.perform().await;
     }
 }

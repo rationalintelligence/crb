@@ -210,7 +210,7 @@ where
         };
 
         let fut = async move {
-            trackable.entrypoint().await;
+            trackable.routine().await;
             // This notification equals calling `detach_trackable`
             if let Err(err) = detacher.detach() {}
         };
@@ -281,7 +281,7 @@ where
 #[async_trait]
 pub trait ClosedRuntime: Send + 'static {
     fn get_interruptor(&mut self) -> Interruptor;
-    async fn entrypoint(self);
+    async fn routine(&mut self);
 }
 
 #[async_trait]
@@ -293,8 +293,8 @@ where
         <T as Runtime>::get_interruptor(self)
     }
 
-    async fn entrypoint(self) {
-        <T as Runtime>::entrypoint(self).await
+    async fn routine(&mut self) {
+        <T as Runtime>::routine(self).await
     }
 }
 
@@ -304,8 +304,7 @@ impl ClosedRuntime for Box<dyn ClosedRuntime> {
         (*self).get_interruptor()
     }
 
-    async fn entrypoint(self) {
-        // TODO: Recursion, fix
-        self.entrypoint().await
+    async fn routine(&mut self) {
+        (*self).routine().await
     }
 }

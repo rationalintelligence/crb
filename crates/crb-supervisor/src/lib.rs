@@ -195,8 +195,9 @@ where
     where
         B: Runtime,
     {
+        // TODO: Get them as a pair in a single method?
         let interruptor = trackable.get_interruptor();
-        let addr = trackable.context().address().clone();
+        let addr = trackable.address();
 
         let rel = self.tracker.register_activity(group, interruptor);
         let detacher = DetacherFor {

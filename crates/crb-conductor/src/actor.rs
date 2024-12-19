@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::Actor;
-use crb_runtime::{Failures, Interruptor, Runtime};
+use crb_runtime::{Context, Failures, Interruptor, Runtime};
 
 pub trait ConductedActor: Actor {
     type Input: Send;
@@ -28,17 +28,16 @@ where
         todo!()
     }
 
+    fn address(&self) -> <Self::Context as Context>::Address {
+        todo!()
+    }
+
     async fn routine(mut self) -> Failures {
         let actor = A::input(self.input);
         let mut runtime = ActorRuntime::new(actor);
-        runtime.execute().await;
+        runtime.perform().await;
         let output = runtime.actor.output();
         // TODO: Send the output
         runtime.failures
-    }
-
-    fn context(&self) -> &Self::Context {
-        todo!()
-        // self.runtime.context()
     }
 }

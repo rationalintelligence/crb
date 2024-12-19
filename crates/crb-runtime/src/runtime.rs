@@ -15,6 +15,8 @@ pub trait Runtime: Sized + Send + 'static {
     /// It's the separate type that wraps address made by a runtime.
     fn get_interruptor(&mut self) -> Box<dyn Interruptor>;
 
+    fn address(&self) -> <Self::Context as Context>::Address;
+
     /// Interruptor can interrupt this routine.
     ///
     /// The `notifier` is passed by a reference to fully avoid cloning
@@ -24,12 +26,4 @@ pub trait Runtime: Sized + Send + 'static {
     async fn entrypoint(self) {
         self.routine().await;
     }
-
-    // TODO: Provide an `address` method instead
-    // Consider to implement interruptor
-
-    /*
-    /// Gets a reference to a context.
-    fn context(&self) -> &Self::Context;
-    */
 }

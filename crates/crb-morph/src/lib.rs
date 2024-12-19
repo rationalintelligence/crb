@@ -53,6 +53,10 @@ where
         todo!()
     }
 
+    fn address(&self) -> <Self::Context as Context>::Address {
+        self.context.address().clone()
+    }
+
     async fn routine(mut self) -> Failures {
         loop {
             if let Some(morphed) = self.context.next_state() {
@@ -60,9 +64,5 @@ where
             }
         }
         todo!()
-    }
-
-    fn context(&self) -> &Self::Context {
-        &self.context
     }
 }

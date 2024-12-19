@@ -36,6 +36,10 @@ where
         self.context.session().controller.interruptor()
     }
 
+    fn address(&self) -> <Self::Context as Context>::Address {
+        self.context.address().clone()
+    }
+
     async fn routine(mut self) -> Failures {
         let mut ctx = self.context;
         let result = self.routine.routine(&mut ctx).await;
@@ -43,12 +47,6 @@ where
         self.failures.put(result);
         self.failures
     }
-
-    /*
-    fn context(&self) -> &Self::Context {
-        &self.context
-    }
-    */
 }
 
 pub struct RoutineSession {

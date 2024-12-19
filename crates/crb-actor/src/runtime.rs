@@ -54,16 +54,14 @@ impl<T: Actor> Runtime for ActorRuntime<T> {
         self.context.controller().interruptor()
     }
 
+    fn address(&self) -> <Self::Context as Context>::Address {
+        self.context.address().clone()
+    }
+
     async fn routine(mut self) -> Failures {
         self.perform().await;
         self.failures
     }
-
-    /*
-    fn context(&self) -> &Self::Context {
-        &self.context
-    }
-    */
 }
 
 #[derive(PartialEq, Eq)]

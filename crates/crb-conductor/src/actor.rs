@@ -23,7 +23,7 @@ where
 {
     type Context = A::Context;
 
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+    fn get_interruptor(&mut self) -> Interruptor {
         // self.runtime.get_interruptor()
         todo!()
     }

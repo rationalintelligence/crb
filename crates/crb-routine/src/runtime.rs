@@ -32,8 +32,8 @@ where
 {
     type Context = T::Context;
 
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        self.context.session().controller.interruptor()
+    fn get_interruptor(&mut self) -> Interruptor {
+        self.context.session().controller().interruptor.clone()
     }
 
     fn address(&self) -> <Self::Context as Context>::Address {

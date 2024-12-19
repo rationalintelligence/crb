@@ -7,26 +7,6 @@ use std::sync::{
 };
 use thiserror::Error;
 
-// TODO: Interruptor has to be the struct, since it's always
-// represented by a `Controller`
-// So, rename `BasicInterruptor` to `Interruptor`
-// and remove the `Interruptor` trait
-// and avoid using boxes.
-
-/// The interruptor used internally by a supervisor
-/// context or by a standalone routine.
-pub trait Interruptor: Send + 'static {
-    /// Interrupte a trackable runtime.
-    fn stop(&self, force: bool) -> Result<(), Error>;
-}
-
-impl Interruptor for AbortHandle {
-    fn stop(&self, _force: bool) -> Result<(), Error> {
-        self.abort();
-        Ok(())
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct ActiveFlag {
     flag: Arc<AtomicBool>,
@@ -54,13 +34,13 @@ pub struct RegistrationTaken;
 pub struct Controller {
     pub registration: Option<AbortRegistration>,
     #[deref]
-    pub interruptor: BasicInterruptor,
+    pub interruptor: Interruptor,
 }
 
 impl Default for Controller {
     fn default() -> Self {
         let (handle, registration) = AbortHandle::new_pair();
-        let interruptor = BasicInterruptor {
+        let interruptor = Interruptor {
             active: ActiveFlag::default(),
             handle,
         };
@@ -72,24 +52,20 @@ impl Default for Controller {
 }
 
 impl Controller {
-    pub fn interruptor(&self) -> Box<dyn Interruptor> {
-        Box::new(self.interruptor.clone())
-    }
-
     pub fn take_registration(&mut self) -> Result<AbortRegistration, RegistrationTaken> {
         self.registration.take().ok_or(RegistrationTaken)
     }
 }
 
 #[derive(Debug, Clone, Deref)]
-pub struct BasicInterruptor {
+pub struct Interruptor {
     #[deref]
     active: ActiveFlag,
     handle: AbortHandle,
 }
 
-impl Interruptor for BasicInterruptor {
-    fn stop(&self, force: bool) -> Result<(), Error> {
+impl Interruptor {
+    pub fn stop(&self, force: bool) -> Result<(), Error> {
         self.active.flag.store(false, Ordering::Relaxed);
         if force {
             self.handle.abort();

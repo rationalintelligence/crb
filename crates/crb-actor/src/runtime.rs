@@ -50,8 +50,8 @@ impl<T: Actor> ActorRuntime<T> {
 impl<T: Actor> Runtime for ActorRuntime<T> {
     type Context = T::Context;
 
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        self.context.controller().interruptor()
+    fn get_interruptor(&mut self) -> Interruptor {
+        self.context.controller().interruptor.clone()
     }
 
     fn address(&self) -> <Self::Context as Context>::Address {

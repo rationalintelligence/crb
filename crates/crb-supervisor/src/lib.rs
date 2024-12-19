@@ -127,7 +127,7 @@ impl<S: Supervisor> Tracker<S> {
     fn register_activity(
         &mut self,
         group: S::GroupBy,
-        interruptor: Box<dyn Interruptor>,
+        interruptor: Interruptor,
     ) -> SupervisedBy<S> {
         let activity = Activity {
             group: group.clone(),
@@ -217,7 +217,7 @@ where
 
 struct Activity<S: Supervisor> {
     group: S::GroupBy,
-    interruptor: Box<dyn Interruptor>,
+    interruptor: Interruptor,
 }
 
 impl<S: Supervisor> Activity<S> {

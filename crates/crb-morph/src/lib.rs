@@ -49,7 +49,7 @@ where
 {
     type Context = C;
 
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+    fn get_interruptor(&mut self) -> Interruptor {
         todo!()
     }
 

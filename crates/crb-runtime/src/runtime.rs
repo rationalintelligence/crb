@@ -13,7 +13,7 @@ pub trait Runtime: Sized + Send + 'static {
 
     /// Used by a lifetime tracker of the supervisor to stop it.
     /// It's the separate type that wraps address made by a runtime.
-    fn get_interruptor(&mut self) -> Box<dyn Interruptor>;
+    fn get_interruptor(&mut self) -> Interruptor;
 
     fn address(&self) -> <Self::Context as Context>::Address;
 

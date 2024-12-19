@@ -57,12 +57,11 @@ where
         self.context.address().clone()
     }
 
-    async fn routine(mut self) -> Failures {
+    async fn routine(mut self) {
         loop {
             if let Some(morphed) = self.context.next_state() {
                 self.morphed = morphed;
             }
         }
-        todo!()
     }
 }

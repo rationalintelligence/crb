@@ -21,7 +21,7 @@ pub trait Runtime: Sized + Send + 'static {
     ///
     /// The `notifier` is passed by a reference to fully avoid cloning
     /// or passing it somewhere to let it outlive this trackable object.
-    async fn routine(self) -> Failures;
+    async fn routine(self);
 
     async fn entrypoint(self) {
         self.routine().await;

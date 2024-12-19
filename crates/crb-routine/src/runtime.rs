@@ -40,12 +40,11 @@ where
         self.context.address().clone()
     }
 
-    async fn routine(mut self) -> Failures {
+    async fn routine(mut self) {
         let mut ctx = self.context;
         let result = self.routine.routine(&mut ctx).await;
         let result = self.routine.finalize(result).await;
         self.failures.put(result);
-        self.failures
     }
 }
 

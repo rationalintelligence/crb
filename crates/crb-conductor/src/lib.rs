@@ -46,10 +46,10 @@ impl<M> MessageRoute<M> {
 }
 
 impl<M: 'static> TypedMapKey for MessageRoute<M> {
-    type Value = Vec<Box<dyn OnInputRuntimeGenerator<Input = M>>>;
+    type Value = Vec<Box<dyn RuntimeGenerator<Input = M>>>;
 }
 
-trait OnInputRuntimeGenerator: Send + Sync {
+trait RuntimeGenerator: Send + Sync {
     type Input;
 
     fn generate(&self, input: Self::Input) -> Box<dyn ClosedRuntime>;

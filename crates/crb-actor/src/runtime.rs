@@ -22,8 +22,21 @@ impl<T: Actor> ActorRuntime<T> {
             failures: Failures::default(),
         }
     }
+}
 
-    pub async fn perform(&mut self) {
+#[async_trait]
+impl<T: Actor> Runtime for ActorRuntime<T> {
+    type Context = T::Context;
+
+    fn get_interruptor(&mut self) -> Interruptor {
+        self.context.controller().interruptor.clone()
+    }
+
+    fn address(&self) -> <Self::Context as Context>::Address {
+        self.context.address().clone()
+    }
+
+    async fn routine(&mut self) {
         let result = self.actor.initialize(&mut self.context).await;
         self.failures.put(result);
 
@@ -43,23 +56,6 @@ impl<T: Actor> ActorRuntime<T> {
             .send(ActorStatus::Done)
             .map_err(|_| Error::msg("Can't set actor's status to `Done`"));
         self.failures.put(result);
-    }
-}
-
-#[async_trait]
-impl<T: Actor> Runtime for ActorRuntime<T> {
-    type Context = T::Context;
-
-    fn get_interruptor(&mut self) -> Interruptor {
-        self.context.controller().interruptor.clone()
-    }
-
-    fn address(&self) -> <Self::Context as Context>::Address {
-        self.context.address().clone()
-    }
-
-    async fn routine(&mut self) {
-        self.perform().await;
     }
 }
 

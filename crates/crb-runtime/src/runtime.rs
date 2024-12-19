@@ -17,10 +17,6 @@ pub trait Runtime: Sized + Send + 'static {
 
     fn address(&self) -> <Self::Context as Context>::Address;
 
-    /// Interruptor can interrupt this routine.
-    ///
-    /// The `notifier` is passed by a reference to fully avoid cloning
-    /// or passing it somewhere to let it outlive this trackable object.
     async fn routine(&mut self);
 
     async fn entrypoint(mut self) {

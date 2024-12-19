@@ -1,3 +1,4 @@
+use crate::Conductor;
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::Actor;
@@ -11,13 +12,15 @@ pub trait ConductedActor: Actor {
     fn output(self) -> Self::Output;
 }
 
-pub struct ConductedActorRuntime<A: ConductedActor> {
+pub struct ConductedActorRuntime<C: Conductor, A: ConductedActor> {
+    conductor: <C::Context as Context>::Address,
     input: A::Input,
 }
 
 #[async_trait]
-impl<A> Runtime for ConductedActorRuntime<A>
+impl<C, A> Runtime for ConductedActorRuntime<C, A>
 where
+    C: Conductor,
     A: ConductedActor,
     A::Context: Default,
 {

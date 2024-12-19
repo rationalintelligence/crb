@@ -4,7 +4,8 @@ pub mod message;
 pub mod runtime;
 
 pub use event::OnEvent;
-pub use runtime::{ActorContext, ActorSession, Standalone};
+pub use message::MessageFor;
+pub use runtime::{ActorContext, ActorSession, Address, Standalone};
 
 use anyhow::Error;
 use async_trait::async_trait;

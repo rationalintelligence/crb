@@ -1,11 +1,12 @@
-/*
 pub mod actor;
+/*
 
 pub use actor::ConductedActor;
 */
 
+use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_actor::{Actor, ActorSession};
+use crb_actor::{Actor, ActorSession, MessageFor};
 use crb_supervisor::{ClosedRuntime, Supervisor, SupervisorSession};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
@@ -22,15 +23,6 @@ impl Supervisor for Conductor {
 
 impl Actor for Conductor {
     type Context = SupervisorSession<Self>;
-}
-
-#[async_trait]
-trait OnInput<M>: Actor {
-    fn on_input(&mut self, message: M, ctx: &mut Self::Context);
-}
-
-struct OnInputMessage<M> {
-    message: M,
 }
 
 impl<M> Hash for MessageRoute<M> {
@@ -72,7 +64,7 @@ impl<M> OnInput<M> for Conductor
 where
     M: Send + Sync + Clone + 'static,
 {
-    fn on_input(&mut self, message: M, ctx: &mut Self::Context) {
+    fn on_input(&mut self, message: M, ctx: &mut Self::Context) -> Result<(), Error> {
         let generators = self.routes.get(&MessageRoute::<M>::this());
         if let Some(generators) = generators {
             for generator in generators.iter() {
@@ -80,6 +72,29 @@ where
                 ctx.spawn_trackable(runtime, ());
             }
         }
-        // TODO: Use the routing table to forward a message
+        Ok(())
+    }
+}
+
+#[async_trait]
+trait OnInput<M>: Actor {
+    fn on_input(&mut self, message: M, ctx: &mut Self::Context) -> Result<(), Error>;
+}
+
+struct OnInputMessage<M> {
+    message: M,
+}
+
+#[async_trait]
+impl<M> MessageFor<Conductor> for OnInputMessage<M>
+where
+    M: Clone + Sync + Send + 'static,
+{
+    async fn handle(
+        self: Box<Self>,
+        actor: &mut Conductor,
+        ctx: &mut SupervisorSession<Conductor>,
+    ) -> Result<(), Error> {
+        actor.on_input(self.message, ctx)
     }
 }

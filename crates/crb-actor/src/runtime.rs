@@ -59,9 +59,11 @@ impl<T: Actor> Runtime for ActorRuntime<T> {
         self.failures
     }
 
+    /*
     fn context(&self) -> &Self::Context {
         &self.context
     }
+    */
 }
 
 #[derive(PartialEq, Eq)]

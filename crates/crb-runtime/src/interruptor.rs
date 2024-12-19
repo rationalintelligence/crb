@@ -7,6 +7,12 @@ use std::sync::{
 };
 use thiserror::Error;
 
+// TODO: Interruptor has to be the struct, since it's always
+// represented by a `Controller`
+// So, rename `BasicInterruptor` to `Interruptor`
+// and remove the `Interruptor` trait
+// and avoid using boxes.
+
 /// The interruptor used internally by a supervisor
 /// context or by a standalone routine.
 pub trait Interruptor: Send + 'static {

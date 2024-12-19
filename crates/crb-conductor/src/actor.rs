@@ -1,7 +1,7 @@
 use async_trait::async_trait;
+use crb_actor::runtime::ActorRuntime;
 use crb_actor::Actor;
-use crb_actor::runtime::{ActorRuntime};
-use crb_runtime::{Interruptor, Failures, Runtime};
+use crb_runtime::{Failures, Interruptor, Runtime};
 
 pub trait ConductedActor: Actor {
     type Input: Send;

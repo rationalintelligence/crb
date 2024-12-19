@@ -25,8 +25,11 @@ pub trait Runtime: Sized + Send + 'static {
         self.routine().await;
     }
 
-    // async fn entrypoint(self, context: Self::Context);
+    // TODO: Provide an `address` method instead
+    // Consider to implement interruptor
 
+    /*
     /// Gets a reference to a context.
     fn context(&self) -> &Self::Context;
+    */
 }

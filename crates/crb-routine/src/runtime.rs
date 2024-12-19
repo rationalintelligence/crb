@@ -44,9 +44,11 @@ where
         self.failures
     }
 
+    /*
     fn context(&self) -> &Self::Context {
         &self.context
     }
+    */
 }
 
 pub struct RoutineSession {

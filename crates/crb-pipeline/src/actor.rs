@@ -1,8 +1,25 @@
-use crate::{Conductor, MessageToRoute};
+use crate::{MessageToRoute, Pipeline, RuntimeGenerator};
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::{Actor, Address};
 use crb_runtime::{Context, Interruptor, Runtime};
+use crb_supervisor::ClosedRuntime;
+use std::marker::PhantomData;
+
+pub struct ActorRuntimeGenerator<C> {
+    _type: PhantomData<C>,
+}
+
+impl<C> RuntimeGenerator for ActorRuntimeGenerator<C>
+where
+    C: ConductedActor,
+{
+    type Input = C::Input;
+
+    fn generate(&self, input: Self::Input) -> Box<dyn ClosedRuntime> {
+        todo!()
+    }
+}
 
 pub trait ConductedActor: Actor {
     type Input: Send;
@@ -13,7 +30,7 @@ pub trait ConductedActor: Actor {
 }
 
 pub struct ConductedActorRuntime<A: ConductedActor> {
-    conductor: Address<Conductor>,
+    conductor: Address<Pipeline>,
     input: Option<A::Input>,
 }
 
@@ -38,7 +55,7 @@ where
         let input = self.input.take().unwrap();
         let actor = A::input(input);
         let mut runtime = ActorRuntime::new(actor);
-        runtime.routine().await;
+        Runtime::routine(&mut runtime).await;
         let message = runtime.actor.output();
         let msg = MessageToRoute { message };
         self.conductor.send(msg);

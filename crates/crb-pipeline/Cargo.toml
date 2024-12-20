@@ -1,6 +1,6 @@
 [package]
-name = "crb-conductor"
-description = "CRB | Composable Runtime Blocks | Conductor"
+name = "crb-pipeline"
+description = "CRB | Composable Runtime Blocks | Pipeline"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

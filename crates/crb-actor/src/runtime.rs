@@ -3,7 +3,9 @@ use crate::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
-use crb_runtime::{Context, Controller, Failures, Interruptor, ManagedContext, Runtime};
+use crb_runtime::{
+    Context, Controller, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+};
 
 pub struct ActorRuntime<T: Actor> {
     pub actor: T,
@@ -25,15 +27,18 @@ impl<T: Actor> ActorRuntime<T> {
 }
 
 #[async_trait]
-impl<T: Actor> Runtime for ActorRuntime<T> {
+impl<T: Actor> OpenRuntime for ActorRuntime<T> {
     type Context = T::Context;
-
-    fn get_interruptor(&mut self) -> Interruptor {
-        self.context.controller().interruptor.clone()
-    }
 
     fn address(&self) -> <Self::Context as Context>::Address {
         self.context.address().clone()
+    }
+}
+
+#[async_trait]
+impl<T: Actor> Runtime for ActorRuntime<T> {
+    fn get_interruptor(&mut self) -> Interruptor {
+        self.context.controller().interruptor.clone()
     }
 
     async fn routine(&mut self) {

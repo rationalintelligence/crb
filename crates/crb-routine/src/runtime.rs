@@ -1,7 +1,9 @@
 use crate::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
-use crb_runtime::{Context, Controller, Failures, Interruptor, ManagedContext, Runtime};
+use crb_runtime::{
+    Context, Controller, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+};
 
 struct RoutineRuntime<T: Routine> {
     routine: T,
@@ -26,18 +28,18 @@ where
 }
 
 #[async_trait]
-impl<T> Runtime for RoutineRuntime<T>
-where
-    T: Routine,
-{
+impl<T: Routine> OpenRuntime for RoutineRuntime<T> {
     type Context = T::Context;
-
-    fn get_interruptor(&mut self) -> Interruptor {
-        self.context.session().controller().interruptor.clone()
-    }
 
     fn address(&self) -> <Self::Context as Context>::Address {
         self.context.address().clone()
+    }
+}
+
+#[async_trait]
+impl<T: Routine> Runtime for RoutineRuntime<T> {
+    fn get_interruptor(&mut self) -> Interruptor {
+        self.context.session().controller().interruptor.clone()
     }
 
     async fn routine(&mut self) {

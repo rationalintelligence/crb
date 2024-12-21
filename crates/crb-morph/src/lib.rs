@@ -1,7 +1,9 @@
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
-use crb_runtime::{Context, Controller, Failures, Interruptor, ManagedContext, Runtime};
+use crb_runtime::{
+    Context, Controller, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+};
 
 pub trait MorphContext: Context + 'static {
     fn morph(&mut self, next: impl Morph<Context = Self>);
@@ -43,18 +45,18 @@ pub struct MorphRuntime<C> {
 }
 
 #[async_trait]
-impl<C> Runtime for MorphRuntime<C>
-where
-    C: MorphContext,
-{
+impl<C: MorphContext> OpenRuntime for MorphRuntime<C> {
     type Context = C;
-
-    fn get_interruptor(&mut self) -> Interruptor {
-        todo!()
-    }
 
     fn address(&self) -> <Self::Context as Context>::Address {
         self.context.address().clone()
+    }
+}
+
+#[async_trait]
+impl<C: MorphContext> Runtime for MorphRuntime<C> {
+    fn get_interruptor(&mut self) -> Interruptor {
+        todo!()
     }
 
     async fn routine(&mut self) {

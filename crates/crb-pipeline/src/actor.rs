@@ -46,14 +46,8 @@ where
     A: ConductedActor,
     A::Context: Default,
 {
-    type Context = A::Context;
-
     fn get_interruptor(&mut self) -> Interruptor {
         // self.runtime.get_interruptor()
-        todo!()
-    }
-
-    fn address(&self) -> <Self::Context as Context>::Address {
         todo!()
     }
 

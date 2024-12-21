@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crb_actor::message::MessageFor;
 use crb_actor::runtime::{ActorContext, ActorRuntime, ActorSession, Address};
 use crb_actor::Actor;
-use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runtime};
+use crb_runtime::{Context, Controller, Interruptor, ManagedContext, OpenRuntime, Runtime};
 use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
@@ -192,7 +192,7 @@ where
         group: S::GroupBy,
     ) -> <B::Context as Context>::Address
     where
-        B: Runtime,
+        B: OpenRuntime,
     {
         let addr = trackable.address();
         self.spawn_trackable(trackable, group);
@@ -201,6 +201,7 @@ where
 
     pub fn spawn_trackable<B>(&mut self, mut trackable: B, group: S::GroupBy)
     where
+        // TODO: Change to `Runtime`
         B: ClosedRuntime,
     {
         let interruptor = trackable.get_interruptor();

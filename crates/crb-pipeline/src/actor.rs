@@ -10,18 +10,24 @@ pub struct ActorRuntimeGenerator<C> {
     _type: PhantomData<C>,
 }
 
-impl<C> RuntimeGenerator for ActorRuntimeGenerator<C>
-where
-    C: ConductedActor,
-{
-    type Input = C::Input;
+unsafe impl<A> Sync for ActorRuntimeGenerator<A> {}
 
-    fn generate(&self, input: Self::Input) -> Box<dyn ClosedRuntime> {
-        todo!()
+impl<A> RuntimeGenerator for ActorRuntimeGenerator<A>
+where
+    A: ConductedActor,
+{
+    type Input = A::Input;
+
+    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn ClosedRuntime> {
+        let runtime = ConductedActorRuntime::<A> {
+            pipeline,
+            input: Some(input),
+        };
+        Box::new(runtime)
     }
 }
 
-pub trait ConductedActor: Actor {
+pub trait ConductedActor: Actor<Context: Default> {
     type Input: Send;
     type Output: Sync + Send + Clone;
 
@@ -30,7 +36,7 @@ pub trait ConductedActor: Actor {
 }
 
 pub struct ConductedActorRuntime<A: ConductedActor> {
-    conductor: Address<Pipeline>,
+    pipeline: Address<Pipeline>,
     input: Option<A::Input>,
 }
 
@@ -58,7 +64,6 @@ where
         Runtime::routine(&mut runtime).await;
         let message = runtime.actor.output();
         let msg = MessageToRoute { message };
-        self.conductor.send(msg);
-        // TODO: Send the output
+        self.pipeline.send(msg);
     }
 }

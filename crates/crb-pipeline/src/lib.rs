@@ -3,7 +3,8 @@ pub mod actor;
 use actor::ConductedActor;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_actor::{Actor, MessageFor};
+use crb_actor::{Actor, Address, MessageFor};
+use crb_runtime::Context;
 use crb_supervisor::{ClosedRuntime, Supervisor, SupervisorSession};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
@@ -63,7 +64,7 @@ impl<M: 'static> TypedMapKey for RouteKey<M> {
 trait RuntimeGenerator: Send + Sync {
     type Input;
 
-    fn generate(&self, input: Self::Input) -> Box<dyn ClosedRuntime>;
+    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn ClosedRuntime>;
 }
 
 struct MessageToRoute<M> {
@@ -83,7 +84,9 @@ where
         let generators = actor.routes.get(&RouteKey::<M>::new());
         if let Some(generators) = generators {
             for generator in generators.iter() {
-                let runtime = generator.generate(self.message.clone());
+                let pipeline = ctx.address().clone();
+                let message = self.message.clone();
+                let runtime = generator.generate(pipeline, message);
                 ctx.spawn_trackable(runtime, ());
             }
         }

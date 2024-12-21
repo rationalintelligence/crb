@@ -201,8 +201,7 @@ where
 
     pub fn spawn_trackable<B>(&mut self, mut trackable: B, group: S::GroupBy)
     where
-        // TODO: Change to `Runtime`
-        B: ClosedRuntime,
+        B: Runtime,
     {
         let interruptor = trackable.get_interruptor();
         let rel = self.tracker.register_activity(group, interruptor);
@@ -276,37 +275,5 @@ where
     pub fn detach(self) -> Result<(), Error> {
         let msg = DetachTrackable { rel: self.rel };
         self.supervisor.send(msg)
-    }
-}
-
-/// A runtime without an address
-#[async_trait]
-pub trait ClosedRuntime: Send + 'static {
-    fn get_interruptor(&mut self) -> Interruptor;
-    async fn routine(&mut self);
-}
-
-#[async_trait]
-impl<T> ClosedRuntime for T
-where
-    T: Runtime,
-{
-    fn get_interruptor(&mut self) -> Interruptor {
-        <T as Runtime>::get_interruptor(self)
-    }
-
-    async fn routine(&mut self) {
-        <T as Runtime>::routine(self).await
-    }
-}
-
-#[async_trait]
-impl ClosedRuntime for Box<dyn ClosedRuntime> {
-    fn get_interruptor(&mut self) -> Interruptor {
-        self.deref_mut().get_interruptor()
-    }
-
-    async fn routine(&mut self) {
-        self.deref_mut().routine().await
     }
 }

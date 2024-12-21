@@ -2,8 +2,7 @@ use crate::{MessageToRoute, Pipeline, RuntimeGenerator};
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::{Actor, Address};
-use crb_runtime::{Context, Interruptor, Runtime};
-use crb_supervisor::ClosedRuntime;
+use crb_runtime::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
 pub struct ActorRuntimeGenerator<C> {
@@ -18,7 +17,7 @@ where
 {
     type Input = A::Input;
 
-    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn ClosedRuntime> {
+    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn Runtime> {
         let runtime = ConductedActorRuntime::<A> {
             pipeline,
             input: Some(input),

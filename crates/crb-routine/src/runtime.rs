@@ -2,7 +2,7 @@ use crate::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
 use crb_runtime::{
-    Context, Controller, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+    Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
 };
 
 struct RoutineRuntime<T: Routine> {

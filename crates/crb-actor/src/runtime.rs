@@ -4,7 +4,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_runtime::{
-    Context, Controller, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+    Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
 };
 
 pub struct ActorRuntime<T: Actor> {
@@ -136,7 +136,7 @@ impl<T> ManagedContext for ActorSession<T> {
     }
 }
 
-pub trait ActorContext<T>: ManagedContext<Address = Address<T>> {
+pub trait ActorContext<T>: Context<Address = Address<T>> + ManagedContext {
     fn session(&mut self) -> &mut ActorSession<T>;
 }
 

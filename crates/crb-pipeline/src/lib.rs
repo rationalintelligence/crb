@@ -4,8 +4,8 @@ use actor::ConductedActor;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
-use crb_runtime::Context;
-use crb_supervisor::{ClosedRuntime, Supervisor, SupervisorSession};
+use crb_runtime::{Context, Runtime};
+use crb_supervisor::{Supervisor, SupervisorSession};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -64,7 +64,7 @@ impl<M: 'static> TypedMapKey for RouteKey<M> {
 trait RuntimeGenerator: Send + Sync {
     type Input;
 
-    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn ClosedRuntime>;
+    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn Runtime>;
 }
 
 struct MessageToRoute<M> {

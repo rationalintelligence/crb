@@ -1,6 +1,7 @@
 pub mod actor;
 pub mod extension;
 pub mod meta;
+pub mod routine;
 
 pub use actor::ConductedActor;
 pub use extension::AddressExt;

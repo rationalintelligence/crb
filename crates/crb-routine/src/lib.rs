@@ -1,5 +1,7 @@
+pub mod finalizer;
 pub mod runtime;
 
+pub use finalizer::Finalizer;
 pub use runtime::{RoutineContext, RoutineSession, Standalone};
 
 use anyhow::Error;
@@ -25,7 +27,7 @@ pub enum TaskError {
 
 #[async_trait]
 pub trait Routine: Sized + Send + 'static {
-    type Context: RoutineContext;
+    type Context: RoutineContext<Self>;
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, TaskError> {
@@ -74,6 +76,7 @@ pub trait Routine: Sized + Send + 'static {
     }
 
     async fn finalize(&mut self, result: Result<Self::Output, TaskError>) -> Result<(), Error> {
+        log::warn!("Use finalizers instead of this method.");
         result?;
         Ok(())
     }

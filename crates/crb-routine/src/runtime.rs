@@ -1,3 +1,4 @@
+use crate::finalizer::Finalizer;
 use crate::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
@@ -50,13 +51,14 @@ impl<T: Routine> Runtime for RoutineRuntime<T> {
     }
 }
 
-pub struct RoutineSession {
+pub struct RoutineSession<R: Routine> {
     controller: Controller,
     /// Interval between repeatable routine calls
     interval: Duration,
+    finalizer: Box<dyn Finalizer<R::Output>>,
 }
 
-impl RoutineSession {
+impl<R: Routine> RoutineSession<R> {
     /// Set repeat interval.
     pub fn set_interval(&mut self, interval: Duration) {
         self.interval = interval;
@@ -67,7 +69,7 @@ impl RoutineSession {
     }
 }
 
-impl Context for RoutineSession {
+impl<R: Routine> Context for RoutineSession<R> {
     // TODO: TaskAddress that uses a controller internally
     type Address = ();
 
@@ -76,7 +78,7 @@ impl Context for RoutineSession {
     }
 }
 
-impl ManagedContext for RoutineSession {
+impl<R: Routine> ManagedContext for RoutineSession<R> {
     fn controller(&mut self) -> &mut Controller {
         &mut self.controller
     }
@@ -86,12 +88,12 @@ impl ManagedContext for RoutineSession {
     }
 }
 
-pub trait RoutineContext: Context {
-    fn session(&mut self) -> &mut RoutineSession;
+pub trait RoutineContext<R: Routine>: Context {
+    fn session(&mut self) -> &mut RoutineSession<R>;
 }
 
-impl RoutineContext for RoutineSession {
-    fn session(&mut self) -> &mut RoutineSession {
+impl<R: Routine> RoutineContext<R> for RoutineSession<R> {
+    fn session(&mut self) -> &mut RoutineSession<R> {
         self
     }
 }

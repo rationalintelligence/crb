@@ -11,7 +11,35 @@ use std::marker::PhantomData;
 // - Split (meta)
 // - route_map
 // - route_split
-// - route_merge
+// - route_merge | works with `(Option<T1>, ...)` tuple or `Vec<T>`
+
+// TODO: Replace with `Stage`: flexible `From` and `Into` pair
+pub trait ConductedActor: Actor<Context: Default> {
+    type Input: Send;
+    type Output: Clone + Sync + Send;
+
+    fn input(input: Self::Input) -> Self;
+    fn output(&mut self) -> Self::Output;
+}
+
+pub trait Stage<IN, OUT> {
+    fn from_input(input: IN) -> Self;
+    fn to_output(self) -> OUT;
+}
+
+impl<T, IN, OUT> Stage<IN, OUT> for T
+where
+    T: From<IN>,
+    T: Into<OUT>,
+{
+    fn from_input(input: IN) -> Self {
+        input.into()
+    }
+
+    fn to_output(self) -> OUT {
+        self.into()
+    }
+}
 
 pub struct ActorRuntimeGenerator<A> {
     _type: PhantomData<A>,
@@ -51,34 +79,6 @@ where
             runtime,
         };
         Box::new(conducted_runtime)
-    }
-}
-
-// TODO: Replace with flexible `From` and `Into` pair
-pub trait ConductedActor: Actor<Context: Default> {
-    type Input: Send;
-    type Output: Clone + Sync + Send;
-
-    fn input(input: Self::Input) -> Self;
-    fn output(&mut self) -> Self::Output;
-}
-
-pub trait Stage<IN, OUT> {
-    fn from_input(input: IN) -> Self;
-    fn to_output(self) -> OUT;
-}
-
-impl<T, IN, OUT> Stage<IN, OUT> for T
-where
-    T: From<IN>,
-    T: Into<OUT>,
-{
-    fn from_input(input: IN) -> Self {
-        input.into()
-    }
-
-    fn to_output(self) -> OUT {
-        self.into()
     }
 }
 

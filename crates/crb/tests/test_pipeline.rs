@@ -60,8 +60,14 @@ impl ConductedActor for SecondProcessor {
 #[tokio::test]
 async fn test_pipeline() -> Result<(), Error> {
     let mut pipeline = Pipeline::new();
+
+    // Routing
     pipeline.input::<(), FirstProcessor>();
     pipeline.route::<FirstProcessor, SecondProcessor>();
+
+    // pipeline.route_map::<FirstProcessor, SecondProcessor>();
+    // pipeline.route_split::<FirstProcessor, SecondProcessor>();
+
     let mut addr = pipeline.spawn();
     addr.ingest(())?;
     sleep(Duration::from_millis(10)).await;

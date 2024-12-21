@@ -5,6 +5,14 @@ use crb_actor::{Actor, Address};
 use crb_runtime::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
+// TODO: Implement
+// - Metadata for all messages
+// - Epochs (metadata)
+// - Split (meta)
+// - route_map
+// - route_split
+// - route_merge
+
 pub struct ActorRuntimeGenerator<A> {
     _type: PhantomData<A>,
 }

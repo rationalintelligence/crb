@@ -1,6 +1,6 @@
 pub mod actor;
 pub mod extension;
-pub mod sequencer;
+pub mod meta;
 
 pub use actor::ConductedActor;
 pub use extension::AddressExt;
@@ -11,7 +11,7 @@ use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
 use crb_runtime::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
-use sequencer::{SeqId, Sequencer};
+use meta::{Metadata, Sequencer};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -142,7 +142,7 @@ pub trait RuntimeGenerator: Send + Sync {
 
     fn generate(
         &self,
-        seq_id: SeqId,
+        meta: Metadata,
         pipeline: Address<Pipeline>,
         input: Self::Input,
     ) -> Box<dyn Runtime>;
@@ -168,15 +168,16 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
-        let seq_id = actor.sequencer.next();
+        let layer = actor.sequencer.next();
+        let meta = Metadata::new(layer);
         let key = InitialKey::<M>::new();
-        actor.spawn_workers(seq_id, key, self.message, ctx);
+        actor.spawn_workers(meta, key, self.message, ctx);
         Ok(())
     }
 }
 
 struct MessageToRoute<A: ConductedActor> {
-    seq_id: SeqId,
+    meta: Metadata,
     message: A::Output,
 }
 
@@ -191,7 +192,7 @@ where
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
         let key = RouteKey::<A>::new();
-        actor.spawn_workers(self.seq_id, key, self.message, ctx);
+        actor.spawn_workers(self.meta, key, self.message, ctx);
         Ok(())
     }
 }
@@ -199,7 +200,7 @@ where
 impl Pipeline {
     fn spawn_workers<K, M>(
         &mut self,
-        seq_id: SeqId,
+        meta: Metadata,
         key: K,
         message: M,
         ctx: &mut SupervisorSession<Pipeline>,
@@ -215,7 +216,7 @@ impl Pipeline {
             for generator in generators.iter() {
                 let pipeline = ctx.address().clone();
                 let message = message.clone();
-                let runtime = generator.generate(seq_id, pipeline, message);
+                let runtime = generator.generate(meta, pipeline, message);
                 ctx.spawn_trackable(runtime, ());
             }
         }

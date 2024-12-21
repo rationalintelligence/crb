@@ -1,5 +1,4 @@
-use crate::sequencer::SeqId;
-use crate::{MessageToRoute, Pipeline, RuntimeGenerator};
+use crate::{MessageToRoute, Metadata, Pipeline, RuntimeGenerator};
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::{Actor, Address};
@@ -40,14 +39,14 @@ where
 
     fn generate(
         &self,
-        seq_id: SeqId,
+        meta: Metadata,
         pipeline: Address<Pipeline>,
         input: Self::Input,
     ) -> Box<dyn Runtime> {
         let actor = A::input(input);
         let runtime = ActorRuntime::new(actor);
         let conducted_runtime = ConductedActorRuntime::<A> {
-            seq_id,
+            meta,
             pipeline,
             runtime,
         };
@@ -84,7 +83,7 @@ where
 }
 
 pub struct ConductedActorRuntime<A: ConductedActor> {
-    seq_id: SeqId,
+    meta: Metadata,
     pipeline: Address<Pipeline>,
     runtime: ActorRuntime<A>,
 }
@@ -103,7 +102,7 @@ where
         self.runtime.routine().await;
         let message = self.runtime.actor.output();
         let msg = MessageToRoute::<A> {
-            seq_id: self.seq_id,
+            meta: self.meta,
             message,
         };
         let res = self.pipeline.send(msg);

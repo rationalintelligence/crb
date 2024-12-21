@@ -1,7 +1,6 @@
 //! A runtime for composable blocks.
 
 use crate::context::Context;
-use crate::error::Failures;
 use crate::interruptor::Interruptor;
 use async_trait::async_trait;
 use std::ops::DerefMut;

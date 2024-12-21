@@ -40,7 +40,7 @@ where
 // TODO: Replace with flexible `From` and `Into` pair
 pub trait ConductedActor: Actor<Context: Default> {
     type Input: Send;
-    type Output: Sync + Send + Clone;
+    type Output: Clone + Sync + Send;
 
     fn input(input: Self::Input) -> Self;
     fn output(&mut self) -> Self::Output;
@@ -84,6 +84,7 @@ where
         self.runtime.routine().await;
         let message = self.runtime.actor.output();
         let msg = MessageToRoute::<A> { message };
-        self.pipeline.send(msg);
+        let res = self.pipeline.send(msg);
+        self.runtime.failures.put(res);
     }
 }

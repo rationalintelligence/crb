@@ -8,7 +8,6 @@ use derive_more::{From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
-use std::ops::DerefMut;
 use typed_slab::TypedSlab;
 
 pub trait Supervisor: Actor {

@@ -46,7 +46,7 @@ impl Pipeline {
         FROM: ConductedActor,
         TO: ConductedActor<Input = FROM::Output>,
     {
-        let key = RouteKey::<FROM::Output>::new();
+        let key = RouteKey::<FROM>::new();
         let generator = ActorRuntimeGenerator::<TO>::new::<FROM::Output>();
         let value = Box::new(generator);
         self.routes.entry(key).or_default().push(value);
@@ -61,38 +61,40 @@ impl Actor for Pipeline {
     type Context = SupervisorSession<Self>;
 }
 
-struct RouteKey<M> {
-    _type: PhantomData<M>,
+struct RouteKey<A> {
+    _type: PhantomData<A>,
 }
 
-impl<M> RouteKey<M> {
+unsafe impl<A> Sync for RouteKey<A> {}
+
+impl<A> RouteKey<A> {
     fn new() -> Self {
         Self { _type: PhantomData }
     }
 }
 
-impl<M> Clone for RouteKey<M> {
+impl<A> Clone for RouteKey<A> {
     fn clone(&self) -> Self {
         Self::new()
     }
 }
 
-impl<M> Hash for RouteKey<M> {
+impl<A> Hash for RouteKey<A> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        type_name::<M>().hash(state);
+        type_name::<A>().hash(state);
     }
 }
 
-impl<M> PartialEq for RouteKey<M> {
+impl<A> PartialEq for RouteKey<A> {
     fn eq(&self, _other: &Self) -> bool {
         true
     }
 }
 
-impl<M> Eq for RouteKey<M> {}
+impl<A> Eq for RouteKey<A> {}
 
-impl<M: 'static> TypedMapKey for RouteKey<M> {
-    type Value = RouteValue<M>;
+impl<A: ConductedActor> TypedMapKey for RouteKey<A> {
+    type Value = RouteValue<A::Output>;
 }
 
 struct InitialKey<M> {
@@ -177,7 +179,7 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
-        let key = RouteKey::<A::Output>::new();
+        let key = RouteKey::<A>::new();
         actor.spawn_workers(key, self.message, ctx);
         Ok(())
     }

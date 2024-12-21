@@ -71,6 +71,12 @@ impl<M> RouteKey<M> {
     }
 }
 
+impl<M> Clone for RouteKey<M> {
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
 impl<M> Hash for RouteKey<M> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         type_name::<M>().hash(state);
@@ -96,6 +102,12 @@ struct InitialKey<M> {
 impl<M> InitialKey<M> {
     fn new() -> Self {
         Self { _type: PhantomData }
+    }
+}
+
+impl<M> Clone for InitialKey<M> {
+    fn clone(&self) -> Self {
+        Self::new()
     }
 }
 

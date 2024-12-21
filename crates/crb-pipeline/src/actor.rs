@@ -5,8 +5,21 @@ use crb_actor::{Actor, Address};
 use crb_runtime::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
-pub struct ActorRuntimeGenerator<C> {
-    _type: PhantomData<C>,
+pub struct ActorRuntimeGenerator<A> {
+    _type: PhantomData<A>,
+}
+
+impl<A> ActorRuntimeGenerator<A>
+where
+    A: ConductedActor,
+{
+    pub fn new<FROM>() -> impl RuntimeGenerator<Input = FROM::Output>
+    where
+        FROM: ConductedActor,
+        A: ConductedActor<Input = FROM::Output>,
+    {
+        Self { _type: PhantomData }
+    }
 }
 
 unsafe impl<A> Sync for ActorRuntimeGenerator<A> {}
@@ -51,7 +64,7 @@ where
     async fn routine(&mut self) {
         self.runtime.routine().await;
         let message = self.runtime.actor.output();
-        let msg = MessageToRoute { message };
+        let msg = MessageToRoute::<A> { message };
         self.pipeline.send(msg);
     }
 }

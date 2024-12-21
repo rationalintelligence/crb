@@ -1,6 +1,6 @@
 pub mod actor;
 
-use actor::ConductedActor;
+use actor::{ActorRuntimeGenerator, ConductedActor};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
@@ -19,9 +19,12 @@ impl Pipeline {
     pub fn route<FROM, TO>(&mut self)
     where
         FROM: ConductedActor,
-        TO: ConductedActor,
+        TO: ConductedActor<Input = FROM::Output>,
     {
         let key = RouteKey::<FROM::Output>::new();
+        let generator = ActorRuntimeGenerator::<TO>::new::<FROM>();
+        let value = Box::new(generator);
+        self.routes.entry(key).or_default().push(value);
     }
 }
 
@@ -61,27 +64,28 @@ impl<M: 'static> TypedMapKey for RouteKey<M> {
     type Value = Vec<Box<dyn RuntimeGenerator<Input = M>>>;
 }
 
-trait RuntimeGenerator: Send + Sync {
+pub trait RuntimeGenerator: Send + Sync {
     type Input;
 
     fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn Runtime>;
 }
 
-struct MessageToRoute<M> {
-    message: M,
+struct MessageToRoute<A: ConductedActor> {
+    message: A::Output,
 }
 
 #[async_trait]
-impl<M> MessageFor<Pipeline> for MessageToRoute<M>
+impl<A> MessageFor<Pipeline> for MessageToRoute<A>
 where
-    M: Clone + Sync + Send + 'static,
+    A: ConductedActor,
 {
     async fn handle(
         self: Box<Self>,
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
-        let generators = actor.routes.get(&RouteKey::<M>::new());
+        let key = RouteKey::<A::Output>::new();
+        let generators = actor.routes.get(&key);
         if let Some(generators) = generators {
             for generator in generators.iter() {
                 let pipeline = ctx.address().clone();

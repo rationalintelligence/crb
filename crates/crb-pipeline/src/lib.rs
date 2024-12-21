@@ -1,6 +1,8 @@
 pub mod actor;
 
-use actor::{ActorRuntimeGenerator, ConductedActor};
+pub use actor::ConductedActor;
+
+use actor::ActorRuntimeGenerator;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
@@ -16,6 +18,12 @@ pub struct Pipeline {
 }
 
 impl Pipeline {
+    pub fn new() -> Self {
+        Self {
+            routes: TypedDashMap::new(),
+        }
+    }
+
     pub fn route<FROM, TO>(&mut self)
     where
         FROM: ConductedActor,

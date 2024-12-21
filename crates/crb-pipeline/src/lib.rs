@@ -1,5 +1,6 @@
 pub mod actor;
 pub mod extension;
+pub mod sequencer;
 
 pub use actor::ConductedActor;
 pub use extension::AddressExt;
@@ -10,6 +11,7 @@ use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
 use crb_runtime::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
+use sequencer::{SeqId, Sequencer};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -20,13 +22,15 @@ pub trait DistributableMessage: Clone + Sync + Send + 'static {}
 impl<M> DistributableMessage for M where Self: Clone + Sync + Send + 'static {}
 
 pub struct Pipeline {
+    sequencer: Sequencer,
     routes: TypedDashMap,
 }
 
 impl Pipeline {
     pub fn new() -> Self {
         Self {
-            routes: TypedDashMap::new(),
+            sequencer: Sequencer::default(),
+            routes: TypedDashMap::default(),
         }
     }
 
@@ -136,7 +140,12 @@ type RouteValue<M> = Vec<Box<dyn RuntimeGenerator<Input = M>>>;
 pub trait RuntimeGenerator: Send + Sync {
     type Input;
 
-    fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn Runtime>;
+    fn generate(
+        &self,
+        seq_id: SeqId,
+        pipeline: Address<Pipeline>,
+        input: Self::Input,
+    ) -> Box<dyn Runtime>;
 }
 
 struct InitialMessage<M> {
@@ -159,8 +168,9 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
+        let seq_id = actor.sequencer.next();
         let key = InitialKey::<M>::new();
-        actor.spawn_workers(key, self.message, ctx);
+        actor.spawn_workers(seq_id, key, self.message, ctx);
         Ok(())
     }
 }
@@ -179,15 +189,22 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
+        // TODO: Reuse Id
+        let seq_id = actor.sequencer.next();
         let key = RouteKey::<A>::new();
-        actor.spawn_workers(key, self.message, ctx);
+        actor.spawn_workers(seq_id, key, self.message, ctx);
         Ok(())
     }
 }
 
 impl Pipeline {
-    fn spawn_workers<K, M>(&mut self, key: K, message: M, ctx: &mut SupervisorSession<Pipeline>)
-    where
+    fn spawn_workers<K, M>(
+        &mut self,
+        seq_id: SeqId,
+        key: K,
+        message: M,
+        ctx: &mut SupervisorSession<Pipeline>,
+    ) where
         K: TypedMapKey<Value = RouteValue<M>> + Send + Sync + 'static,
         M: Clone + 'static,
     {
@@ -199,7 +216,7 @@ impl Pipeline {
             for generator in generators.iter() {
                 let pipeline = ctx.address().clone();
                 let message = message.clone();
-                let runtime = generator.generate(pipeline, message);
+                let runtime = generator.generate(seq_id, pipeline, message);
                 ctx.spawn_trackable(runtime, ());
             }
         }

@@ -46,7 +46,11 @@ where
     ) -> Box<dyn Runtime> {
         let actor = A::input(input);
         let runtime = ActorRuntime::new(actor);
-        let conducted_runtime = ConductedActorRuntime::<A> { pipeline, runtime };
+        let conducted_runtime = ConductedActorRuntime::<A> {
+            seq_id,
+            pipeline,
+            runtime,
+        };
         Box::new(conducted_runtime)
     }
 }
@@ -80,6 +84,7 @@ where
 }
 
 pub struct ConductedActorRuntime<A: ConductedActor> {
+    seq_id: SeqId,
     pipeline: Address<Pipeline>,
     runtime: ActorRuntime<A>,
 }
@@ -97,7 +102,10 @@ where
     async fn routine(&mut self) {
         self.runtime.routine().await;
         let message = self.runtime.actor.output();
-        let msg = MessageToRoute::<A> { message };
+        let msg = MessageToRoute::<A> {
+            seq_id: self.seq_id,
+            message,
+        };
         let res = self.pipeline.send(msg);
         self.runtime.failures.put(res);
     }

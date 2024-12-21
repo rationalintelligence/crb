@@ -176,6 +176,7 @@ where
 }
 
 struct MessageToRoute<A: ConductedActor> {
+    seq_id: SeqId,
     message: A::Output,
 }
 
@@ -189,10 +190,8 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
-        // TODO: Reuse Id
-        let seq_id = actor.sequencer.next();
         let key = RouteKey::<A>::new();
-        actor.spawn_workers(seq_id, key, self.message, ctx);
+        actor.spawn_workers(self.seq_id, key, self.message, ctx);
         Ok(())
     }
 }

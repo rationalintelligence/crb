@@ -1,7 +1,8 @@
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_actor::{Actor, ActorSession, OnEvent, Standalone};
-use crb_pipeline::{ConductedActor, Pipeline};
+use crb_pipeline::{AddressExt, ConductedActor, Pipeline};
+use tokio::time::{sleep, Duration};
 
 struct FirstProcessor {}
 
@@ -42,7 +43,7 @@ impl ConductedActor for SecondProcessor {
 }
 
 #[tokio::test]
-async fn test_actor() -> Result<(), Error> {
+async fn test_pipeline() -> Result<(), Error> {
     let mut pipeline = Pipeline::new();
     /*
     pipeline! {
@@ -55,6 +56,9 @@ async fn test_actor() -> Result<(), Error> {
     pipeline.input::<(), FirstProcessor>();
     pipeline.route::<FirstProcessor, SecondProcessor>();
     let mut addr = pipeline.spawn();
+    addr.ingest(())?;
+    sleep(Duration::from_secs(2)).await;
+    addr.interrupt()?;
     addr.join().await?;
     Ok(())
 }

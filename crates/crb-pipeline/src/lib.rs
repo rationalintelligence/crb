@@ -2,6 +2,7 @@ pub mod actor;
 pub mod extension;
 
 pub use actor::ConductedActor;
+pub use extension::AddressExt;
 
 use actor::ActorRuntimeGenerator;
 use anyhow::{Error, Result};

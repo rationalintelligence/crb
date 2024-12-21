@@ -39,7 +39,7 @@ impl Supervisor for Main {
 }
 
 #[tokio::test]
-async fn test_actor() -> Result<(), Error> {
+async fn test_trackable() -> Result<(), Error> {
     let mut addr = Main.spawn();
     addr.interrupt()?;
     addr.join().await?;

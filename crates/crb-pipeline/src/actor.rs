@@ -18,11 +18,10 @@ where
     type Input = A::Input;
 
     fn generate(&self, pipeline: Address<Pipeline>, input: Self::Input) -> Box<dyn Runtime> {
-        let runtime = ConductedActorRuntime::<A> {
-            pipeline,
-            input: Some(input),
-        };
-        Box::new(runtime)
+        let actor = A::input(input);
+        let runtime = ActorRuntime::new(actor);
+        let conducted_runtime = ConductedActorRuntime::<A> { pipeline, runtime };
+        Box::new(conducted_runtime)
     }
 }
 
@@ -31,12 +30,12 @@ pub trait ConductedActor: Actor<Context: Default> {
     type Output: Sync + Send + Clone;
 
     fn input(input: Self::Input) -> Self;
-    fn output(self) -> Self::Output;
+    fn output(&mut self) -> Self::Output;
 }
 
 pub struct ConductedActorRuntime<A: ConductedActor> {
     pipeline: Address<Pipeline>,
-    input: Option<A::Input>,
+    runtime: ActorRuntime<A>,
 }
 
 #[async_trait]
@@ -46,16 +45,12 @@ where
     A::Context: Default,
 {
     fn get_interruptor(&mut self) -> Interruptor {
-        // self.runtime.get_interruptor()
-        todo!()
+        self.runtime.get_interruptor()
     }
 
     async fn routine(&mut self) {
-        let input = self.input.take().unwrap();
-        let actor = A::input(input);
-        let mut runtime = ActorRuntime::new(actor);
-        Runtime::routine(&mut runtime).await;
-        let message = runtime.actor.output();
+        self.runtime.routine().await;
+        let message = self.runtime.actor.output();
         let msg = MessageToRoute { message };
         self.pipeline.send(msg);
     }

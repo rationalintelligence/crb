@@ -44,6 +44,17 @@ impl ConductedActor for SecondProcessor {
 #[tokio::test]
 async fn test_actor() -> Result<(), Error> {
     let mut pipeline = Pipeline::new();
+    /*
+    pipeline! {
+        () > FirstProcessor,
+        FirstProcessor >> SecondProcessor,
+        SecondProcessor > mapper > ThirdProcessor,
+        ThirdProcessor => ()
+    }
+    */
+    pipeline.input::<(), FirstProcessor>();
     pipeline.route::<FirstProcessor, SecondProcessor>();
+    let mut addr = pipeline.spawn();
+    addr.join().await?;
     Ok(())
 }

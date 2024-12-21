@@ -13,10 +13,9 @@ impl<A> ActorRuntimeGenerator<A>
 where
     A: ConductedActor,
 {
-    pub fn new<FROM>() -> impl RuntimeGenerator<Input = FROM::Output>
+    pub fn new<M>() -> impl RuntimeGenerator<Input = M>
     where
-        FROM: ConductedActor,
-        A: ConductedActor<Input = FROM::Output>,
+        A: ConductedActor<Input = M>,
     {
         Self { _type: PhantomData }
     }
@@ -38,12 +37,32 @@ where
     }
 }
 
+// TODO: Replace with flexible `From` and `Into` pair
 pub trait ConductedActor: Actor<Context: Default> {
     type Input: Send;
     type Output: Sync + Send + Clone;
 
     fn input(input: Self::Input) -> Self;
     fn output(&mut self) -> Self::Output;
+}
+
+pub trait Stage<IN, OUT> {
+    fn from_input(input: IN) -> Self;
+    fn to_output(self) -> OUT;
+}
+
+impl<T, IN, OUT> Stage<IN, OUT> for T
+where
+    T: From<IN>,
+    T: Into<OUT>,
+{
+    fn from_input(input: IN) -> Self {
+        input.into()
+    }
+
+    fn to_output(self) -> OUT {
+        self.into()
+    }
 }
 
 pub struct ConductedActorRuntime<A: ConductedActor> {

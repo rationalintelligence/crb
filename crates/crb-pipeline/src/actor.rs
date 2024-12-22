@@ -1,4 +1,7 @@
-use crate::{MessageToRoute, Metadata, Pipeline, RouteValue, RuntimeGenerator, Stage};
+use crate::{
+    MessageToRoute, Metadata, Pipeline, RoutePoint, RouteValue, RuntimeGenerator, Stage,
+    StageDestination, StageSource,
+};
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
@@ -116,14 +119,12 @@ where
     async fn routine(&mut self) {
         self.runtime.routine().await;
         let message = self.runtime.actor.to_output();
-        /*
         let msg = ActorStageRuntimeReport::<A> {
             meta: self.meta,
             message,
         };
         let res = self.pipeline.send(msg);
         self.runtime.failures.put(res);
-        */
     }
 }
 
@@ -142,45 +143,123 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
-        let key = RouteKey::<A>::new();
+        let key = ActorKey::<A>::new();
         actor.spawn_workers(self.meta, key, self.message, ctx);
         Ok(())
     }
 }
 
-pub struct RouteKey<A> {
+pub struct ActorKey<A> {
     _type: PhantomData<A>,
 }
 
-unsafe impl<A> Sync for RouteKey<A> {}
+unsafe impl<A> Sync for ActorKey<A> {}
 
 // TODO: Use `Stage` instead of `A`
-impl<A> RouteKey<A> {
+impl<A> ActorKey<A> {
     fn new() -> Self {
         Self { _type: PhantomData }
     }
 }
 
-impl<A> Clone for RouteKey<A> {
+impl<A> Clone for ActorKey<A> {
     fn clone(&self) -> Self {
         Self::new()
     }
 }
 
-impl<A> Hash for RouteKey<A> {
+impl<A> Hash for ActorKey<A> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         type_name::<A>().hash(state);
     }
 }
 
-impl<A> PartialEq for RouteKey<A> {
+impl<A> PartialEq for ActorKey<A> {
     fn eq(&self, _other: &Self) -> bool {
         true
     }
 }
 
-impl<A> Eq for RouteKey<A> {}
+impl<A> Eq for ActorKey<A> {}
 
-impl<A: Stage> TypedMapKey for RouteKey<A> {
+impl<A: Stage> TypedMapKey for ActorKey<A> {
     type Value = RouteValue<A::Output>;
+}
+
+pub struct ActorStage<A> {
+    _type: PhantomData<A>,
+}
+
+impl<A> ActorStage<A> {
+    pub fn stage() -> Self {
+        Self { _type: PhantomData }
+    }
+}
+
+impl<A> StageSource for ActorStage<A>
+where
+    A: Stage,
+{
+    type Stage = A;
+    type Key = ActorKey<A>;
+
+    fn source(&self) -> Self::Key {
+        ActorKey::<A>::new()
+    }
+}
+
+impl<A> StageDestination for ActorStage<A>
+where
+    A: Actor + Stage,
+    A::Context: Default,
+{
+    type Stage = A;
+
+    fn destination(&self) -> RoutePoint<A::Input> {
+        let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>();
+        Box::new(generator)
+    }
+}
+
+pub struct ActorStageRuntimeGenerator<A> {
+    _type: PhantomData<A>,
+}
+
+impl<A> ActorStageRuntimeGenerator<A>
+where
+    A: Actor + Stage,
+{
+    pub fn new<M>() -> impl RuntimeGenerator<Input = M>
+    where
+        A: Stage<Input = M>,
+        A::Context: Default,
+    {
+        Self { _type: PhantomData }
+    }
+}
+
+unsafe impl<A> Sync for ActorStageRuntimeGenerator<A> {}
+
+impl<A> RuntimeGenerator for ActorStageRuntimeGenerator<A>
+where
+    A: Actor + Stage,
+    A::Context: Default,
+{
+    type Input = A::Input;
+
+    fn generate(
+        &self,
+        meta: Metadata,
+        pipeline: Address<Pipeline>,
+        input: Self::Input,
+    ) -> Box<dyn Runtime> {
+        let actor = A::from_input(input);
+        let runtime = ActorRuntime::new(actor);
+        let conducted_runtime = ActorStageRuntime::<A> {
+            meta,
+            pipeline,
+            runtime,
+        };
+        Box::new(conducted_runtime)
+    }
 }

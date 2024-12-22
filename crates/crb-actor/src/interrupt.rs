@@ -4,7 +4,7 @@ use crate::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 
-impl<T: Actor> Address<T> {
+impl<A: Actor> Address<A> {
     pub fn interrupt(&self) -> Result<(), Error> {
         self.send(Interrupt)
     }
@@ -13,8 +13,8 @@ impl<T: Actor> Address<T> {
 struct Interrupt;
 
 #[async_trait]
-impl<T: Actor> MessageFor<T> for Interrupt {
-    async fn handle(self: Box<Self>, actor: &mut T, ctx: &mut T::Context) -> Result<(), Error> {
+impl<A: Actor> MessageFor<A> for Interrupt {
+    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<(), Error> {
         actor.interrupt(ctx).await
     }
 }

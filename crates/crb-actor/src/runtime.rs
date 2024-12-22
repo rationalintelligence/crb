@@ -3,7 +3,7 @@ use crate::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
-use crb_runtime::{
+use crb_runtime::kit::{
     Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
 };
 

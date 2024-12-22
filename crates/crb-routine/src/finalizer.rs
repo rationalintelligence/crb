@@ -3,14 +3,12 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
 
-// TODO:
-// - Allow to add actor's address as a finalizer
-// - Assign own finalizer by the pipeline
+pub type BoxFinalizer<O> = Box<dyn Finalizer<O>>;
 
 #[async_trait]
 pub trait Finalizer<O>
 where
-    Self: Send,
+    Self: Send + 'static,
     O: Send + 'static,
 {
     async fn finalize(&mut self, output: Result<O, TaskError>) -> Result<()> {
@@ -47,7 +45,7 @@ where
     A: OnOutput<O>,
     O: Send + 'static,
 {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<(), Error> {
+    async fn handle(self: Box<Self>, actor: &mut A, _ctx: &mut A::Context) -> Result<(), Error> {
         actor.on_output(self.output).await
     }
 }

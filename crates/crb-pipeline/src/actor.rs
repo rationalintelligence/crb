@@ -2,7 +2,7 @@ use crate::{MessageToRoute, Metadata, Pipeline, RuntimeGenerator};
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
 use crb_actor::{Actor, Address};
-use crb_runtime::{Interruptor, Runtime};
+use crb_runtime::kit::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
 // TODO: Implement

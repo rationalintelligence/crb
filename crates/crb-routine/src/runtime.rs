@@ -1,9 +1,9 @@
-use crate::finalizer::Finalizer;
+use crate::finalizer::{BoxFinalizer, Finalizer};
 use crate::Routine;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::Duration;
-use crb_runtime::{
+use crb_runtime::kit::{
     Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
 };
 
@@ -11,7 +11,6 @@ struct RoutineRuntime<T: Routine> {
     routine: T,
     context: T::Context,
     failures: Failures,
-    finalizer: Option<Box<dyn Finalizer<T::Output>>>,
 }
 
 impl<T> RoutineRuntime<T>
@@ -26,7 +25,6 @@ where
             routine,
             context: T::Context::default(),
             failures: Failures::default(),
-            finalizer: None,
         }
     }
 }
@@ -49,7 +47,7 @@ impl<T: Routine> Runtime for RoutineRuntime<T> {
     async fn routine(&mut self) {
         let ctx = &mut self.context;
         let output = self.routine.routine(ctx).await;
-        let result = if let Some(mut finalizer) = self.finalizer.take() {
+        let result = if let Some(mut finalizer) = self.context.session().finalizer.take() {
             finalizer.finalize(output).await
         } else {
             output.map(drop).map_err(Error::from)
@@ -62,7 +60,7 @@ pub struct RoutineSession<R: Routine> {
     controller: Controller,
     /// Interval between repeatable routine calls
     interval: Duration,
-    finalizer: Box<dyn Finalizer<R::Output>>,
+    finalizer: Option<BoxFinalizer<R::Output>>,
 }
 
 impl<R: Routine> RoutineSession<R> {
@@ -73,6 +71,14 @@ impl<R: Routine> RoutineSession<R> {
 
     pub fn interval(&self) -> Duration {
         self.interval
+    }
+
+    pub fn set_finalizer(&mut self, finalizer: impl Finalizer<R::Output>) {
+        self.finalizer = Some(Box::new(finalizer));
+    }
+
+    pub fn take_finalizer(&mut self) -> Option<BoxFinalizer<R::Output>> {
+        self.finalizer.take()
     }
 }
 

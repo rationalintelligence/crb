@@ -1,9 +1,11 @@
-mod context;
-mod error;
-mod interruptor;
-mod runtime;
+pub mod context;
+pub mod error;
+pub mod interruptor;
+pub mod runtime;
 
-pub use context::{Context, ManagedContext};
-pub use error::Failures;
-pub use interruptor::{Controller, Interruptor, RegistrationTaken};
-pub use runtime::{Entrypoint, OpenRuntime, Runtime};
+pub mod kit {
+    pub use crate::context::{Context, ManagedContext};
+    pub use crate::error::Failures;
+    pub use crate::interruptor::{Controller, Interruptor, RegistrationTaken};
+    pub use crate::runtime::{Entrypoint, OpenRuntime, Runtime};
+}

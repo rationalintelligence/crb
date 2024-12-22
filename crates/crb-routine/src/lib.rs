@@ -7,7 +7,7 @@ pub use runtime::{RoutineContext, RoutineSession, Standalone};
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::{sleep, timeout, Duration, Elapsed};
-use crb_runtime::{ManagedContext, RegistrationTaken};
+use crb_runtime::kit::{ManagedContext, RegistrationTaken};
 use futures::stream::{Abortable, Aborted};
 use thiserror::Error;
 

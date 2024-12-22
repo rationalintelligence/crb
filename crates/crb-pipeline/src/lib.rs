@@ -10,7 +10,7 @@ use actor::ActorRuntimeGenerator;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
-use crb_runtime::{Context, Runtime};
+use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
 use std::any::type_name;

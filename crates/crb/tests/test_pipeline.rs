@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_actor::{Actor, ActorSession, Standalone};
+use crb_actor::kit::{Actor, ActorSession, Standalone};
 use crb_pipeline::kit::{AddressExt, Pipeline, Stage};
 use crb_runtime::kit::ManagedContext;
 use tokio::time::{sleep, Duration};

@@ -6,7 +6,7 @@ use crate::Pipeline;
 use crate::{RoutePoint, RouteValue};
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_actor::MessageFor;
+use crb_actor::kit::MessageFor;
 use crb_core::types::Clony;
 use crb_supervisor::SupervisorSession;
 use std::any::type_name;

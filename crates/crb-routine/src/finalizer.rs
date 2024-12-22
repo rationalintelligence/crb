@@ -1,7 +1,7 @@
 use crate::TaskError;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_actor::{Actor, Address, MessageFor};
+use crb_actor::kit::{Actor, Address, MessageFor};
 
 pub type BoxFinalizer<O> = Box<dyn Finalizer<O>>;
 

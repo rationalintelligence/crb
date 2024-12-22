@@ -4,7 +4,9 @@ pub mod interrupt;
 pub mod message;
 pub mod runtime;
 
-pub use actor::Actor;
-pub use event::OnEvent;
-pub use message::MessageFor;
-pub use runtime::{ActorContext, ActorSession, Address, Standalone};
+pub mod kit {
+    pub use crate::actor::Actor;
+    pub use crate::event::OnEvent;
+    pub use crate::message::MessageFor;
+    pub use crate::runtime::{ActorContext, ActorSession, Address, Standalone};
+}

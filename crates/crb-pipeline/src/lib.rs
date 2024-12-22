@@ -14,7 +14,7 @@ pub mod kit {
     pub use crate::Pipeline;
 }
 
-use crb_actor::{Actor, Address};
+use crb_actor::kit::{Actor, Address};
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};

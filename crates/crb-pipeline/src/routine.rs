@@ -1,7 +1,7 @@
 use crate::stage::{Stage, StageDestination, StageKey, StageReport, StageSource};
 use crate::{Metadata, Pipeline, RoutePoint, RuntimeGenerator};
 use async_trait::async_trait;
-use crb_actor::Address;
+use crb_actor::kit::Address;
 use crb_routine::{Routine, RoutineRuntime};
 use crb_runtime::kit::{Interruptor, Runtime};
 use std::marker::PhantomData;

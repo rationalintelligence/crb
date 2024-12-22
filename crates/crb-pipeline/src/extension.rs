@@ -1,6 +1,6 @@
 use crate::{stage::InitialMessage, Pipeline};
 use anyhow::Result;
-use crb_actor::Address;
+use crb_actor::kit::Address;
 use crb_core::types::Clony;
 
 pub trait AddressExt {

@@ -1,8 +1,5 @@
-use crate::PhantomData;
-use crate::{stage::Stage, RoutePoint, RouteValue, StageSource};
-use std::any::type_name;
-use std::hash::{Hash, Hasher};
-use typedmap::TypedMapKey;
+use crate::stage::{InitialKey, Stage, StageSource};
+use std::marker::PhantomData;
 
 pub struct MessageStage<M> {
     message: M,
@@ -44,38 +41,4 @@ where
     fn source(&self) -> Self::Key {
         InitialKey::<M>::new()
     }
-}
-
-pub struct InitialKey<M> {
-    _type: PhantomData<M>,
-}
-
-impl<M> InitialKey<M> {
-    pub fn new() -> Self {
-        Self { _type: PhantomData }
-    }
-}
-
-impl<M> Clone for InitialKey<M> {
-    fn clone(&self) -> Self {
-        Self::new()
-    }
-}
-
-impl<M> Hash for InitialKey<M> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        type_name::<M>().hash(state);
-    }
-}
-
-impl<M> PartialEq for InitialKey<M> {
-    fn eq(&self, _other: &Self) -> bool {
-        true
-    }
-}
-
-impl<M> Eq for InitialKey<M> {}
-
-impl<M: 'static> TypedMapKey for InitialKey<M> {
-    type Value = RouteValue<M>;
 }

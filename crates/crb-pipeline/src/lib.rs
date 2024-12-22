@@ -38,7 +38,11 @@ impl Pipeline {
     where
         FROM: StageSource,
         TO: StageDestination,
+        TO::Stage: Stage<Input = <FROM::Stage as Stage>::Output>,
     {
+        let key = from.source();
+        let generator = to.destination();
+        self.routes.entry(key).or_default().push(generator);
     }
 
     pub fn input<M, TO>(&mut self)

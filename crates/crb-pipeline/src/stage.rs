@@ -12,7 +12,10 @@ pub trait Stage: Send + 'static {
 
 pub trait StageSource {
     type Stage: Stage;
-    type Key;
+    type Key: TypedMapKey<Value = RouteValue<<Self::Stage as Stage>::Output>>
+        + Sync
+        + Send
+        + 'static;
     fn source(&self) -> Self::Key;
 }
 

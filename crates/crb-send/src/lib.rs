@@ -9,8 +9,12 @@
 
 #![warn(missing_docs)]
 
+pub mod message;
 pub mod notifier;
 pub mod sender;
 
-pub use notifier::*;
-pub use sender::*;
+pub mod kit {
+    pub use message::*;
+    pub use notifier::*;
+    pub use sender::*;
+}

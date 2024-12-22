@@ -1,12 +1,9 @@
-use crate::stage::{Stage, StageDestination, StageKey, StageSource};
+use crate::stage::{Stage, StageDestination, StageKey, StageReport, StageSource};
 use crate::{Metadata, Pipeline, RoutePoint, RuntimeGenerator};
-use anyhow::Error;
 use async_trait::async_trait;
 use crb_actor::runtime::ActorRuntime;
-use crb_actor::MessageFor;
 use crb_actor::{Actor, Address};
 use crb_runtime::kit::{Interruptor, Runtime};
-use crb_supervisor::SupervisorSession;
 use std::marker::PhantomData;
 
 // TODO: Implement
@@ -71,33 +68,9 @@ where
     async fn routine(&mut self) {
         self.runtime.routine().await;
         let message = self.runtime.actor.to_output();
-        let msg = ActorStageRuntimeReport::<A> {
-            meta: self.meta,
-            message,
-        };
+        let msg = StageReport::<A>::new(self.meta, message);
         let res = self.pipeline.send(msg);
         self.runtime.failures.put(res);
-    }
-}
-
-struct ActorStageRuntimeReport<A: Stage> {
-    meta: Metadata,
-    message: A::Output,
-}
-
-#[async_trait]
-impl<A> MessageFor<Pipeline> for ActorStageRuntimeReport<A>
-where
-    A: Stage,
-{
-    async fn handle(
-        self: Box<Self>,
-        actor: &mut Pipeline,
-        ctx: &mut SupervisorSession<Pipeline>,
-    ) -> Result<(), Error> {
-        let key = StageKey::<A>::new();
-        actor.spawn_workers(self.meta, key, self.message, ctx);
-        Ok(())
     }
 }
 

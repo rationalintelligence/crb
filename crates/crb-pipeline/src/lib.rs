@@ -13,14 +13,10 @@ pub mod kit {
     pub use crate::Pipeline;
 }
 
-use anyhow::{Error, Result};
-use async_trait::async_trait;
-use crb_actor::{Actor, Address, MessageFor};
-use crb_core::types::Clony;
+use crb_actor::{Actor, Address};
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
-use stage::InitialKey;
 use stage::Stage;
 use stage::{StageDestination, StageSource};
 use std::any::type_name;
@@ -71,35 +67,6 @@ pub trait RuntimeGenerator: Send + Sync {
         pipeline: Address<Pipeline>,
         input: Self::Input,
     ) -> Box<dyn Runtime>;
-}
-
-// TODO: Move?
-struct InitialMessage<M> {
-    message: M,
-}
-
-impl<M> InitialMessage<M> {
-    fn new(message: M) -> Self {
-        Self { message }
-    }
-}
-
-#[async_trait]
-impl<M> MessageFor<Pipeline> for InitialMessage<M>
-where
-    M: Clony,
-{
-    async fn handle(
-        self: Box<Self>,
-        actor: &mut Pipeline,
-        ctx: &mut SupervisorSession<Pipeline>,
-    ) -> Result<(), Error> {
-        let layer = actor.sequencer.next();
-        let meta = Metadata::new(layer);
-        let key = InitialKey::<M>::new();
-        actor.spawn_workers(meta, key, self.message, ctx);
-        Ok(())
-    }
 }
 
 impl Pipeline {

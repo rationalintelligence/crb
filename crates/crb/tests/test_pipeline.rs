@@ -1,7 +1,8 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, ActorSession, Standalone};
-use crb_pipeline::kit::{ActorStage, AddressExt, InputStage, Pipeline, Stage};
+use crb_pipeline::kit::{AddressExt, Pipeline, Stage};
+use crb_pipeline::stage::*;
 use crb_runtime::kit::ManagedContext;
 use tokio::time::{sleep, Duration};
 
@@ -70,14 +71,8 @@ async fn test_pipeline() -> Result<(), Error> {
     let mut pipeline = Pipeline::new();
 
     // Routing
-    pipeline.stage(
-        InputStage::<u8>::stage(),
-        ActorStage::<FirstProcessor>::stage(),
-    );
-    pipeline.stage(
-        ActorStage::<FirstProcessor>::stage(),
-        ActorStage::<SecondProcessor>::stage(),
-    );
+    pipeline.stage(input::<u8>(), actor::<FirstProcessor>());
+    pipeline.stage(actor::<FirstProcessor>(), actor::<SecondProcessor>());
 
     // pipeline.route_map::<FirstProcessor, SecondProcessor>();
     // pipeline.route_split::<FirstProcessor, SecondProcessor>();

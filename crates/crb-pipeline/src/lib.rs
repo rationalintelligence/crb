@@ -10,6 +10,7 @@ use actor::ActorRuntimeGenerator;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
+use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
@@ -17,10 +18,6 @@ use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use typedmap::{TypedDashMap, TypedMapKey};
-
-pub trait DistributableMessage: Clone + Sync + Send + 'static {}
-
-impl<M> DistributableMessage for M where Self: Clone + Sync + Send + 'static {}
 
 pub struct Pipeline {
     sequencer: Sequencer,
@@ -37,7 +34,7 @@ impl Pipeline {
 
     pub fn input<M, TO>(&mut self)
     where
-        M: DistributableMessage,
+        M: Clony,
         TO: ConductedActor<Input = M>,
     {
         let key = InitialKey::<M>::new();
@@ -162,7 +159,7 @@ impl<M> InitialMessage<M> {
 #[async_trait]
 impl<M> MessageFor<Pipeline> for InitialMessage<M>
 where
-    M: DistributableMessage,
+    M: Clony,
 {
     async fn handle(
         self: Box<Self>,

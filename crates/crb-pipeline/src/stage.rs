@@ -1,5 +1,6 @@
-use crate::{ActorRuntimeGenerator, ConductedActor, RoutePoint};
+use crate::{ActorRuntimeGenerator, ConductedActor, RouteKey, RoutePoint, RouteValue};
 use std::marker::PhantomData;
+use typedmap::TypedMapKey;
 
 pub trait Stage {
     type Input;
@@ -7,6 +8,17 @@ pub trait Stage {
 
     fn from_input(input: Self::Input) -> Self;
     fn to_output(self) -> Self::Output;
+}
+
+pub trait StageSource {
+    type Stage: Stage;
+    type Key;
+    fn source(&self) -> Self::Key;
+}
+
+pub trait StageDestination {
+    type Stage: Stage;
+    fn destination(&self) -> RoutePoint<<Self::Stage as Stage>::Input>;
 }
 
 pub struct Actor<A> {
@@ -19,49 +31,29 @@ impl<A> Actor<A> {
     }
 }
 
-impl<A, IN, OUT> StageRoute<IN, OUT> for Actor<A>
+impl<A> StageSource for Actor<A>
 where
-    A: ConductedActor<Input = IN, Output = OUT>,
-    A: Stage<Input = IN, Output = OUT>,
-    IN: 'static,
+    A: Stage,
 {
-    fn source(&self) {}
+    type Stage = A;
+    type Key = RouteKey<A>;
 
-    fn recipient(&self) -> RoutePoint<IN> {
-        let generator = ActorRuntimeGenerator::<A>::new::<IN>();
+    fn source(&self) -> Self::Key {
+        RouteKey::<A>::new()
+    }
+}
+
+impl<A> StageDestination for Actor<A>
+where
+    A: Stage,
+{
+    type Stage = A;
+
+    fn destination(&self) -> RoutePoint<A::Input> {
+        /*
+        let generator = ActorRuntimeGenerator::<A>::new::<A::Input>();
         Box::new(generator)
+        */
+        todo!()
     }
 }
-
-pub trait StageRoute<IN, OUT> {
-    fn source(&self);
-    fn recipient(&self) -> RoutePoint<IN>;
-}
-
-/*
-impl<A, IN, OUT> Stage<IN, OUT> for Actor<A> {
-}
-
-pub trait Stage<IN, OUT> {
-    /*
-    fn from_input(input: IN) -> Self;
-    fn to_output(self) -> OUT;
-    */
-}
-
-/*
-impl<T, IN, OUT> Stage<IN, OUT> for T
-where
-    T: From<IN>,
-    T: Into<OUT>,
-{
-    fn from_input(input: IN) -> Self {
-        input.into()
-    }
-
-    fn to_output(self) -> OUT {
-        self.into()
-    }
-}
-*/
-*/

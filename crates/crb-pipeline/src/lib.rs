@@ -15,7 +15,7 @@ use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
-use stage::Stage;
+use stage::{Stage, StageDestination, StageSource};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -34,12 +34,14 @@ impl Pipeline {
         }
     }
 
-    pub fn route_s<T, FROM, TO>(&mut self, from: FROM, to: TO)
+    /*
+    pub fn stage<FROM, TO, IN, OUT>(&mut self, from: FROM, to: TO)
     where
-        FROM: Stage,
-        TO: Stage<Input = FROM::Output>,
+        FROM: StageSource,
+        TO: StageDestination,
     {
     }
+    */
 
     pub fn input<M, TO>(&mut self)
     where
@@ -72,12 +74,13 @@ impl Actor for Pipeline {
     type Context = SupervisorSession<Self>;
 }
 
-struct RouteKey<A> {
+pub struct RouteKey<A> {
     _type: PhantomData<A>,
 }
 
 unsafe impl<A> Sync for RouteKey<A> {}
 
+// TODO: Use `Stage` instead of `A`
 impl<A> RouteKey<A> {
     fn new() -> Self {
         Self { _type: PhantomData }

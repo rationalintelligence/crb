@@ -18,8 +18,8 @@ pub struct ActorStage<A> {
     _type: PhantomData<A>,
 }
 
-impl<A> ActorStage<A> {
-    pub fn stage() -> Self {
+impl<A> Default for ActorStage<A> {
+    fn default() -> Self {
         Self { _type: PhantomData }
     }
 }

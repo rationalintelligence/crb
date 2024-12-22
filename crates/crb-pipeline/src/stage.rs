@@ -35,12 +35,16 @@ pub trait StageDestination {
     fn destination(&self) -> RoutePoint<<Self::Stage as Stage>::Input>;
 }
 
+pub type Input<M> = InputStage<M>;
+
 pub fn input<M>() -> InputStage<M> {
-    InputStage::<M>::stage()
+    InputStage::<M>::default()
 }
 
+pub type Actor<A> = ActorStage<A>;
+
 pub fn actor<A>() -> ActorStage<A> {
-    ActorStage::<A>::stage()
+    ActorStage::<A>::default()
 }
 
 pub struct InitialKey<M> {

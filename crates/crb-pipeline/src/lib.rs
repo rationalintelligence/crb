@@ -45,6 +45,15 @@ impl Pipeline {
         let generator = to.destination();
         self.routes.entry(key).or_default().push(generator);
     }
+
+    pub fn route<FROM, TO>(&mut self)
+    where
+        FROM: StageSource + Default,
+        TO: StageDestination + Default,
+        TO::Stage: Stage<Input = <FROM::Stage as Stage>::Output>,
+    {
+        self.stage(FROM::default(), TO::default())
+    }
 }
 
 impl Supervisor for Pipeline {

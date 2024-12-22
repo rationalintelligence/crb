@@ -25,8 +25,8 @@ pub struct InputStage<M> {
     _type: PhantomData<M>,
 }
 
-impl<M> InputStage<M> {
-    pub fn stage() -> Self {
+impl<M> Default for InputStage<M> {
+    fn default() -> Self {
         Self { _type: PhantomData }
     }
 }

@@ -25,15 +25,17 @@ where
     A: Stage<Input = IN, Output = OUT>,
     IN: 'static,
 {
-    fn value(&self) -> RoutePoint<IN> {
+    fn source(&self) {}
+
+    fn recipient(&self) -> RoutePoint<IN> {
         let generator = ActorRuntimeGenerator::<A>::new::<IN>();
         Box::new(generator)
     }
 }
 
 pub trait StageRoute<IN, OUT> {
-    // fn key(&self);
-    fn value(&self) -> RoutePoint<IN>;
+    fn source(&self);
+    fn recipient(&self) -> RoutePoint<IN>;
 }
 
 /*

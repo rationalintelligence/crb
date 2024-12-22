@@ -14,7 +14,7 @@ pub mod notifier;
 pub mod sender;
 
 pub mod kit {
-    pub use message::*;
-    pub use notifier::*;
-    pub use sender::*;
+    pub use crate::message::*;
+    pub use crate::notifier::*;
+    pub use crate::sender::*;
 }

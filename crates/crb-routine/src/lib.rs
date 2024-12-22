@@ -2,7 +2,7 @@ pub mod finalizer;
 pub mod runtime;
 
 pub use finalizer::Finalizer;
-pub use runtime::{RoutineContext, RoutineSession, Standalone};
+pub use runtime::{RoutineContext, RoutineRuntime, RoutineSession, Standalone};
 
 use anyhow::Error;
 use async_trait::async_trait;

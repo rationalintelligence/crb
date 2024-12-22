@@ -7,28 +7,28 @@ use crb_runtime::kit::{
     Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
 };
 
-pub struct ActorRuntime<T: Actor> {
-    pub actor: T,
-    pub context: T::Context,
+pub struct ActorRuntime<A: Actor> {
+    pub actor: A,
+    pub context: A::Context,
     pub failures: Failures,
 }
 
-impl<T: Actor> ActorRuntime<T> {
-    pub fn new(actor: T) -> Self
+impl<A: Actor> ActorRuntime<A> {
+    pub fn new(actor: A) -> Self
     where
-        T::Context: Default,
+        A::Context: Default,
     {
         Self {
             actor,
-            context: T::Context::default(),
+            context: A::Context::default(),
             failures: Failures::default(),
         }
     }
 }
 
 #[async_trait]
-impl<T: Actor> OpenRuntime for ActorRuntime<T> {
-    type Context = T::Context;
+impl<A: Actor> OpenRuntime for ActorRuntime<A> {
+    type Context = A::Context;
 
     fn address(&self) -> <Self::Context as Context>::Address {
         self.context.address().clone()
@@ -36,7 +36,7 @@ impl<T: Actor> OpenRuntime for ActorRuntime<T> {
 }
 
 #[async_trait]
-impl<T: Actor> Runtime for ActorRuntime<T> {
+impl<A: Actor> Runtime for ActorRuntime<A> {
     fn get_interruptor(&mut self) -> Interruptor {
         self.context.controller().interruptor.clone()
     }

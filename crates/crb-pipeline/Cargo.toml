@@ -11,6 +11,7 @@ anyhow.workspace = true
 async-trait.workspace = true
 crb-actor.workspace = true
 crb-core.workspace = true
+crb-routine.workspace = true
 crb-runtime.workspace = true
 crb-supervisor.workspace = true
 log.workspace = true

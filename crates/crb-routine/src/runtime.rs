@@ -7,31 +7,28 @@ use crb_runtime::kit::{
     Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
 };
 
-struct RoutineRuntime<T: Routine> {
-    routine: T,
-    context: T::Context,
-    failures: Failures,
+pub struct RoutineRuntime<R: Routine> {
+    pub routine: R,
+    pub context: R::Context,
+    pub failures: Failures,
 }
 
-impl<T> RoutineRuntime<T>
-where
-    T: Routine,
-{
-    pub fn new(routine: T) -> Self
+impl<R: Routine> RoutineRuntime<R> {
+    pub fn new(routine: R) -> Self
     where
-        T::Context: Default,
+        R::Context: Default,
     {
         Self {
             routine,
-            context: T::Context::default(),
+            context: R::Context::default(),
             failures: Failures::default(),
         }
     }
 }
 
 #[async_trait]
-impl<T: Routine> OpenRuntime for RoutineRuntime<T> {
-    type Context = T::Context;
+impl<R: Routine> OpenRuntime for RoutineRuntime<R> {
+    type Context = R::Context;
 
     fn address(&self) -> <Self::Context as Context>::Address {
         self.context.address().clone()
@@ -39,7 +36,7 @@ impl<T: Routine> OpenRuntime for RoutineRuntime<T> {
 }
 
 #[async_trait]
-impl<T: Routine> Runtime for RoutineRuntime<T> {
+impl<R: Routine> Runtime for RoutineRuntime<R> {
     fn get_interruptor(&mut self) -> Interruptor {
         self.context.session().controller().interruptor.clone()
     }

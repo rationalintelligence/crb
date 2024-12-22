@@ -1,5 +1,6 @@
 use crate::finalizer::Finalizer;
 use crate::Routine;
+use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::Duration;
 use crb_runtime::{
@@ -10,6 +11,7 @@ struct RoutineRuntime<T: Routine> {
     routine: T,
     context: T::Context,
     failures: Failures,
+    finalizer: Option<Box<dyn Finalizer<T::Output>>>,
 }
 
 impl<T> RoutineRuntime<T>
@@ -24,6 +26,7 @@ where
             routine,
             context: T::Context::default(),
             failures: Failures::default(),
+            finalizer: None,
         }
     }
 }
@@ -45,8 +48,12 @@ impl<T: Routine> Runtime for RoutineRuntime<T> {
 
     async fn routine(&mut self) {
         let ctx = &mut self.context;
-        let result = self.routine.routine(ctx).await;
-        let result = self.routine.finalize(result).await;
+        let output = self.routine.routine(ctx).await;
+        let result = if let Some(mut finalizer) = self.finalizer.take() {
+            finalizer.finalize(output).await
+        } else {
+            output.map(drop).map_err(Error::from)
+        };
         self.failures.put(result);
     }
 }

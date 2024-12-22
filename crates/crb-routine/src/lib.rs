@@ -74,10 +74,4 @@ pub trait Routine: Sized + Send + 'static {
         let duration = ctx.session().interval();
         sleep(duration).await
     }
-
-    async fn finalize(&mut self, result: Result<Self::Output, TaskError>) -> Result<(), Error> {
-        log::warn!("Use finalizers instead of this method.");
-        result?;
-        Ok(())
-    }
 }

@@ -1,5 +1,5 @@
+use crate::actor::Actor;
 use crate::message::{Envelope, MessageFor};
-use crate::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};

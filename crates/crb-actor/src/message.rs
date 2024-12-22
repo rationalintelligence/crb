@@ -1,4 +1,4 @@
-use crate::Actor;
+use crate::actor::Actor;
 use anyhow::Error;
 use async_trait::async_trait;
 

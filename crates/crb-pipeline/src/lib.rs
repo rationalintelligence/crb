@@ -8,6 +8,7 @@ pub mod stage;
 pub mod kit {
     pub use crate::actor::ActorStage;
     pub use crate::extension::AddressExt;
+    pub use crate::routine::RoutineStage;
     pub use crate::service::InputStage;
     pub use crate::stage::Stage;
     pub use crate::Pipeline;

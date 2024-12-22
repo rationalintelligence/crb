@@ -1,5 +1,6 @@
 use crate::actor::ActorStage;
 use crate::meta::Metadata;
+use crate::routine::RoutineStage;
 use crate::service::InputStage;
 use crate::Pipeline;
 use crate::{RoutePoint, RouteValue};
@@ -45,6 +46,12 @@ pub type Actor<A> = ActorStage<A>;
 
 pub fn actor<A>() -> ActorStage<A> {
     ActorStage::<A>::default()
+}
+
+pub type Routine<A> = RoutineStage<A>;
+
+pub fn routine<A>() -> RoutineStage<A> {
+    RoutineStage::<A>::default()
 }
 
 pub struct InitialKey<M> {

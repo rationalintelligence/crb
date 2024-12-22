@@ -2,13 +2,17 @@ pub mod actor;
 pub mod extension;
 pub mod meta;
 pub mod routine;
+pub mod service;
 pub mod stage;
 
-pub use actor::{ActorStage, ConductedActor};
-pub use extension::AddressExt;
-pub use stage::Stage;
+pub mod kit {
+    pub use crate::actor::ActorStage;
+    pub use crate::extension::AddressExt;
+    pub use crate::service::InputStage;
+    pub use crate::stage::Stage;
+    pub use crate::Pipeline;
+}
 
-use actor::ActorRuntimeGenerator;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, Address, MessageFor};
@@ -16,6 +20,8 @@ use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
+use service::InitialKey;
+use stage::Stage;
 use stage::{StageDestination, StageSource};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
@@ -46,6 +52,7 @@ impl Pipeline {
         self.routes.entry(key).or_default().push(generator);
     }
 
+    /*
     pub fn input<M, TO>(&mut self)
     where
         M: Clony,
@@ -67,6 +74,7 @@ impl Pipeline {
         let value = Box::new(generator);
         self.routes.entry(key).or_default().push(value);
     }
+    */
 }
 
 impl Supervisor for Pipeline {
@@ -77,6 +85,7 @@ impl Actor for Pipeline {
     type Context = SupervisorSession<Self>;
 }
 
+/*
 pub struct RouteKey<A> {
     _type: PhantomData<A>,
 }
@@ -113,40 +122,7 @@ impl<A> Eq for RouteKey<A> {}
 impl<A: ConductedActor> TypedMapKey for RouteKey<A> {
     type Value = RouteValue<A::Output>;
 }
-
-struct InitialKey<M> {
-    _type: PhantomData<M>,
-}
-
-impl<M> InitialKey<M> {
-    fn new() -> Self {
-        Self { _type: PhantomData }
-    }
-}
-
-impl<M> Clone for InitialKey<M> {
-    fn clone(&self) -> Self {
-        Self::new()
-    }
-}
-
-impl<M> Hash for InitialKey<M> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        type_name::<M>().hash(state);
-    }
-}
-
-impl<M> PartialEq for InitialKey<M> {
-    fn eq(&self, _other: &Self) -> bool {
-        true
-    }
-}
-
-impl<M> Eq for InitialKey<M> {}
-
-impl<M: 'static> TypedMapKey for InitialKey<M> {
-    type Value = RouteValue<M>;
-}
+*/
 
 type RoutePoint<M> = Box<dyn RuntimeGenerator<Input = M>>;
 type RouteValue<M> = Vec<RoutePoint<M>>;
@@ -162,6 +138,7 @@ pub trait RuntimeGenerator: Send + Sync {
     ) -> Box<dyn Runtime>;
 }
 
+// TODO: Move?
 struct InitialMessage<M> {
     message: M,
 }
@@ -190,6 +167,7 @@ where
     }
 }
 
+/*
 struct MessageToRoute<A: ConductedActor> {
     meta: Metadata,
     message: A::Output,
@@ -210,6 +188,7 @@ where
         Ok(())
     }
 }
+*/
 
 impl Pipeline {
     fn spawn_workers<K, M>(

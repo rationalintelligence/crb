@@ -1,6 +1,6 @@
 use crate::{
-    MessageToRoute, Metadata, Pipeline, RoutePoint, RouteValue, RuntimeGenerator, Stage,
-    StageDestination, StageSource,
+    stage::Stage, Metadata, Pipeline, RoutePoint, RouteValue, RuntimeGenerator, StageDestination,
+    StageSource,
 };
 use anyhow::Error;
 use async_trait::async_trait;
@@ -22,6 +22,7 @@ use typedmap::TypedMapKey;
 // - route_split
 // - route_merge | works with `(Option<T1>, ...)` tuple or `Vec<T>`
 
+/*
 // TODO: Replace with `Stage`: flexible `From` and `Into` pair
 pub trait ConductedActor: Actor<Context: Default> {
     type Input: Send;
@@ -99,8 +100,43 @@ where
         self.runtime.failures.put(res);
     }
 }
+*/
 
 // TODO: Remove all that above
+pub struct ActorStage<A> {
+    _type: PhantomData<A>,
+}
+
+impl<A> ActorStage<A> {
+    pub fn stage() -> Self {
+        Self { _type: PhantomData }
+    }
+}
+
+impl<A> StageSource for ActorStage<A>
+where
+    A: Stage,
+{
+    type Stage = A;
+    type Key = StageKey<A>;
+
+    fn source(&self) -> Self::Key {
+        StageKey::<A>::new()
+    }
+}
+
+impl<A> StageDestination for ActorStage<A>
+where
+    A: Actor + Stage,
+    A::Context: Default,
+{
+    type Stage = A;
+
+    fn destination(&self) -> RoutePoint<A::Input> {
+        let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>();
+        Box::new(generator)
+    }
+}
 
 pub struct ActorStageRuntime<A: Actor + Stage> {
     meta: Metadata,
@@ -186,41 +222,6 @@ impl<S> Eq for StageKey<S> {}
 
 impl<S: Stage> TypedMapKey for StageKey<S> {
     type Value = RouteValue<S::Output>;
-}
-
-pub struct ActorStage<A> {
-    _type: PhantomData<A>,
-}
-
-impl<A> ActorStage<A> {
-    pub fn stage() -> Self {
-        Self { _type: PhantomData }
-    }
-}
-
-impl<A> StageSource for ActorStage<A>
-where
-    A: Stage,
-{
-    type Stage = A;
-    type Key = StageKey<A>;
-
-    fn source(&self) -> Self::Key {
-        StageKey::<A>::new()
-    }
-}
-
-impl<A> StageDestination for ActorStage<A>
-where
-    A: Actor + Stage,
-    A::Context: Default,
-{
-    type Stage = A;
-
-    fn destination(&self) -> RoutePoint<A::Input> {
-        let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>();
-        Box::new(generator)
-    }
 }
 
 pub struct ActorStageRuntimeGenerator<A> {

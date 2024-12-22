@@ -2,6 +2,7 @@ pub mod actor;
 pub mod extension;
 pub mod meta;
 pub mod routine;
+pub mod stage;
 
 pub use actor::ConductedActor;
 pub use extension::AddressExt;
@@ -14,6 +15,7 @@ use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
+use stage::Stage;
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -30,6 +32,13 @@ impl Pipeline {
             sequencer: Sequencer::default(),
             routes: TypedDashMap::default(),
         }
+    }
+
+    pub fn route_s<T, FROM, TO>(&mut self, from: FROM, to: TO)
+    where
+        FROM: Stage,
+        TO: Stage<Input = FROM::Output>,
+    {
     }
 
     pub fn input<M, TO>(&mut self)
@@ -133,7 +142,8 @@ impl<M: 'static> TypedMapKey for InitialKey<M> {
     type Value = RouteValue<M>;
 }
 
-type RouteValue<M> = Vec<Box<dyn RuntimeGenerator<Input = M>>>;
+type RoutePoint<M> = Box<dyn RuntimeGenerator<Input = M>>;
+type RouteValue<M> = Vec<RoutePoint<M>>;
 
 pub trait RuntimeGenerator: Send + Sync {
     type Input;

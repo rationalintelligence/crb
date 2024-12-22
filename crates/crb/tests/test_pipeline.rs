@@ -69,6 +69,9 @@ impl ConductedActor for SecondProcessor {
 async fn test_pipeline() -> Result<(), Error> {
     let mut pipeline = Pipeline::new();
 
+    // pipeline.route(Stage::actor(FirstProcessor::new), Actor::<FirstProcessor>::stage());
+    // pipeline.route(Init::<u8>::stage(), Actor::<FirstProcessor>::stage());
+
     // Routing
     pipeline.input::<u8, FirstProcessor>();
     pipeline.route::<FirstProcessor, SecondProcessor>();

@@ -18,3 +18,5 @@ pub use std_runtime::*;
 mod wasm_runtime;
 #[cfg(target_arch = "wasm32")]
 pub use wasm_runtime::*;
+
+pub mod types;

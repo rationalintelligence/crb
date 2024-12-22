@@ -79,7 +79,7 @@ async fn test_pipeline() -> Result<(), Error> {
     // pipeline.route_merge::<FirstProcessor, SecondProcessor>();
 
     let mut addr = pipeline.spawn();
-    addr.ingest(8)?;
+    addr.ingest(8u8)?;
     sleep(Duration::from_millis(10)).await;
     addr.interrupt()?;
     addr.join().await?;

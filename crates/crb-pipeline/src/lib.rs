@@ -89,17 +89,23 @@ impl Pipeline {
         K: TypedMapKey<Value = RouteValue<M>> + Send + Sync + 'static,
         M: Clone + 'static,
     {
+        let mut spawned = 0;
         let generators = self.routes.get(&key);
         if let Some(generators) = generators {
-            if generators.is_empty() {
-                log::error!("Workers for {} are not presented.", type_name::<M>());
-            }
             for generator in generators.iter() {
                 let pipeline = ctx.address().clone();
                 let message = message.clone();
                 let runtime = generator.generate(meta, pipeline, message);
                 ctx.spawn_trackable(runtime, ());
+                spawned += 1;
             }
+        }
+        if spawned == 0 {
+            log::error!(
+                "Workers for {} are not presented. Source: {}",
+                type_name::<M>(),
+                type_name::<K>()
+            );
         }
     }
 }

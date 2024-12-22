@@ -34,14 +34,12 @@ impl Pipeline {
         }
     }
 
-    /*
-    pub fn stage<FROM, TO, IN, OUT>(&mut self, from: FROM, to: TO)
+    pub fn stage<FROM, TO>(&mut self, from: FROM, to: TO)
     where
         FROM: StageSource,
         TO: StageDestination,
     {
     }
-    */
 
     pub fn input<M, TO>(&mut self)
     where

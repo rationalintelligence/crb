@@ -2,12 +2,12 @@ use crate::{ActorRuntimeGenerator, ConductedActor, RouteKey, RoutePoint, RouteVa
 use std::marker::PhantomData;
 use typedmap::TypedMapKey;
 
-pub trait Stage {
+pub trait Stage: Send + 'static {
     type Input;
-    type Output;
+    type Output: Clone + Send + 'static;
 
     fn from_input(input: Self::Input) -> Self;
-    fn to_output(self) -> Self::Output;
+    fn to_output(&mut self) -> Self::Output;
 }
 
 pub trait StageSource {

@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_actor::{Actor, ActorSession, Standalone};
-use crb_pipeline::{AddressExt, ConductedActor, Pipeline};
+use crb_pipeline::{ActorStage, AddressExt, ConductedActor, Pipeline, Stage};
 use crb_runtime::kit::ManagedContext;
 use tokio::time::{sleep, Duration};
 
@@ -17,6 +17,21 @@ impl Actor for FirstProcessor {
         println!("FirstProcessor");
         ctx.shutdown();
         Ok(())
+    }
+}
+
+impl Stage for FirstProcessor {
+    type Input = u8;
+    type Output = u16;
+
+    fn from_input(input: Self::Input) -> Self {
+        Self {
+            value: input as u16 * 2,
+        }
+    }
+
+    fn to_output(&mut self) -> Self::Output {
+        self.value
     }
 }
 
@@ -50,6 +65,21 @@ impl Actor for SecondProcessor {
     }
 }
 
+impl Stage for SecondProcessor {
+    type Input = u16;
+    type Output = u32;
+
+    fn from_input(input: Self::Input) -> Self {
+        Self {
+            value: input as u32 * 2,
+        }
+    }
+
+    fn to_output(&mut self) -> Self::Output {
+        self.value
+    }
+}
+
 impl ConductedActor for SecondProcessor {
     type Input = u16;
     type Output = u32;
@@ -75,6 +105,10 @@ async fn test_pipeline() -> Result<(), Error> {
     // Routing
     pipeline.input::<u8, FirstProcessor>();
     pipeline.route::<FirstProcessor, SecondProcessor>();
+    pipeline.stage(
+        ActorStage::<FirstProcessor>::stage(),
+        ActorStage::<SecondProcessor>::stage(),
+    );
 
     // pipeline.route_map::<FirstProcessor, SecondProcessor>();
     // pipeline.route_split::<FirstProcessor, SecondProcessor>();

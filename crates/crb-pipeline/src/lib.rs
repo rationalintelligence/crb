@@ -4,8 +4,9 @@ pub mod meta;
 pub mod routine;
 pub mod stage;
 
-pub use actor::ConductedActor;
+pub use actor::{ActorStage, ConductedActor};
 pub use extension::AddressExt;
+pub use stage::Stage;
 
 use actor::ActorRuntimeGenerator;
 use anyhow::{Error, Result};
@@ -15,7 +16,7 @@ use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
 use meta::{Metadata, Sequencer};
-use stage::{Stage, StageDestination, StageSource};
+use stage::{StageDestination, StageSource};
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;

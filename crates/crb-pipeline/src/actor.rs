@@ -6,14 +6,6 @@ use crb_actor::runtime::ActorRuntime;
 use crb_runtime::kit::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
-// TODO: Implement
-// - Metadata for all messages
-// - Epochs (metadata)
-// - Split (meta)
-// - route_map
-// - route_split
-// - route_merge | works with `(Option<T1>, ...)` tuple or `Vec<T>`
-
 pub struct ActorStage<A> {
     _type: PhantomData<A>,
 }

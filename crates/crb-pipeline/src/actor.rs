@@ -100,6 +100,8 @@ where
     }
 }
 
+// TODO: Remove all that above
+
 pub struct ActorStageRuntime<A: Actor + Stage> {
     meta: Metadata,
     pipeline: Address<Pipeline>,
@@ -143,47 +145,47 @@ where
         actor: &mut Pipeline,
         ctx: &mut SupervisorSession<Pipeline>,
     ) -> Result<(), Error> {
-        let key = ActorKey::<A>::new();
+        let key = StageKey::<A>::new();
         actor.spawn_workers(self.meta, key, self.message, ctx);
         Ok(())
     }
 }
 
-pub struct ActorKey<A> {
-    _type: PhantomData<A>,
+pub struct StageKey<S> {
+    _type: PhantomData<S>,
 }
 
-unsafe impl<A> Sync for ActorKey<A> {}
+unsafe impl<S> Sync for StageKey<S> {}
 
-// TODO: Use `Stage` instead of `A`
-impl<A> ActorKey<A> {
+// TODO: Use `Stage` instead of `S`
+impl<S> StageKey<S> {
     fn new() -> Self {
         Self { _type: PhantomData }
     }
 }
 
-impl<A> Clone for ActorKey<A> {
+impl<S> Clone for StageKey<S> {
     fn clone(&self) -> Self {
         Self::new()
     }
 }
 
-impl<A> Hash for ActorKey<A> {
+impl<S> Hash for StageKey<S> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        type_name::<A>().hash(state);
+        type_name::<S>().hash(state);
     }
 }
 
-impl<A> PartialEq for ActorKey<A> {
+impl<S> PartialEq for StageKey<S> {
     fn eq(&self, _other: &Self) -> bool {
         true
     }
 }
 
-impl<A> Eq for ActorKey<A> {}
+impl<S> Eq for StageKey<S> {}
 
-impl<A: Stage> TypedMapKey for ActorKey<A> {
-    type Value = RouteValue<A::Output>;
+impl<S: Stage> TypedMapKey for StageKey<S> {
+    type Value = RouteValue<S::Output>;
 }
 
 pub struct ActorStage<A> {
@@ -201,10 +203,10 @@ where
     A: Stage,
 {
     type Stage = A;
-    type Key = ActorKey<A>;
+    type Key = StageKey<A>;
 
     fn source(&self) -> Self::Key {
-        ActorKey::<A>::new()
+        StageKey::<A>::new()
     }
 }
 

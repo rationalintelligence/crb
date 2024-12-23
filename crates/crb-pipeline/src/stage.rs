@@ -2,6 +2,7 @@ use crate::actor::ActorStage;
 use crate::pipeline::{RoutePoint, RouteValue};
 use crate::routine::RoutineStage;
 use crate::service::InputStage;
+use crate::task::TaskStage;
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -41,10 +42,16 @@ pub fn actor<A>() -> ActorStage<A> {
     ActorStage::<A>::default()
 }
 
-pub type Routine<A> = RoutineStage<A>;
+pub type Routine<R> = RoutineStage<R>;
 
-pub fn routine<A>() -> RoutineStage<A> {
-    RoutineStage::<A>::default()
+pub fn routine<R>() -> RoutineStage<R> {
+    RoutineStage::<R>::default()
+}
+
+pub type Task<T> = TaskStage<T>;
+
+pub fn task<T>() -> TaskStage<T> {
+    TaskStage::<T>::default()
 }
 
 pub struct InitialKey<M> {

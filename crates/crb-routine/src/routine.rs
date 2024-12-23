@@ -34,7 +34,7 @@ pub trait Routine: Sized + Send + 'static {
         Ok(())
     }
 
-    async fn basic_routine(&mut self, ctx: &mut Self::Context) -> Result<(), TaskError> {
+    async fn basic_routine(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
         let output = self.interruptable_routine(ctx).await;
         self.finalize(output, ctx).await?;
         Ok(())

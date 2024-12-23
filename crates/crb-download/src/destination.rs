@@ -23,7 +23,7 @@ impl Tempfile {
     }
 
     /// Writes a temporary file to a path
-    pub async fn persist(&mut self, path: impl AsRef<Path>) -> Result<()> {
+    pub async fn persist(&mut self, path: impl AsRef<Path>) -> Result<File> {
         let path = path.as_ref();
         if let Some(dir) = path.parent() {
             create_dir_all(dir).await?;
@@ -31,6 +31,7 @@ impl Tempfile {
         self.0.rewind().await?;
         let mut dest = File::create(path).await?;
         copy(&mut self.0, &mut dest).await?;
-        Ok(())
+        dest.rewind().await?;
+        Ok(dest)
     }
 }

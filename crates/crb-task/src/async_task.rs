@@ -15,11 +15,13 @@ pub trait Task: Send + 'static {
         Ok(())
     }
 
-    async fn routine(&mut self) -> Result<()>;
+    async fn routine(&mut self) -> Result<()> {
+        Ok(())
+    }
 }
 
 pub struct TaskRuntime<T> {
-    pub task: T,
+    pub task: Option<T>,
     pub controller: Controller,
     pub failures: Failures,
 }
@@ -27,7 +29,7 @@ pub struct TaskRuntime<T> {
 impl<T: Task> TaskRuntime<T> {
     pub fn new(task: T) -> Self {
         Self {
-            task,
+            task: Some(task),
             controller: Controller::default(),
             failures: Failures::default(),
         }
@@ -44,8 +46,10 @@ where
     }
 
     async fn routine(&mut self) {
-        let res = self.task.controlled_routine(&mut self.controller).await;
-        self.failures.put(res);
+        if let Some(mut task) = self.task.take() {
+            let res = task.controlled_routine(&mut self.controller).await;
+            self.failures.put(res);
+        }
     }
 }
 
@@ -107,7 +111,8 @@ impl Drop for TypelessTask {
 impl TypelessTask {
     pub fn spawn<T>(fut: T) -> Self
     where
-        T: Future<Output = Result<()>> + Send + 'static,
+        T: Future<Output = Result<()>>,
+        T: Send + 'static,
     {
         let task = FnTask { fut: Some(fut) };
         TypedTask::spawn(task).into()
@@ -121,7 +126,8 @@ struct FnTask<T> {
 #[async_trait]
 impl<T> Task for FnTask<T>
 where
-    T: Future<Output = Result<()>> + Send + 'static,
+    T: Future<Output = Result<()>>,
+    T: Send + 'static,
 {
     async fn routine(&mut self) -> Result<()> {
         self.fut

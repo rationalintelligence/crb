@@ -1,11 +1,11 @@
 pub mod actor;
+pub mod async_task;
 pub mod extension;
 pub mod meta;
 pub mod pipeline;
 pub mod routine;
 pub mod service;
 pub mod stage;
-pub mod task;
 
 pub mod kit {
     pub use crate::actor::ActorStage;

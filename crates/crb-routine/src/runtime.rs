@@ -3,7 +3,8 @@ use crate::routine::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
 use crb_runtime::kit::{
-    Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+    Context, Controller, Entrypoint, Failures, InteractiveRuntime, Interruptor, ManagedContext,
+    Runtime,
 };
 
 pub struct RoutineRuntime<R: Routine> {
@@ -26,7 +27,7 @@ impl<R: Routine> RoutineRuntime<R> {
 }
 
 #[async_trait]
-impl<R: Routine> OpenRuntime for RoutineRuntime<R> {
+impl<R: Routine> InteractiveRuntime for RoutineRuntime<R> {
     type Context = R::Context;
 
     fn address(&self) -> <Self::Context as Context>::Address {

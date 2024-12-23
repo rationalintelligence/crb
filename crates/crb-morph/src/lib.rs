@@ -2,7 +2,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_runtime::kit::{
-    Context, Controller, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+    Context, Controller, Failures, InteractiveRuntime, Interruptor, ManagedContext, Runtime,
 };
 
 pub trait MorphContext: Context + 'static {
@@ -45,7 +45,7 @@ pub struct MorphRuntime<C> {
 }
 
 #[async_trait]
-impl<C: MorphContext> OpenRuntime for MorphRuntime<C> {
+impl<C: MorphContext> InteractiveRuntime for MorphRuntime<C> {
     type Context = C;
 
     fn address(&self) -> <Self::Context as Context>::Address {

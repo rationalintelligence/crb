@@ -15,7 +15,7 @@ pub trait Runtime: Send + 'static {
     async fn routine(&mut self);
 }
 
-pub trait OpenRuntime: Runtime {
+pub trait InteractiveRuntime: Runtime {
     /// Type of the composable block's contenxt.
     type Context: Context;
 

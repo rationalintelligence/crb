@@ -4,7 +4,8 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_runtime::kit::{
-    Context, Controller, Entrypoint, Failures, Interruptor, ManagedContext, OpenRuntime, Runtime,
+    Context, Controller, Entrypoint, Failures, InteractiveRuntime, Interruptor, ManagedContext,
+    Runtime,
 };
 
 pub struct ActorRuntime<A: Actor> {
@@ -27,7 +28,7 @@ impl<A: Actor> ActorRuntime<A> {
 }
 
 #[async_trait]
-impl<A: Actor> OpenRuntime for ActorRuntime<A> {
+impl<A: Actor> InteractiveRuntime for ActorRuntime<A> {
     type Context = A::Context;
 
     fn address(&self) -> <Self::Context as Context>::Address {

@@ -1,14 +1,18 @@
 pub mod finalizer;
 pub mod runtime;
 
-pub use finalizer::Finalizer;
-pub use runtime::{RoutineContext, RoutineRuntime, RoutineSession, Standalone};
+pub mod kit {
+    pub use crate::finalizer::Finalizer;
+    pub use crate::runtime::{RoutineContext, RoutineRuntime, RoutineSession, Standalone};
+    pub use crate::{Routine, TaskError};
+}
 
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::{sleep, timeout, Duration, Elapsed};
 use crb_runtime::kit::{ManagedContext, RegistrationTaken};
 use futures::stream::{Abortable, Aborted};
+use runtime::RoutineContext;
 use thiserror::Error;
 
 #[derive(Debug, Error)]

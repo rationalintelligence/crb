@@ -54,6 +54,17 @@ pub struct RoutineSession<R: Routine> {
     finalizer: Option<BoxFinalizer<R::Output>>,
 }
 
+impl<R: Routine> Default for RoutineSession<R> {
+    fn default() -> Self {
+        let controller = Controller::default();
+        Self {
+            controller,
+            interval: Duration::from_secs(5),
+            finalizer: None,
+        }
+    }
+}
+
 impl<R: Routine> RoutineSession<R> {
     /// Set repeat interval.
     pub fn set_interval(&mut self, interval: Duration) {

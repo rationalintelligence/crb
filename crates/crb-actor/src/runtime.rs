@@ -93,7 +93,7 @@ pub struct ActorSession<A> {
     address: Address<A>,
 }
 
-impl<T> Default for ActorSession<T> {
+impl<A> Default for ActorSession<A> {
     fn default() -> Self {
         Self::new()
     }

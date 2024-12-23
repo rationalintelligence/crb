@@ -14,7 +14,7 @@ use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use typedmap::TypedMapKey;
 
-pub trait Stage: Send + 'static {
+pub trait Stage<LayerState = ()>: Send + 'static {
     type Input;
     type Output: Clone + Send + 'static;
 

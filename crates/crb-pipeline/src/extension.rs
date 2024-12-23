@@ -1,4 +1,4 @@
-use crate::{stage::InitialMessage, Pipeline};
+use crate::pipeline::{InitialMessage, Pipeline};
 use anyhow::Result;
 use crb_actor::kit::Address;
 use crb_core::types::Clony;

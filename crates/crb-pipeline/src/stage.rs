@@ -1,14 +1,7 @@
 use crate::actor::ActorStage;
-use crate::meta::Metadata;
+use crate::pipeline::{RoutePoint, RouteValue};
 use crate::routine::RoutineStage;
 use crate::service::InputStage;
-use crate::Pipeline;
-use crate::{RoutePoint, RouteValue};
-use anyhow::Error;
-use async_trait::async_trait;
-use crb_actor::kit::MessageFor;
-use crb_core::types::Clony;
-use crb_supervisor::SupervisorSession;
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -88,34 +81,6 @@ impl<M: 'static> TypedMapKey for InitialKey<M> {
     type Value = RouteValue<M>;
 }
 
-pub struct InitialMessage<M> {
-    message: M,
-}
-
-impl<M> InitialMessage<M> {
-    pub fn new(message: M) -> Self {
-        Self { message }
-    }
-}
-
-#[async_trait]
-impl<M> MessageFor<Pipeline> for InitialMessage<M>
-where
-    M: Clony,
-{
-    async fn handle(
-        self: Box<Self>,
-        actor: &mut Pipeline,
-        ctx: &mut SupervisorSession<Pipeline>,
-    ) -> Result<(), Error> {
-        let layer = actor.sequencer.next();
-        let meta = Metadata::new(layer);
-        let key = InitialKey::<M>::new();
-        actor.spawn_workers(meta, key, self.message, ctx);
-        Ok(())
-    }
-}
-
 pub struct StageKey<S> {
     _type: PhantomData<S>,
 }
@@ -150,31 +115,4 @@ impl<S> Eq for StageKey<S> {}
 
 impl<S: Stage> TypedMapKey for StageKey<S> {
     type Value = RouteValue<S::Output>;
-}
-
-pub struct StageReport<S: Stage> {
-    meta: Metadata,
-    message: S::Output,
-}
-
-impl<S: Stage> StageReport<S> {
-    pub fn new(meta: Metadata, message: S::Output) -> Self {
-        Self { meta, message }
-    }
-}
-
-#[async_trait]
-impl<A> MessageFor<Pipeline> for StageReport<A>
-where
-    A: Stage,
-{
-    async fn handle(
-        self: Box<Self>,
-        actor: &mut Pipeline,
-        ctx: &mut SupervisorSession<Pipeline>,
-    ) -> Result<(), Error> {
-        let key = StageKey::<A>::new();
-        actor.spawn_workers(self.meta, key, self.message, ctx);
-        Ok(())
-    }
 }

@@ -58,13 +58,10 @@ where
 
     async fn routine(&mut self) {
         self.runtime.routine().await;
-        if let Some(mut task) = self.runtime.task.take() {
-            let message = task.to_output();
-            let msg = StageReport::<T>::new(self.meta, message);
-            let res = self.pipeline.send(msg);
-            self.runtime.failures.put(res);
-        }
-        // TODO: Report about failed tasks
+        let message = self.runtime.task.to_output();
+        let msg = StageReport::<T>::new(self.meta, message);
+        let res = self.pipeline.send(msg);
+        self.runtime.failures.put(res);
     }
 }
 

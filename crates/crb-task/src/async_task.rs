@@ -21,7 +21,7 @@ pub trait Task: Send + 'static {
 }
 
 pub struct TaskRuntime<T> {
-    pub task: Option<T>,
+    pub task: T,
     pub controller: Controller,
     pub failures: Failures,
 }
@@ -29,7 +29,7 @@ pub struct TaskRuntime<T> {
 impl<T: Task> TaskRuntime<T> {
     pub fn new(task: T) -> Self {
         Self {
-            task: Some(task),
+            task,
             controller: Controller::default(),
             failures: Failures::default(),
         }
@@ -46,10 +46,8 @@ where
     }
 
     async fn routine(&mut self) {
-        if let Some(mut task) = self.task.take() {
-            let res = task.controlled_routine(&mut self.controller).await;
-            self.failures.put(res);
-        }
+        let res = self.task.controlled_routine(&mut self.controller).await;
+        self.failures.put(res);
     }
 }
 

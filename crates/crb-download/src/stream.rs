@@ -67,6 +67,6 @@ impl Stream for Downloader {
 }
 
 enum State {
-    Request(Pin<Box<dyn Future<Output = reqwest::Result<Response>>>>),
-    Stream(Pin<Box<dyn Stream<Item = reqwest::Result<Bytes>>>>),
+    Request(Pin<Box<dyn Future<Output = reqwest::Result<Response>> + Send>>),
+    Stream(Pin<Box<dyn Stream<Item = reqwest::Result<Bytes>> + Send>>),
 }

@@ -3,10 +3,14 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
 use crb_runtime::kit::{Entrypoint, Interruptor, Runtime};
+use derive_more::{Deref, DerefMut};
 use futures::Future;
 use std::marker::PhantomData;
 
+#[derive(Deref, DerefMut)]
 pub struct TypedTask<T> {
+    #[deref]
+    #[deref_mut]
     task: TypelessTask,
     _run: PhantomData<T>,
 }
@@ -43,6 +47,10 @@ pub struct TypelessTask {
 impl TypelessTask {
     pub fn cancel_on_drop(&mut self, cancel: bool) {
         self.cancel_on_drop = cancel;
+    }
+
+    pub fn interrupt(&mut self) {
+        self.interruptor.stop(true).ok();
     }
 }
 

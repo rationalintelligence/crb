@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
+derive_more.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
 futures.workspace = true

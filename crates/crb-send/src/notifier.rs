@@ -1,6 +1,5 @@
 //! A module with notifiers.
 
-use crate::message::Message;
 use crate::sender::{EventSender, Sender};
 use anyhow::Error;
 use std::sync::Arc;

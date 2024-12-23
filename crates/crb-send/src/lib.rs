@@ -7,8 +7,6 @@
 //! two priority queues). If we use the `SendError` we have to
 //! drop the details!
 
-#![warn(missing_docs)]
-
 pub mod message;
 pub mod notifier;
 pub mod sender;

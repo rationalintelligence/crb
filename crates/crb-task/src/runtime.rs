@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime};
-use futures::stream::{Abortable, Aborted};
+use futures::stream::Abortable;
 
 #[async_trait]
 pub trait Task: Send + 'static {

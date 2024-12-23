@@ -1,6 +1,5 @@
 use crate::finalizer::{BoxFinalizer, Finalizer};
 use crate::Routine;
-use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::Duration;
 use crb_runtime::kit::{
@@ -43,12 +42,7 @@ impl<R: Routine> Runtime for RoutineRuntime<R> {
 
     async fn routine(&mut self) {
         let ctx = &mut self.context;
-        let output = self.routine.routine(ctx).await;
-        let result = if let Some(mut finalizer) = self.context.session().finalizer.take() {
-            finalizer.finalize(output).await
-        } else {
-            output.map(drop).map_err(Error::from)
-        };
+        let result = self.routine.routine(ctx).await;
         self.failures.put(result);
     }
 }

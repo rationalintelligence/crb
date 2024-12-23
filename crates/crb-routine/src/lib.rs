@@ -30,13 +30,19 @@ pub trait Routine: Sized + Send + 'static {
     type Context: RoutineContext<Self>;
     type Output: Send;
 
-    async fn routine(&mut self, ctx: &mut Self::Context) -> Result<Self::Output, TaskError> {
+    async fn routine(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
         let reg = ctx.session().controller().take_registration()?;
         // TODO: Get time limit from the context (and make it ajustable in real-time)
         let time_limit = self.time_limit().await;
-        let fut = timeout(time_limit, self.interruptable_routine(ctx));
-        let output = Abortable::new(fut, reg).await???;
-        Ok(output)
+        let fut = timeout(time_limit, self.basic_routine(ctx));
+        Abortable::new(fut, reg).await???;
+        Ok(())
+    }
+
+    async fn basic_routine(&mut self, ctx: &mut Self::Context) -> Result<(), TaskError> {
+        let output = self.interruptable_routine(ctx).await;
+        self.finalize(output, ctx).await?;
+        Ok(())
     }
 
     async fn interruptable_routine(
@@ -63,6 +69,17 @@ pub trait Routine: Sized + Send + 'static {
 
     async fn repeatable_routine(&mut self) -> Result<Option<Self::Output>, Error> {
         Ok(None)
+    }
+
+    async fn finalize(
+        &mut self,
+        output: Result<Self::Output, TaskError>,
+        ctx: &mut Self::Context,
+    ) -> Result<(), Error> {
+        if let Some(mut finalizer) = ctx.session().take_finalizer() {
+            finalizer.finalize(output).await?;
+        };
+        Ok(())
     }
 
     // TODO: Use context instead

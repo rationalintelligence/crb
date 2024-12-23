@@ -1,4 +1,6 @@
-use anyhow::Error;
+use crate::runtime::Task;
+use anyhow::{Error, Result};
+use async_trait::async_trait;
 use crb_core::JoinHandle;
 use futures::Future;
 
@@ -15,7 +17,7 @@ impl Drop for TypelessTask {
 impl TypelessTask {
     pub fn spawn<T>(fut: T) -> Self
     where
-        T: Future<Output = Result<(), Error>> + Send + 'static,
+        T: Future<Output = Result<()>> + Send + 'static,
     {
         let handle = crb_core::spawn(async {
             if let Err(err) = fut.await {
@@ -23,5 +25,22 @@ impl TypelessTask {
             }
         });
         Self { handle }
+    }
+}
+
+struct FnTask<T> {
+    fut: Option<T>,
+}
+
+#[async_trait]
+impl<T> Task for FnTask<T>
+where
+    T: Future<Output = Result<()>> + Send + 'static,
+{
+    async fn routine(&mut self) -> Result<()> {
+        self.fut
+            .take()
+            .ok_or_else(|| Error::msg("Future has taken already"))?
+            .await
     }
 }

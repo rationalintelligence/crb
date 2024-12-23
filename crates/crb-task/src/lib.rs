@@ -1,5 +1,9 @@
-mod task;
-mod typed_task;
+pub mod runtime;
+pub mod typed_task;
+pub mod typeless_task;
 
-pub use task::TypelessTask;
-pub use typed_task::{Task, TypedTask};
+pub mod kit {
+    pub use crate::runtime::Task;
+    pub use crate::typed_task::TypedTask;
+    pub use crate::typeless_task::TypelessTask;
+}

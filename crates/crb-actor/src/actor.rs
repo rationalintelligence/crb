@@ -1,5 +1,5 @@
 use crate::runtime::ActorContext;
-use anyhow::Error;
+use anyhow::Result;
 use async_trait::async_trait;
 use crb_runtime::kit::ManagedContext;
 
@@ -7,17 +7,17 @@ use crb_runtime::kit::ManagedContext;
 pub trait Actor: Sized + Send + 'static {
     type Context: ActorContext<Self>;
 
-    async fn initialize(&mut self, _ctx: &mut Self::Context) -> Result<(), Error> {
+    async fn initialize(&mut self, _ctx: &mut Self::Context) -> Result<()> {
         Ok(())
     }
 
-    async fn interrupt(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
+    async fn interrupt(&mut self, ctx: &mut Self::Context) -> Result<()> {
         // Closes the channel
         ctx.session().shutdown();
         Ok(())
     }
 
-    async fn event(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
+    async fn event(&mut self, ctx: &mut Self::Context) -> Result<()> {
         let envelope = ctx.session().joint().next_envelope();
         if let Some(envelope) = envelope.await {
             envelope.handle(self, ctx).await?;
@@ -28,7 +28,7 @@ pub trait Actor: Sized + Send + 'static {
         Ok(())
     }
 
-    async fn finalize(&mut self, _ctx: &mut Self::Context) -> Result<(), Error> {
+    async fn finalize(&mut self, _ctx: &mut Self::Context) -> Result<()> {
         Ok(())
     }
 }

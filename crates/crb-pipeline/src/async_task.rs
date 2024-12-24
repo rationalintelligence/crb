@@ -68,10 +68,11 @@ where
 
     async fn routine(&mut self) {
         self.runtime.routine().await;
-        let message = self.runtime.task.to_output();
-        let msg = StageReport::<T>::new(self.meta, message);
-        let res = self.pipeline.send(msg);
-        self.runtime.failures.put(res);
+        while let Some(message) = self.runtime.task.to_output() {
+            let msg = StageReport::<T>::new(self.meta, message);
+            let res = self.pipeline.send(msg);
+            self.runtime.failures.put(res);
+        }
     }
 }
 

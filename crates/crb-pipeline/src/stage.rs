@@ -1,15 +1,17 @@
 use crate::pipeline::{RoutePoint, RouteValue};
+use async_trait::async_trait;
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 use typedmap::TypedMapKey;
 
+#[async_trait]
 pub trait Stage<LayerState = ()>: Send + 'static {
     type Input;
     type Output: Clone + Send + 'static;
 
     fn from_input(input: Self::Input) -> Self;
-    fn to_output(&mut self) -> Self::Output;
+    fn to_output(&mut self) -> Option<Self::Output>;
 }
 
 pub trait StageSource {

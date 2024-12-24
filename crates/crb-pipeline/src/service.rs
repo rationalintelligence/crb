@@ -12,7 +12,7 @@ pub mod stage {
 }
 
 pub struct MessageStage<M> {
-    message: M,
+    message: Option<M>,
 }
 
 impl<M> Stage for MessageStage<M>
@@ -23,11 +23,13 @@ where
     type Output = M;
 
     fn from_input(input: Self::Input) -> Self {
-        Self { message: input }
+        Self {
+            message: Some(input),
+        }
     }
 
-    fn to_output(&mut self) -> Self::Output {
-        self.message.clone()
+    fn to_output(&mut self) -> Option<Self::Output> {
+        self.message.take()
     }
 }
 

@@ -6,7 +6,7 @@ use crb_runtime::kit::ManagedContext;
 use tokio::time::{sleep, Duration};
 
 struct FirstProcessor {
-    value: u16,
+    value: Option<u16>,
 }
 
 #[async_trait]
@@ -26,17 +26,17 @@ impl Stage for FirstProcessor {
 
     fn from_input(input: Self::Input) -> Self {
         Self {
-            value: input as u16 * 2,
+            value: Some(input as u16),
         }
     }
 
-    fn to_output(&mut self) -> Self::Output {
-        self.value
+    fn to_output(&mut self) -> Option<Self::Output> {
+        self.value.take().map(|value| value * 2)
     }
 }
 
 struct SecondProcessor {
-    value: u32,
+    value: Option<u32>,
 }
 
 #[async_trait]
@@ -56,12 +56,12 @@ impl Stage for SecondProcessor {
 
     fn from_input(input: Self::Input) -> Self {
         Self {
-            value: input as u32 * 2,
+            value: Some(input as u32),
         }
     }
 
-    fn to_output(&mut self) -> Self::Output {
-        self.value
+    fn to_output(&mut self) -> Option<Self::Output> {
+        self.value.take().map(|value| value * 2)
     }
 }
 

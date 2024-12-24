@@ -12,18 +12,28 @@ pub mod stage {
 
     pub type SyncTask<T> = SyncTaskStage<T>;
 
-    pub fn sync_task<T>() -> SyncTaskStage<T> {
+    pub fn sync_task<T>() -> SyncTaskStage<T>
+    where
+        T: Stage,
+        T::Config: Default,
+    {
         SyncTaskStage::<T>::default()
     }
 }
 
-pub struct SyncTaskStage<T> {
-    _type: PhantomData<T>,
+pub struct SyncTaskStage<T: Stage> {
+    config: T::Config,
 }
 
-impl<T> Default for SyncTaskStage<T> {
+impl<T> Default for SyncTaskStage<T>
+where
+    T: Stage,
+    T::Config: Default,
+{
     fn default() -> Self {
-        Self { _type: PhantomData }
+        Self {
+            config: T::Config::default(),
+        }
     }
 }
 

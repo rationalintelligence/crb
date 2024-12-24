@@ -12,18 +12,28 @@ pub mod stage {
 
     pub type Task<T> = TaskStage<T>;
 
-    pub fn task<T>() -> TaskStage<T> {
+    pub fn task<T>() -> TaskStage<T>
+    where
+        T: Stage,
+        T::Config: Default,
+    {
         TaskStage::<T>::default()
     }
 }
 
-pub struct TaskStage<T> {
-    _type: PhantomData<T>,
+pub struct TaskStage<T: Stage> {
+    config: T::Config,
 }
 
-impl<T> Default for TaskStage<T> {
+impl<T> Default for TaskStage<T>
+where
+    T: Stage,
+    T::Config: Default,
+{
     fn default() -> Self {
-        Self { _type: PhantomData }
+        Self {
+            config: T::Config::default(),
+        }
     }
 }
 

@@ -12,18 +12,28 @@ pub mod stage {
 
     pub type Actor<A> = ActorStage<A>;
 
-    pub fn actor<A>() -> ActorStage<A> {
+    pub fn actor<A>() -> ActorStage<A>
+    where
+        A: Stage,
+        A::Config: Default,
+    {
         ActorStage::<A>::default()
     }
 }
 
-pub struct ActorStage<A> {
-    _type: PhantomData<A>,
+pub struct ActorStage<A: Stage> {
+    config: A::Config,
 }
 
-impl<A> Default for ActorStage<A> {
+impl<A> Default for ActorStage<A>
+where
+    A: Stage,
+    A::Config: Default,
+{
     fn default() -> Self {
-        Self { _type: PhantomData }
+        Self {
+            config: A::Config::default(),
+        }
     }
 }
 

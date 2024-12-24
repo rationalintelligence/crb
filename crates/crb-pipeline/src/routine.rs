@@ -12,18 +12,28 @@ pub mod stage {
 
     pub type Routine<R> = RoutineStage<R>;
 
-    pub fn routine<R>() -> RoutineStage<R> {
+    pub fn routine<R>() -> RoutineStage<R>
+    where
+        R: Stage,
+        R::Config: Default,
+    {
         RoutineStage::<R>::default()
     }
 }
 
-pub struct RoutineStage<R> {
-    _type: PhantomData<R>,
+pub struct RoutineStage<R: Stage> {
+    config: R::Config,
 }
 
-impl<R> Default for RoutineStage<R> {
+impl<R> Default for RoutineStage<R>
+where
+    R: Stage,
+    R::Config: Default,
+{
     fn default() -> Self {
-        Self { _type: PhantomData }
+        Self {
+            config: R::Config::default(),
+        }
     }
 }
 

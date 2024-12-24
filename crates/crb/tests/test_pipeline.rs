@@ -20,6 +20,7 @@ impl Actor for FirstProcessor {
     }
 }
 
+#[async_trait]
 impl Stage for FirstProcessor {
     type Input = u8;
     type Output = u16;
@@ -30,7 +31,7 @@ impl Stage for FirstProcessor {
         }
     }
 
-    fn to_output(&mut self) -> Option<Self::Output> {
+    async fn next_output(&mut self) -> Option<Self::Output> {
         self.value.take().map(|value| value * 2)
     }
 }
@@ -50,6 +51,7 @@ impl Actor for SecondProcessor {
     }
 }
 
+#[async_trait]
 impl Stage for SecondProcessor {
     type Input = u16;
     type Output = u32;
@@ -60,7 +62,7 @@ impl Stage for SecondProcessor {
         }
     }
 
-    fn to_output(&mut self) -> Option<Self::Output> {
+    async fn next_output(&mut self) -> Option<Self::Output> {
         self.value.take().map(|value| value * 2)
     }
 }

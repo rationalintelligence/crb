@@ -1,4 +1,5 @@
 use crate::stage::{InitialKey, Stage, StageSource};
+use async_trait::async_trait;
 use std::marker::PhantomData;
 
 pub mod stage {
@@ -15,6 +16,7 @@ pub struct MessageStage<M> {
     message: Option<M>,
 }
 
+#[async_trait]
 impl<M> Stage for MessageStage<M>
 where
     M: Clone + Send + 'static,
@@ -28,7 +30,7 @@ where
         }
     }
 
-    fn to_output(&mut self) -> Option<Self::Output> {
+    async fn next_output(&mut self) -> Option<Self::Output> {
         self.message.take()
     }
 }

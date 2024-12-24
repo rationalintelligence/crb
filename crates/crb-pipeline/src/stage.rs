@@ -11,7 +11,7 @@ pub trait Stage<LayerState = ()>: Send + 'static {
     type Output: Clone + Send + 'static;
 
     fn from_input(input: Self::Input) -> Self;
-    fn to_output(&mut self) -> Option<Self::Output>;
+    async fn next_output(&mut self) -> Option<Self::Output>;
 }
 
 pub trait StageSource {

@@ -115,8 +115,9 @@ where
         pipeline: Address<Pipeline>,
         input: Self::Input,
     ) -> Box<dyn Runtime> {
-        let actor = T::from_input(input);
-        let runtime = TaskRuntime::new(actor);
+        let config = self.config.clone();
+        let instance = T::construct(config, input);
+        let runtime = TaskRuntime::new(instance);
         let conducted_runtime = TaskStageRuntime::<T> {
             meta,
             pipeline,

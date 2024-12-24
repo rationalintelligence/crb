@@ -119,8 +119,9 @@ where
         pipeline: Address<Pipeline>,
         input: Self::Input,
     ) -> Box<dyn Runtime> {
-        let actor = R::from_input(input);
-        let runtime = RoutineRuntime::new(actor);
+        let config = self.config.clone();
+        let instance = R::construct(config, input);
+        let runtime = RoutineRuntime::new(instance);
         let conducted_runtime = RoutineStageRuntime::<R> {
             meta,
             pipeline,

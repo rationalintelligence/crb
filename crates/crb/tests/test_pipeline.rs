@@ -26,7 +26,7 @@ impl Stage for FirstProcessor {
     type Input = u8;
     type Output = u16;
 
-    fn from_input(input: Self::Input) -> Self {
+    fn construct(_config: Self::Config, input: Self::Input) -> Self {
         Self {
             value: Some(input as u16),
         }
@@ -58,7 +58,7 @@ impl Stage for SecondProcessor {
     type Input = u16;
     type Output = u32;
 
-    fn from_input(input: Self::Input) -> Self {
+    fn construct(_config: Self::Config, input: Self::Input) -> Self {
         Self {
             value: Some(input as u32),
         }

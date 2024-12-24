@@ -25,7 +25,7 @@ where
     type Input = M;
     type Output = M;
 
-    fn from_input(input: Self::Input) -> Self {
+    fn construct(_config: Self::Config, input: Self::Input) -> Self {
         Self {
             message: Some(input),
         }

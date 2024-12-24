@@ -22,6 +22,7 @@ impl Actor for FirstProcessor {
 
 #[async_trait]
 impl Stage for FirstProcessor {
+    type Config = ();
     type Input = u8;
     type Output = u16;
 
@@ -53,6 +54,7 @@ impl Actor for SecondProcessor {
 
 #[async_trait]
 impl Stage for SecondProcessor {
+    type Config = ();
     type Input = u16;
     type Output = u32;
 

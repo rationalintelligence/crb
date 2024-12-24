@@ -21,6 +21,7 @@ impl<M> Stage for MessageStage<M>
 where
     M: Clone + Send + 'static,
 {
+    type Config = ();
     type Input = M;
     type Output = M;
 

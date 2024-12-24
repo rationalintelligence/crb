@@ -7,7 +7,7 @@ use typedmap::TypedMapKey;
 
 #[async_trait]
 pub trait Stage<LayerState = ()>: Send + 'static {
-    type Config: Clone;
+    type Config: Clone + Send;
     type Input;
     type Output: Clone + Send + 'static;
 

@@ -5,7 +5,6 @@ use async_trait::async_trait;
 use crb_actor::kit::{Actor, Address};
 use crb_actor::runtime::ActorRuntime;
 use crb_runtime::kit::{Interruptor, Runtime};
-use std::marker::PhantomData;
 
 pub mod stage {
     use super::*;
@@ -57,7 +56,7 @@ where
     type Stage = A;
 
     fn destination(&self) -> RoutePoint<A::Input> {
-        let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>();
+        let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>(self.config.clone());
         Box::new(generator)
     }
 }
@@ -88,24 +87,24 @@ where
     }
 }
 
-pub struct ActorStageRuntimeGenerator<A> {
-    _type: PhantomData<A>,
+pub struct ActorStageRuntimeGenerator<A: Stage> {
+    config: A::Config,
 }
 
 impl<A> ActorStageRuntimeGenerator<A>
 where
     A: Actor + Stage,
 {
-    pub fn new<M>() -> impl RuntimeGenerator<Input = M>
+    pub fn new<M>(config: A::Config) -> impl RuntimeGenerator<Input = M>
     where
         A: Stage<Input = M>,
         A::Context: Default,
     {
-        Self { _type: PhantomData }
+        Self { config }
     }
 }
 
-unsafe impl<A> Sync for ActorStageRuntimeGenerator<A> {}
+unsafe impl<A: Stage> Sync for ActorStageRuntimeGenerator<A> {}
 
 impl<A> RuntimeGenerator for ActorStageRuntimeGenerator<A>
 where

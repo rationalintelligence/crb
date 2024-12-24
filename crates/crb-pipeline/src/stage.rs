@@ -1,8 +1,4 @@
-use crate::actor::ActorStage;
-use crate::async_task::TaskStage;
 use crate::pipeline::{RoutePoint, RouteValue};
-use crate::routine::RoutineStage;
-use crate::service::InputStage;
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
@@ -28,30 +24,6 @@ pub trait StageSource {
 pub trait StageDestination {
     type Stage: Stage;
     fn destination(&self) -> RoutePoint<<Self::Stage as Stage>::Input>;
-}
-
-pub type Input<M> = InputStage<M>;
-
-pub fn input<M>() -> InputStage<M> {
-    InputStage::<M>::default()
-}
-
-pub type Actor<A> = ActorStage<A>;
-
-pub fn actor<A>() -> ActorStage<A> {
-    ActorStage::<A>::default()
-}
-
-pub type Routine<R> = RoutineStage<R>;
-
-pub fn routine<R>() -> RoutineStage<R> {
-    RoutineStage::<R>::default()
-}
-
-pub type Task<T> = TaskStage<T>;
-
-pub fn task<T>() -> TaskStage<T> {
-    TaskStage::<T>::default()
 }
 
 pub struct InitialKey<M> {

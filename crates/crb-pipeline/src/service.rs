@@ -1,6 +1,16 @@
 use crate::stage::{InitialKey, Stage, StageSource};
 use std::marker::PhantomData;
 
+pub mod stage {
+    use super::*;
+
+    pub type Input<M> = InputStage<M>;
+
+    pub fn input<M>() -> InputStage<M> {
+        InputStage::<M>::default()
+    }
+}
+
 pub struct MessageStage<M> {
     message: M,
 }

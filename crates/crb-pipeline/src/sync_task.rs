@@ -4,30 +4,30 @@ use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
 use crb_actor::kit::Address;
 use crb_runtime::kit::{Interruptor, Runtime};
-use crb_task::kit::{Task, TaskRuntime};
+use crb_task::kit::{SyncTask, SyncTaskRuntime};
 use std::marker::PhantomData;
 
 pub mod stage {
-    use super::*;
+    pub use super::*;
 
-    pub type Task<T> = TaskStage<T>;
+    pub type SyncTask<T> = SyncTaskStage<T>;
 
-    pub fn task<T>() -> TaskStage<T> {
-        TaskStage::<T>::default()
+    pub fn sync_task<T>() -> SyncTaskStage<T> {
+        SyncTaskStage::<T>::default()
     }
 }
 
-pub struct TaskStage<T> {
+pub struct SyncTaskStage<T> {
     _type: PhantomData<T>,
 }
 
-impl<T> Default for TaskStage<T> {
+impl<T> Default for SyncTaskStage<T> {
     fn default() -> Self {
         Self { _type: PhantomData }
     }
 }
 
-impl<T> StageSource for TaskStage<T>
+impl<T> StageSource for SyncTaskStage<T>
 where
     T: Stage,
 {
@@ -39,28 +39,28 @@ where
     }
 }
 
-impl<T> StageDestination for TaskStage<T>
+impl<T> StageDestination for SyncTaskStage<T>
 where
-    T: Task + Stage,
+    T: SyncTask + Stage,
 {
     type Stage = T;
 
     fn destination(&self) -> RoutePoint<T::Input> {
-        let generator = TaskStageRuntimeGenerator::<T>::new::<T::Input>();
+        let generator = SyncTaskStageRuntimeGenerator::<T>::new::<T::Input>();
         Box::new(generator)
     }
 }
 
-pub struct TaskStageRuntime<T: Task + Stage> {
+pub struct SyncTaskStageRuntime<T: SyncTask + Stage> {
     meta: Metadata,
     pipeline: Address<Pipeline>,
-    runtime: TaskRuntime<T>,
+    runtime: SyncTaskRuntime<T>,
 }
 
 #[async_trait]
-impl<T> Runtime for TaskStageRuntime<T>
+impl<T> Runtime for SyncTaskStageRuntime<T>
 where
-    T: Task + Stage,
+    T: SyncTask + Stage,
 {
     fn get_interruptor(&mut self) -> Interruptor {
         self.runtime.get_interruptor()
@@ -68,20 +68,24 @@ where
 
     async fn routine(&mut self) {
         self.runtime.routine().await;
-        let message = self.runtime.task.to_output();
-        let msg = StageReport::<T>::new(self.meta, message);
-        let res = self.pipeline.send(msg);
-        self.runtime.failures.put(res);
+        if let Some(task) = self.runtime.task.as_mut() {
+            let message = task.to_output();
+            let msg = StageReport::<T>::new(self.meta, message);
+            let res = self.pipeline.send(msg);
+            self.runtime.failures.put(res);
+        } else {
+            // TODO: Report about the error
+        }
     }
 }
 
-pub struct TaskStageRuntimeGenerator<T> {
+pub struct SyncTaskStageRuntimeGenerator<T> {
     _type: PhantomData<T>,
 }
 
-impl<T> TaskStageRuntimeGenerator<T>
+impl<T> SyncTaskStageRuntimeGenerator<T>
 where
-    T: Task + Stage,
+    T: SyncTask + Stage,
 {
     pub fn new<M>() -> impl RuntimeGenerator<Input = M>
     where
@@ -91,11 +95,11 @@ where
     }
 }
 
-unsafe impl<T> Sync for TaskStageRuntimeGenerator<T> {}
+unsafe impl<T> Sync for SyncTaskStageRuntimeGenerator<T> {}
 
-impl<T> RuntimeGenerator for TaskStageRuntimeGenerator<T>
+impl<T> RuntimeGenerator for SyncTaskStageRuntimeGenerator<T>
 where
-    T: Task + Stage,
+    T: SyncTask + Stage,
 {
     type Input = T::Input;
 
@@ -106,8 +110,8 @@ where
         input: Self::Input,
     ) -> Box<dyn Runtime> {
         let actor = T::from_input(input);
-        let runtime = TaskRuntime::new(actor);
-        let conducted_runtime = TaskStageRuntime::<T> {
+        let runtime = SyncTaskRuntime::new(actor);
+        let conducted_runtime = SyncTaskStageRuntime::<T> {
             meta,
             pipeline,
             runtime,

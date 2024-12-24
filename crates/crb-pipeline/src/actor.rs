@@ -7,6 +7,16 @@ use crb_actor::runtime::ActorRuntime;
 use crb_runtime::kit::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
+pub mod stage {
+    use super::*;
+
+    pub type Actor<A> = ActorStage<A>;
+
+    pub fn actor<A>() -> ActorStage<A> {
+        ActorStage::<A>::default()
+    }
+}
+
 pub struct ActorStage<A> {
     _type: PhantomData<A>,
 }

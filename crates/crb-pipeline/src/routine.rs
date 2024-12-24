@@ -7,6 +7,16 @@ use crb_routine::kit::{Routine, RoutineRuntime};
 use crb_runtime::kit::{Interruptor, Runtime};
 use std::marker::PhantomData;
 
+pub mod stage {
+    use super::*;
+
+    pub type Routine<R> = RoutineStage<R>;
+
+    pub fn routine<R>() -> RoutineStage<R> {
+        RoutineStage::<R>::default()
+    }
+}
+
 pub struct RoutineStage<R> {
     _type: PhantomData<R>,
 }

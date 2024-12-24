@@ -1,2 +1,2 @@
-pub mod parallel;
 pub mod concurrent;
+pub mod parallel;

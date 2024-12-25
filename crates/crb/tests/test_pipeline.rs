@@ -15,6 +15,7 @@ impl Actor for FirstProcessor {
 
     async fn initialize(&mut self, ctx: &mut Self::Context) -> Result<()> {
         println!("FirstProcessor");
+        self.value.as_mut().map(|value| *value *= 2);
         ctx.shutdown();
         Ok(())
     }
@@ -33,7 +34,7 @@ impl Stage for FirstProcessor {
     }
 
     async fn next_output(&mut self) -> Option<Self::Output> {
-        self.value.take().map(|value| value * 2)
+        self.value.take()
     }
 }
 
@@ -47,6 +48,7 @@ impl Actor for SecondProcessor {
 
     async fn initialize(&mut self, ctx: &mut Self::Context) -> Result<()> {
         println!("SecondProcessor");
+        self.value.as_mut().map(|value| *value *= 2);
         ctx.shutdown();
         Ok(())
     }
@@ -65,7 +67,7 @@ impl Stage for SecondProcessor {
     }
 
     async fn next_output(&mut self) -> Option<Self::Output> {
-        self.value.take().map(|value| value * 2)
+        self.value.take()
     }
 }
 

@@ -8,6 +8,8 @@ pub mod service;
 pub mod stage;
 #[cfg(feature = "sync")]
 pub mod sync_task;
+#[cfg(feature = "sync")]
+pub mod hybryd_task;
 
 pub mod kit {
     pub use crate::actor::{stage::Actor, ActorStage};
@@ -19,4 +21,6 @@ pub mod kit {
     pub use crate::stage::Stage;
     #[cfg(feature = "sync")]
     pub use crate::sync_task::stage::SyncTask;
+    #[cfg(feature = "sync")]
+    pub use crate::hybryd_task::stage::HybrydTask;
 }

@@ -11,4 +11,7 @@ pub mod kit {
 
     #[cfg(feature = "sync")]
     pub use crate::sync_task::{SyncTask, SyncTaskRuntime, TypedSyncTask, TypelessSyncTask};
+
+    #[cfg(feature = "sync")]
+    pub use crate::hybryd_task::{HybrydTask, HybrydTaskRuntime, TypedHybrydTask, TypelessHybrydTask};
 }

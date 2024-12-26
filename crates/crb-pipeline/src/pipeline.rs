@@ -10,16 +10,21 @@ use derive_more::Deref;
 use std::any::type_name;
 use typedmap::{TypedDashMap, TypedMapKey};
 
-pub struct Pipeline {
+pub struct Pipeline<State = ()> {
     sequencer: Sequencer,
     routes: TypedDashMap,
+    state: State,
 }
 
-impl Pipeline {
-    pub fn new() -> Self {
+impl<State> Pipeline<State> {
+    pub fn new() -> Self
+    where
+        State: Default,
+    {
         Self {
             sequencer: Sequencer::default(),
             routes: TypedDashMap::default(),
+            state: State::default(),
         }
     }
 

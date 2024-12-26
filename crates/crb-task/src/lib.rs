@@ -3,6 +3,9 @@ pub mod async_task;
 #[cfg(feature = "sync")]
 pub mod sync_task;
 
+#[cfg(feature = "sync")]
+pub mod hybryd_task;
+
 pub mod kit {
     pub use crate::async_task::{Task, TaskRuntime, TypedTask, TypelessTask};
 

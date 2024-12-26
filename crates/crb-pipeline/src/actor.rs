@@ -55,15 +55,15 @@ where
 {
     type Stage = A;
 
-    fn destination(&self) -> RoutePoint<A::Input> {
-        let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>(self.config.clone());
+    fn destination(&self) -> RoutePoint<A::Input, A::State> {
+        let generator = ActorStageRuntimeGenerator::<A>::new(self.config.clone());
         RoutePoint::new(generator)
     }
 }
 
 pub struct ActorStageRuntime<A: Actor + Stage> {
     meta: Metadata,
-    pipeline: Address<Pipeline>,
+    pipeline: Address<Pipeline<A::State>>,
     runtime: ActorRuntime<A>,
 }
 
@@ -95,9 +95,9 @@ impl<A> ActorStageRuntimeGenerator<A>
 where
     A: Actor + Stage,
 {
-    pub fn new<M>(config: A::Config) -> impl RuntimeGenerator<Input = M>
+    pub fn new(config: A::Config) -> impl RuntimeGenerator<Input = A::Input, State = A::State>
     where
-        A: Stage<Input = M>,
+        A: Stage,
         A::Context: Default,
     {
         Self { config }
@@ -111,16 +111,18 @@ where
     A: Actor + Stage,
     A::Context: Default,
 {
+    type State = A::State;
     type Input = A::Input;
 
     fn generate(
         &self,
         meta: Metadata,
-        pipeline: Address<Pipeline>,
+        pipeline: Address<Pipeline<Self::State>>,
         input: Self::Input,
+        state: &mut Self::State,
     ) -> Box<dyn Runtime> {
         let config = self.config.clone();
-        let instance = A::construct(config, input);
+        let instance = A::construct(config, input, state);
         let runtime = ActorRuntime::new(instance);
         let conducted_runtime = ActorStageRuntime::<A> {
             meta,

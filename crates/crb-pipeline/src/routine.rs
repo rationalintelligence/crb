@@ -55,15 +55,15 @@ where
 {
     type Stage = R;
 
-    fn destination(&self) -> RoutePoint<R::Input> {
-        let generator = RoutineStageRuntimeGenerator::<R>::new::<R::Input>(self.config.clone());
+    fn destination(&self) -> RoutePoint<R::Input, R::State> {
+        let generator = RoutineStageRuntimeGenerator::<R>::new(self.config.clone());
         RoutePoint::new(generator)
     }
 }
 
 pub struct RoutineStageRuntime<R: Routine + Stage> {
     meta: Metadata,
-    pipeline: Address<Pipeline>,
+    pipeline: Address<Pipeline<R::State>>,
     runtime: RoutineRuntime<R>,
 }
 
@@ -95,9 +95,9 @@ impl<R> RoutineStageRuntimeGenerator<R>
 where
     R: Routine + Stage,
 {
-    pub fn new<M>(config: R::Config) -> impl RuntimeGenerator<Input = M>
+    pub fn new(config: R::Config) -> impl RuntimeGenerator<Input = R::Input, State = R::State>
     where
-        R: Stage<Input = M>,
+        R: Stage,
         R::Context: Default,
     {
         Self { config }
@@ -111,16 +111,18 @@ where
     R: Routine + Stage,
     R::Context: Default,
 {
+    type State = R::State;
     type Input = R::Input;
 
     fn generate(
         &self,
         meta: Metadata,
-        pipeline: Address<Pipeline>,
+        pipeline: Address<Pipeline<Self::State>>,
         input: Self::Input,
+        state: &mut Self::State,
     ) -> Box<dyn Runtime> {
         let config = self.config.clone();
-        let instance = R::construct(config, input);
+        let instance = R::construct(config, input, state);
         let runtime = RoutineRuntime::new(instance);
         let conducted_runtime = RoutineStageRuntime::<R> {
             meta,

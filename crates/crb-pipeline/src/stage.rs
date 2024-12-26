@@ -1,4 +1,4 @@
-use crate::pipeline::{RoutePoint, RouteValue};
+use crate::pipeline::{PipelineState, RoutePoint, RouteValue};
 use async_trait::async_trait;
 use std::any::type_name;
 use std::hash::{Hash, Hasher};
@@ -6,19 +6,21 @@ use std::marker::PhantomData;
 use typedmap::TypedMapKey;
 
 #[async_trait]
-pub trait Stage<LayerState = ()>: Send + 'static {
+pub trait Stage: Send + 'static {
+    type State: PipelineState;
     type Config: Clone + Send;
     type Input;
     type Output: Clone + Send + 'static;
 
-    fn construct(config: Self::Config, input: Self::Input) -> Self;
+    fn construct(config: Self::Config, input: Self::Input, state: &mut Self::State) -> Self;
     async fn next_output(&mut self) -> Option<Self::Output>;
 }
 
 pub trait StageSource {
     type Stage: Stage;
-    type Key: TypedMapKey<Value = RouteValue<<Self::Stage as Stage>::Output>>
-        + Sync
+    type Key: TypedMapKey<
+            Value = RouteValue<<Self::Stage as Stage>::Output, <Self::Stage as Stage>::State>,
+        > + Sync
         + Send
         + 'static;
     fn source(&self) -> Self::Key;
@@ -26,15 +28,17 @@ pub trait StageSource {
 
 pub trait StageDestination {
     type Stage: Stage;
-    fn destination(&self) -> RoutePoint<<Self::Stage as Stage>::Input>;
+    fn destination(
+        &self,
+    ) -> RoutePoint<<Self::Stage as Stage>::Input, <Self::Stage as Stage>::State>;
 }
 
-pub struct InitialKey<M, State = ()> {
+pub struct InitialKey<M, State> {
     _type: PhantomData<M>,
     _state: PhantomData<State>,
 }
 
-impl<M> InitialKey<M> {
+impl<M, State> InitialKey<M, State> {
     pub fn new() -> Self {
         Self {
             _type: PhantomData,
@@ -43,43 +47,39 @@ impl<M> InitialKey<M> {
     }
 }
 
-impl<M> Clone for InitialKey<M> {
+impl<M, State> Clone for InitialKey<M, State> {
     fn clone(&self) -> Self {
         Self::new()
     }
 }
 
-impl<M> Hash for InitialKey<M> {
+impl<M, State> Hash for InitialKey<M, State> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         type_name::<M>().hash(state);
     }
 }
 
-impl<M> PartialEq for InitialKey<M> {
+impl<M, State> PartialEq for InitialKey<M, State> {
     fn eq(&self, _other: &Self) -> bool {
         true
     }
 }
 
-impl<M> Eq for InitialKey<M> {}
+impl<M, State> Eq for InitialKey<M, State> {}
 
-impl<M: 'static> TypedMapKey for InitialKey<M> {
-    type Value = RouteValue<M>;
+impl<M: 'static, State: PipelineState> TypedMapKey for InitialKey<M, State> {
+    type Value = RouteValue<M, State>;
 }
 
-pub struct StageKey<S, State = ()> {
+pub struct StageKey<S> {
     _type: PhantomData<S>,
-    _state: PhantomData<State>,
 }
 
 unsafe impl<S> Sync for StageKey<S> {}
 
 impl<S> StageKey<S> {
     pub fn new() -> Self {
-        Self {
-            _type: PhantomData,
-            _state: PhantomData,
-        }
+        Self { _type: PhantomData }
     }
 }
 
@@ -104,5 +104,5 @@ impl<S> PartialEq for StageKey<S> {
 impl<S> Eq for StageKey<S> {}
 
 impl<S: Stage> TypedMapKey for StageKey<S> {
-    type Value = RouteValue<S::Output>;
+    type Value = RouteValue<S::Output, S::State>;
 }

@@ -1,8 +1,10 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
+use crb_core::JoinHandle;
 use crb_runtime::kit::{Controller, Entrypoint, Failures, Interruptor, Runtime};
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
+use derive_more::{Deref, DerefMut};
 
 pub trait HybrydState: Send + 'static {}
 
@@ -74,7 +76,7 @@ impl<T> TransitionFor<T> for Interrupt
 where
     T: HybrydTask,
 {
-    async fn perform(&mut self, task: T) -> Transition<T> {
+    async fn perform(&mut self, _task: T) -> Transition<T> {
         match self.error.take() {
             None => Transition::Interrupted,
             Some(err) => Transition::Crashed(err),
@@ -223,7 +225,6 @@ where
     }
 }
 
-/*
 #[derive(Deref, DerefMut)]
 pub struct TypedHybrydTask<T> {
     #[deref]
@@ -278,31 +279,3 @@ impl Drop for TypelessHybrydTask {
         }
     }
 }
-
-impl TypelessHybrydTask {
-    pub fn spawn<T>(fun: T) -> Self
-    where
-        T: FnOnce() -> Result<()>,
-        T: Send + 'static,
-    {
-        let task = FnTask { fun: Some(fun) };
-        TypedHybrydTask::spawn(task).into()
-    }
-}
-
-struct FnTask<T> {
-    fun: Option<T>,
-}
-
-impl<T> HybrydTask for FnTask<T>
-where
-    T: FnOnce() -> Result<()>,
-    T: Send + 'static,
-{
-    fn routine(&mut self) -> Result<()> {
-        self.fun
-            .take()
-            .ok_or_else(|| Error::msg("Function has taken already"))?()
-    }
-}
-*/

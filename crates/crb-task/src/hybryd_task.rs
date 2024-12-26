@@ -7,10 +7,10 @@ use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
 
-pub trait HybrydState: Send {}
+pub trait HybrydState: Send + 'static {}
 
 impl<T> HybrydState for T
-where T: Send {}
+where T: Send + 'static {}
 
 pub struct Init;
 
@@ -18,9 +18,89 @@ pub struct NextState<T: ?Sized> {
     transition: Box<dyn TransitionFor<T>>,
 }
 
+impl<T> NextState<T>
+where
+    T: HybrydTask,
+{
+    pub fn do_sync<S>(state: S) -> Self
+    where
+        T: SyncActivity<S>,
+        S: HybrydState,
+    {
+        let runner = SyncRunner {
+            _task: PhantomData,
+            _state: PhantomData,
+        };
+        Self {
+            transition: Box::new(runner),
+        }
+    }
+
+    pub fn do_async<S>(state: S) -> Self
+    where
+        T: Activity<S>,
+        S: HybrydState,
+    {
+        let runner = AsyncRunner {
+            _task: PhantomData,
+            _state: PhantomData,
+        };
+        Self {
+            transition: Box::new(runner),
+        }
+    }
+
+    pub fn done() -> Self {
+        Self::interrupt(None)
+    }
+
+    pub fn fail(err: Error) -> Self {
+        Self::interrupt(Some(err))
+    }
+}
+
+impl<T> NextState<T>
+where
+    T: HybrydTask,
+{
+    fn interrupt(error: Option<Error>) -> Self {
+        Self {
+            transition: Box::new(Interrupt { error }),
+        }
+    }
+}
+
+pub struct Interrupt {
+    error: Option<Error>,
+}
+
+#[async_trait]
+impl<T> TransitionFor<T> for Interrupt
+where
+    T: HybrydTask,
+{
+    async fn perform(&mut self, task: T) -> Transition<T> {
+        match self.error.take() {
+            None => Transition::Interrupted,
+            Some(err) => Transition::Crashed(err),
+        }
+    }
+
+    async fn fallback(&mut self, task: T) -> (T, NextState<T>) {
+        (task, NextState::interrupt(self.error.take()))
+    }
+}
+
+enum Transition<T> {
+    Next(T, Result<NextState<T>>),
+    Crashed(Error),
+    Interrupted,
+}
+
 #[async_trait]
 trait TransitionFor<T>: Send {
-    async fn perform(&mut self, task: T) -> Result<(T, NextState<T>)>;
+    async fn perform(&mut self, task: T) -> Transition<T>;
+    async fn fallback(&mut self, task: T) -> (T, NextState<T>);
 }
 
 struct SyncRunner<T, S> {
@@ -34,13 +114,20 @@ where
     T: SyncActivity<S>,
     S: HybrydState,
 {
-    async fn perform(&mut self, mut task: T) -> Result<(T, NextState<T>)> {
+    async fn perform(&mut self, mut task: T) -> Transition<T> {
         let handle = spawn_blocking(move || {
             let state = task.state();
-            (task, state)
+            Transition::Next(task, state)
         });
-        let pair = handle.await?;
-        Ok(pair)
+        match handle.await {
+            Ok(transition) => transition,
+            Err(err) => Transition::Crashed(err.into()),
+        }
+    }
+
+    async fn fallback(&mut self, mut task: T) -> (T, NextState<T>) {
+        let next_state = task.fallback();
+        (task, next_state)
     }
 }
 
@@ -55,20 +142,60 @@ where
     T: Activity<S>,
     S: HybrydState,
 {
-    async fn perform(&mut self, mut task: T) -> Result<(T, NextState<T>)> {
+    async fn perform(&mut self, mut task: T) -> Transition<T> {
         let state = task.state().await;
-        Ok((task, state))
+        Transition::Next(task, state)
+    }
+
+    async fn fallback(&mut self, mut task: T) -> (T, NextState<T>) {
+        let next_state = task.fallback().await;
+        (task, next_state)
     }
 }
 
+/*
 pub enum GoTo<S> {
-    Sync,
-    Async,
+    Sync(S),
+    Async(S),
     Crash(Error),
     Done,
-    #[doc(hidden)]
-    _Phantom(S, Infallible),
 }
+
+impl<S> GoTo<S> {
+    pub fn sync_state(state: S) -> NextState<T> {
+        todo!()
+    }
+}
+
+impl<S, T> From<GoTo<S>> for NextState<T>
+{
+    fn from(go_to: GoTo<S>) -> Self {
+        match go_to {
+            GoTo::Sync => {
+                let runner = SyncRunner {
+                    _task: PhantomData,
+                    _state: PhantomData,
+                };
+                Self {
+                    transition: Box::new(runner),
+                }
+            }
+            GoTo::Async => {
+                todo!()
+            }
+            GoTo::Crash(error) => {
+                todo!()
+            }
+            GoTo::Done => {
+                todo!()
+            }
+            GoTo::_Phantom(_, _) => {
+                todo!()
+            }
+        }
+    }
+}
+*/
 
 #[async_trait]
 pub trait HybrydTask: Send + 'static {
@@ -77,11 +204,13 @@ pub trait HybrydTask: Send + 'static {
 
 #[async_trait]
 pub trait Activity<S>: HybrydTask {
-    async fn state(&mut self) -> NextState<Self>;
+    async fn state(&mut self) -> Result<NextState<Self>>;
+    async fn fallback(&mut self) -> NextState<Self>;
 }
 
 pub trait SyncActivity<S>: HybrydTask {
-    fn state(&mut self) -> NextState<Self>;
+    fn state(&mut self) -> Result<NextState<Self>>;
+    fn fallback(&mut self) -> NextState<Self>;
 }
 
 pub struct HybrydTaskRuntime<T> {
@@ -112,9 +241,25 @@ where
     async fn routine(&mut self) {
         if let Some(mut task) = self.task.take() {
             let next_state = task.begin().await;
-            let mut res: Result<(T, NextState<T>)> = Ok((task, next_state));
-            while let Ok((task, mut next_state)) = res {
-                res = next_state.transition.perform(task).await;
+            let mut pair = (task, next_state);
+            loop {
+                let (task, mut next_state) = pair;
+                let res = next_state.transition.perform(task).await;
+                match res {
+                    Transition::Next(task, Ok(next_state)) => {
+                        pair = (task, next_state);
+                    }
+                    Transition::Next(task, Err(err)) => {
+                        let (task, next_state) = next_state.transition.fallback(task).await;
+                        pair = (task, next_state);
+                    }
+                    Transition::Crashed(err) => {
+                        break;
+                    }
+                    Transition::Interrupted => {
+                        break;
+                    }
+                }
             }
         }
     }

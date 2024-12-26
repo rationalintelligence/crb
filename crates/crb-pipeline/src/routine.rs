@@ -57,7 +57,7 @@ where
 
     fn destination(&self) -> RoutePoint<R::Input> {
         let generator = RoutineStageRuntimeGenerator::<R>::new::<R::Input>(self.config.clone());
-        Box::new(generator)
+        RoutePoint::new(generator)
     }
 }
 

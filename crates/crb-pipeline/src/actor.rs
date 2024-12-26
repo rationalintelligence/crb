@@ -57,7 +57,7 @@ where
 
     fn destination(&self) -> RoutePoint<A::Input> {
         let generator = ActorStageRuntimeGenerator::<A>::new::<A::Input>(self.config.clone());
-        Box::new(generator)
+        RoutePoint::new(generator)
     }
 }
 

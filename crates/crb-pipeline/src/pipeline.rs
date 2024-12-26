@@ -6,6 +6,7 @@ use crb_actor::kit::{Actor, Address, MessageFor};
 use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
+use derive_more::Deref;
 use std::any::type_name;
 use typedmap::{TypedDashMap, TypedMapKey};
 
@@ -51,10 +52,22 @@ impl Actor for Pipeline {
     type Context = SupervisorSession<Self>;
 }
 
-pub type RoutePoint<M> = Box<dyn RuntimeGenerator<Input = M>>;
+#[derive(Deref)]
+pub struct RoutePoint<M> {
+    pub generator: Box<dyn RuntimeGenerator<Input = M>>,
+}
+
+impl<M> RoutePoint<M> {
+    pub fn new(generator: impl RuntimeGenerator<Input = M>) -> Self {
+        Self {
+            generator: Box::new(generator),
+        }
+    }
+}
+
 pub type RouteValue<M> = Vec<RoutePoint<M>>;
 
-pub trait RuntimeGenerator: Send + Sync {
+pub trait RuntimeGenerator: Send + Sync + 'static {
     type Input;
 
     fn generate(

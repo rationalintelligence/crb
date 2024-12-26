@@ -15,6 +15,7 @@ crb-routine.workspace = true
 crb-runtime.workspace = true
 crb-supervisor.workspace = true
 crb-task.workspace = true
+derive_more.workspace = true
 log.workspace = true
 typedmap = { version = "0.6.0", features = ["dashmap"] }
 

@@ -29,13 +29,17 @@ pub trait StageDestination {
     fn destination(&self) -> RoutePoint<<Self::Stage as Stage>::Input>;
 }
 
-pub struct InitialKey<M> {
+pub struct InitialKey<M, State = ()> {
     _type: PhantomData<M>,
+    _state: PhantomData<State>,
 }
 
 impl<M> InitialKey<M> {
     pub fn new() -> Self {
-        Self { _type: PhantomData }
+        Self {
+            _type: PhantomData,
+            _state: PhantomData,
+        }
     }
 }
 
@@ -63,15 +67,19 @@ impl<M: 'static> TypedMapKey for InitialKey<M> {
     type Value = RouteValue<M>;
 }
 
-pub struct StageKey<S> {
+pub struct StageKey<S, State = ()> {
     _type: PhantomData<S>,
+    _state: PhantomData<State>,
 }
 
 unsafe impl<S> Sync for StageKey<S> {}
 
 impl<S> StageKey<S> {
     pub fn new() -> Self {
-        Self { _type: PhantomData }
+        Self {
+            _type: PhantomData,
+            _state: PhantomData,
+        }
     }
 }
 

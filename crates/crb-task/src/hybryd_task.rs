@@ -1,9 +1,6 @@
-use std::convert::Infallible;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_core::JoinHandle;
 use crb_runtime::kit::{Controller, Entrypoint, Failures, Interruptor, Runtime};
-use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
 
@@ -11,8 +8,6 @@ pub trait HybrydState: Send + 'static {}
 
 impl<T> HybrydState for T
 where T: Send + 'static {}
-
-pub struct Init;
 
 pub struct NextState<T: ?Sized> {
     transition: Box<dyn TransitionFor<T>>,
@@ -22,7 +17,7 @@ impl<T> NextState<T>
 where
     T: HybrydTask,
 {
-    pub fn do_sync<S>(state: S) -> Self
+    pub fn do_sync<S>(_state: S) -> Self
     where
         T: SyncActivity<S>,
         S: HybrydState,
@@ -36,7 +31,7 @@ where
         }
     }
 
-    pub fn do_async<S>(state: S) -> Self
+    pub fn do_async<S>(_state: S) -> Self
     where
         T: Activity<S>,
         S: HybrydState,
@@ -86,8 +81,9 @@ where
         }
     }
 
-    async fn fallback(&mut self, task: T) -> (T, NextState<T>) {
-        (task, NextState::interrupt(self.error.take()))
+    async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>) {
+        let error = self.error.take().unwrap_or(err);
+        (task, NextState::interrupt(Some(error)))
     }
 }
 
@@ -100,7 +96,7 @@ enum Transition<T> {
 #[async_trait]
 trait TransitionFor<T>: Send {
     async fn perform(&mut self, task: T) -> Transition<T>;
-    async fn fallback(&mut self, task: T) -> (T, NextState<T>);
+    async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
 
 struct SyncRunner<T, S> {
@@ -125,8 +121,8 @@ where
         }
     }
 
-    async fn fallback(&mut self, mut task: T) -> (T, NextState<T>) {
-        let next_state = task.fallback();
+    async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
+        let next_state = task.fallback(err);
         (task, next_state)
     }
 }
@@ -147,70 +143,32 @@ where
         Transition::Next(task, state)
     }
 
-    async fn fallback(&mut self, mut task: T) -> (T, NextState<T>) {
-        let next_state = task.fallback().await;
+    async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
+        let next_state = task.fallback(err).await;
         (task, next_state)
     }
 }
 
-/*
-pub enum GoTo<S> {
-    Sync(S),
-    Async(S),
-    Crash(Error),
-    Done,
-}
-
-impl<S> GoTo<S> {
-    pub fn sync_state(state: S) -> NextState<T> {
-        todo!()
-    }
-}
-
-impl<S, T> From<GoTo<S>> for NextState<T>
-{
-    fn from(go_to: GoTo<S>) -> Self {
-        match go_to {
-            GoTo::Sync => {
-                let runner = SyncRunner {
-                    _task: PhantomData,
-                    _state: PhantomData,
-                };
-                Self {
-                    transition: Box::new(runner),
-                }
-            }
-            GoTo::Async => {
-                todo!()
-            }
-            GoTo::Crash(error) => {
-                todo!()
-            }
-            GoTo::Done => {
-                todo!()
-            }
-            GoTo::_Phantom(_, _) => {
-                todo!()
-            }
-        }
-    }
-}
-*/
-
 #[async_trait]
-pub trait HybrydTask: Send + 'static {
+pub trait HybrydTask: Sized + Send + 'static {
     async fn begin(&mut self) -> NextState<Self>;
 }
 
 #[async_trait]
 pub trait Activity<S>: HybrydTask {
     async fn state(&mut self) -> Result<NextState<Self>>;
-    async fn fallback(&mut self) -> NextState<Self>;
+
+    async fn fallback(&mut self, err: Error) -> NextState<Self> {
+        NextState::fail(err)
+    }
 }
 
 pub trait SyncActivity<S>: HybrydTask {
     fn state(&mut self) -> Result<NextState<Self>>;
-    fn fallback(&mut self) -> NextState<Self>;
+
+    fn fallback(&mut self, err: Error) -> NextState<Self> {
+        NextState::fail(err)
+    }
 }
 
 pub struct HybrydTaskRuntime<T> {
@@ -250,7 +208,7 @@ where
                         pair = (task, next_state);
                     }
                     Transition::Next(task, Err(err)) => {
-                        let (task, next_state) = next_state.transition.fallback(task).await;
+                        let (task, next_state) = next_state.transition.fallback(task, err).await;
                         pair = (task, next_state);
                     }
                     Transition::Crashed(err) => {

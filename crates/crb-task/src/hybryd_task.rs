@@ -19,28 +19,28 @@ impl<T> NextState<T>
 where
     T: HybrydTask,
 {
-    pub fn do_sync<S>(_state: S) -> Self
+    pub fn do_sync<S>(state: S) -> Self
     where
         T: SyncActivity<S>,
         S: HybrydState,
     {
         let runner = SyncRunner {
             _task: PhantomData,
-            _state: PhantomData,
+            state: Some(state),
         };
         Self {
             transition: Box::new(runner),
         }
     }
 
-    pub fn do_async<S>(_state: S) -> Self
+    pub fn do_async<S>(state: S) -> Self
     where
         T: Activity<S>,
         S: HybrydState,
     {
         let runner = AsyncRunner {
             _task: PhantomData,
-            _state: PhantomData,
+            state: Some(state),
         };
         Self {
             transition: Box::new(runner),
@@ -103,7 +103,7 @@ trait TransitionFor<T>: Send {
 
 struct SyncRunner<T, S> {
     _task: PhantomData<T>,
-    _state: PhantomData<S>,
+    state: Option<S>,
 }
 
 #[async_trait]
@@ -113,9 +113,10 @@ where
     S: HybrydState,
 {
     async fn perform(&mut self, mut task: T) -> Transition<T> {
+        let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
-            let state = task.perform();
-            Transition::Next(task, state)
+            let next_state = task.perform(state);
+            Transition::Next(task, next_state)
         });
         match handle.await {
             Ok(transition) => transition,
@@ -131,7 +132,7 @@ where
 
 struct AsyncRunner<T, S> {
     _task: PhantomData<T>,
-    _state: PhantomData<S>,
+    state: Option<S>,
 }
 
 #[async_trait]
@@ -141,8 +142,9 @@ where
     S: HybrydState,
 {
     async fn perform(&mut self, mut task: T) -> Transition<T> {
-        let state = task.perform().await;
-        Transition::Next(task, state)
+        let state = self.state.take().unwrap();
+        let next_state = task.perform(state).await;
+        Transition::Next(task, next_state)
     }
 
     async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
@@ -158,7 +160,7 @@ pub trait HybrydTask: Sized + Send + 'static {
 
 #[async_trait]
 pub trait Activity<S>: HybrydTask {
-    async fn perform(&mut self) -> Result<NextState<Self>>;
+    async fn perform(&mut self, state: S) -> Result<NextState<Self>>;
 
     async fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)
@@ -166,7 +168,7 @@ pub trait Activity<S>: HybrydTask {
 }
 
 pub trait SyncActivity<S>: HybrydTask {
-    fn perform(&mut self) -> Result<NextState<Self>>;
+    fn perform(&mut self, state: S) -> Result<NextState<Self>>;
 
     fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)

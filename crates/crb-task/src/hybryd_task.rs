@@ -114,7 +114,7 @@ where
 {
     async fn perform(&mut self, mut task: T) -> Transition<T> {
         let handle = spawn_blocking(move || {
-            let state = task.state();
+            let state = task.perform();
             Transition::Next(task, state)
         });
         match handle.await {
@@ -141,7 +141,7 @@ where
     S: HybrydState,
 {
     async fn perform(&mut self, mut task: T) -> Transition<T> {
-        let state = task.state().await;
+        let state = task.perform().await;
         Transition::Next(task, state)
     }
 
@@ -158,7 +158,7 @@ pub trait HybrydTask: Sized + Send + 'static {
 
 #[async_trait]
 pub trait Activity<S>: HybrydTask {
-    async fn state(&mut self) -> Result<NextState<Self>>;
+    async fn perform(&mut self) -> Result<NextState<Self>>;
 
     async fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)
@@ -166,7 +166,7 @@ pub trait Activity<S>: HybrydTask {
 }
 
 pub trait SyncActivity<S>: HybrydTask {
-    fn state(&mut self) -> Result<NextState<Self>>;
+    fn perform(&mut self) -> Result<NextState<Self>>;
 
     fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)

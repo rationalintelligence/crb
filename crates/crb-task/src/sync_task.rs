@@ -1,10 +1,6 @@
-use crate::task::Task;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_core::JoinHandle;
-use crb_runtime::kit::{Controller, Entrypoint, Failures, Interruptor, Runtime};
-use derive_more::{Deref, DerefMut};
-use std::marker::PhantomData;
+use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime};
 use tokio::task::spawn_blocking;
 
 pub trait SyncTask: Send + 'static {
@@ -27,8 +23,6 @@ impl<T: SyncTask> DoSync<T> {
         }
     }
 }
-
-impl<T: SyncTask> Task<T> for DoSync<T> {}
 
 #[async_trait]
 impl<T> Runtime for DoSync<T>

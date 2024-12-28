@@ -1,11 +1,7 @@
-use crate::task::Task;
-use anyhow::{Error, Result};
+use anyhow::Result;
 use async_trait::async_trait;
-use crb_core::JoinHandle;
-use crb_runtime::kit::{Controller, Entrypoint, Failures, Interruptor, Runtime};
-use derive_more::{Deref, DerefMut};
-use futures::{stream::Abortable, Future};
-use std::marker::PhantomData;
+use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime};
+use futures::stream::Abortable;
 
 #[async_trait]
 pub trait AsyncTask: Send + 'static {
@@ -47,8 +43,6 @@ impl<T: AsyncTask> DoAsync<T> {
     }
     */
 }
-
-impl<T: AsyncTask> Task<T> for DoAsync<T> {}
 
 #[async_trait]
 impl<T> Runtime for DoAsync<T>

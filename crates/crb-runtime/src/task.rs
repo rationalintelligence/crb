@@ -1,6 +1,7 @@
+use crate::interruptor::Interruptor;
+use crate::runtime::Runtime;
 use async_trait::async_trait;
 use crb_core::JoinHandle;
-use crb_runtime::kit::{Interruptor, Runtime};
 use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
 
@@ -26,6 +27,8 @@ pub trait Task<T>: Runtime + Sized {
         self.routine().await;
     }
 }
+
+impl<R, T> Task<T> for R where R: Runtime + Sized {}
 
 #[derive(Deref, DerefMut)]
 pub struct TaskHandle<T> {

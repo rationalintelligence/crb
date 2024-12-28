@@ -1,6 +1,7 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_actor::kit::{Actor, ActorSession, OnEvent, Standalone};
+use crb_actor::kit::{Actor, ActorSession, DoActor, OnEvent};
+use crb_runtime::task::InteractiveTask;
 use crb_supervisor::{Supervisor, SupervisorSession};
 
 struct Printer;
@@ -40,7 +41,7 @@ impl Supervisor for Main {
 
 #[tokio::test]
 async fn test_trackable() -> Result<(), Error> {
-    let mut addr = Main.spawn();
+    let mut addr = DoActor::new(Main).spawn_connected();
     addr.interrupt()?;
     addr.join().await?;
     Ok(())

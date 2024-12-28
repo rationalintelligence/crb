@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime};
+use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
 use futures::stream::Abortable;
 
 #[async_trait]
@@ -43,6 +43,8 @@ impl<T: AsyncTask> DoAsync<T> {
     }
     */
 }
+
+impl<T: AsyncTask> Task<T> for DoAsync<T> {}
 
 #[async_trait]
 impl<T> Runtime for DoAsync<T>

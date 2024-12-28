@@ -2,7 +2,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_actor::kit::Actor;
 use crb_actor::message::MessageFor;
-use crb_actor::runtime::{ActorContext, ActorRuntime, ActorSession, Address};
+use crb_actor::runtime::{ActorContext, ActorSession, Address, DoActor};
 use crb_runtime::kit::{
     Context, Controller, InteractiveRuntime, Interruptor, ManagedContext, Runtime,
 };
@@ -75,7 +75,7 @@ impl<S: Supervisor> SupervisorSession<S> {
         A::Context: Default,
         S: Supervisor<Context = SupervisorSession<S>>,
     {
-        let runtime = ActorRuntime::<A>::new(input);
+        let runtime = DoActor::<A>::new(input);
         self.spawn_runtime(runtime, group)
     }
 }
@@ -222,6 +222,7 @@ where
 
 struct Activity<S: Supervisor> {
     group: S::GroupBy,
+    // TODO: Consider to use JobHandle here
     interruptor: Interruptor,
 }
 

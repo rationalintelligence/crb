@@ -5,5 +5,5 @@ pub mod runtime;
 pub mod kit {
     pub use crate::finalizer::Finalizer;
     pub use crate::routine::{Routine, TaskError};
-    pub use crate::runtime::{RoutineContext, RoutineRuntime, RoutineSession, Standalone};
+    pub use crate::runtime::{RoutineContext, RoutineRuntime, RoutineSession};
 }

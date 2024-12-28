@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime};
+use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
 use tokio::task::spawn_blocking;
 
 pub trait SyncTask: Send + 'static {
@@ -23,6 +23,8 @@ impl<T: SyncTask> DoSync<T> {
         }
     }
 }
+
+impl<T: SyncTask> Task<T> for DoSync<T> {}
 
 #[async_trait]
 impl<T> Runtime for DoSync<T>

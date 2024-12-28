@@ -4,16 +4,17 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_runtime::kit::{
-    Context, Controller, Failures, InteractiveRuntime, Interruptor, ManagedContext, Runtime, Task,
+    Context, Controller, Failures, InteractiveRuntime, InteractiveTask, Interruptor,
+    ManagedContext, Runtime, Task,
 };
 
-pub struct ActorRuntime<A: Actor> {
+pub struct DoActor<A: Actor> {
     pub actor: A,
     pub context: A::Context,
     pub failures: Failures,
 }
 
-impl<A: Actor> ActorRuntime<A> {
+impl<A: Actor> DoActor<A> {
     pub fn new(actor: A) -> Self
     where
         A::Context: Default,
@@ -26,8 +27,11 @@ impl<A: Actor> ActorRuntime<A> {
     }
 }
 
+impl<A: Actor> Task<A> for DoActor<A> {}
+impl<A: Actor> InteractiveTask<A> for DoActor<A> {}
+
 #[async_trait]
-impl<A: Actor> InteractiveRuntime for ActorRuntime<A> {
+impl<A: Actor> InteractiveRuntime for DoActor<A> {
     type Context = A::Context;
 
     fn address(&self) -> <Self::Context as Context>::Address {
@@ -36,7 +40,7 @@ impl<A: Actor> InteractiveRuntime for ActorRuntime<A> {
 }
 
 #[async_trait]
-impl<A: Actor> Runtime for ActorRuntime<A> {
+impl<A: Actor> Runtime for DoActor<A> {
     fn get_interruptor(&mut self) -> Interruptor {
         self.context.controller().interruptor.clone()
     }
@@ -170,27 +174,5 @@ impl<A> Clone for Address<A> {
             msg_tx: self.msg_tx.clone(),
             status_rx: self.status_rx.clone(),
         }
-    }
-}
-
-pub trait Standalone: Actor {
-    fn spawn(self) -> Address<Self>
-    where
-        Self::Context: Default;
-}
-
-impl<A> Standalone for A
-where
-    A: Actor + 'static,
-    ActorRuntime<A>: Task<A>,
-{
-    fn spawn(self) -> Address<Self>
-    where
-        Self::Context: Default,
-    {
-        let mut runtime = ActorRuntime::new(self);
-        let address = runtime.context.session().address().clone();
-        runtime.spawn();
-        address
     }
 }

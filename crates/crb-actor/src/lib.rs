@@ -5,8 +5,8 @@ pub mod message;
 pub mod runtime;
 
 pub mod kit {
-    pub use crate::actor::Actor;
+    pub use crate::actor::{Actor, Standalone};
     pub use crate::event::OnEvent;
     pub use crate::message::MessageFor;
-    pub use crate::runtime::{ActorContext, ActorSession, Address, Standalone};
+    pub use crate::runtime::{ActorContext, ActorSession, Address, DoActor};
 }

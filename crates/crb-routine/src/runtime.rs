@@ -112,25 +112,3 @@ impl<R: Routine> RoutineContext<R> for RoutineSession<R> {
         self
     }
 }
-
-pub trait Standalone: Routine {
-    fn spawn(self)
-    where
-        Self::Context: Default;
-}
-
-impl<R> Standalone for R
-where
-    R: Routine + 'static,
-    RoutineRuntime<R>: Task<R>,
-{
-    fn spawn(self)
-    where
-        Self::Context: Default,
-    {
-        let mut runtime = RoutineRuntime::new(self);
-        let address = runtime.context.session().address().clone();
-        runtime.spawn();
-        address
-    }
-}

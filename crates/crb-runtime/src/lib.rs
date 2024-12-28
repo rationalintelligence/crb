@@ -9,5 +9,5 @@ pub mod kit {
     pub use crate::error::Failures;
     pub use crate::interruptor::{Controller, Interruptor, RegistrationTaken};
     pub use crate::runtime::{InteractiveRuntime, Runtime};
-    pub use crate::task::{JobHandle, Task, TaskHandle};
+    pub use crate::task::{InteractiveTask, JobHandle, Task, TaskHandle};
 }

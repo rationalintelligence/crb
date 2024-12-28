@@ -2,7 +2,7 @@ use crate::meta::{Metadata, Sequencer};
 use crate::stage::{InitialKey, Stage, StageDestination, StageKey, StageSource};
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_actor::kit::{Actor, Address, MessageFor};
+use crb_actor::kit::{Actor, Address, MessageFor, Standalone};
 use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
 use crb_supervisor::{Supervisor, SupervisorSession};
@@ -67,6 +67,8 @@ impl<State: PipelineState> Pipeline<State> {
 impl<State: PipelineState> Supervisor for Pipeline<State> {
     type GroupBy = ();
 }
+
+impl<State: PipelineState> Standalone for Pipeline<State> {}
 
 impl<State: PipelineState> Actor for Pipeline<State> {
     type Context = SupervisorSession<Self>;

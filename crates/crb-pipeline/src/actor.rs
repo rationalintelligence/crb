@@ -3,7 +3,7 @@ use crate::pipeline::{Pipeline, RoutePoint, RuntimeGenerator, StageReport};
 use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
 use crb_actor::kit::{Actor, Address};
-use crb_actor::runtime::ActorRuntime;
+use crb_actor::runtime::DoActor;
 use crb_runtime::kit::{Interruptor, Runtime};
 
 pub mod stage {
@@ -64,7 +64,7 @@ where
 pub struct ActorStageRuntime<A: Actor + Stage> {
     meta: Metadata,
     pipeline: Address<Pipeline<A::State>>,
-    runtime: ActorRuntime<A>,
+    runtime: DoActor<A>,
 }
 
 #[async_trait]
@@ -123,7 +123,7 @@ where
     ) -> Box<dyn Runtime> {
         let config = self.config.clone();
         let instance = A::construct(config, input, state);
-        let runtime = ActorRuntime::new(instance);
+        let runtime = DoActor::new(instance);
         let conducted_runtime = ActorStageRuntime::<A> {
             meta,
             pipeline,

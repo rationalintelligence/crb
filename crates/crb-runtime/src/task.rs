@@ -1,9 +1,18 @@
+use crate::context::Context;
 use crate::interruptor::Interruptor;
-use crate::runtime::Runtime;
+use crate::runtime::{InteractiveRuntime, Runtime};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
 use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
+
+pub trait InteractiveTask<T>: Task<T> + InteractiveRuntime {
+    fn spawn_connected(mut self) -> <Self::Context as Context>::Address {
+        let address = self.address();
+        self.spawn();
+        address
+    }
+}
 
 #[async_trait]
 pub trait Task<T>: Runtime + Sized {
@@ -27,8 +36,6 @@ pub trait Task<T>: Runtime + Sized {
         self.routine().await;
     }
 }
-
-impl<R, T> Task<T> for R where R: Runtime + Sized {}
 
 #[derive(Deref, DerefMut)]
 pub struct TaskHandle<T> {

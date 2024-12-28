@@ -1,8 +1,11 @@
 use anyhow::Error;
 use async_trait::async_trait;
+// TODO: Use self kits here
 use crb_actor::kit::{Actor, ActorSession, OnEvent, Standalone};
 
 struct TestActor;
+
+impl Standalone for TestActor {}
 
 impl Actor for TestActor {
     type Context = ActorSession<Self>;

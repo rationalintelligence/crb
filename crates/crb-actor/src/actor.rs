@@ -1,7 +1,7 @@
-use crate::runtime::ActorContext;
+use crate::runtime::{ActorContext, DoActor};
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_runtime::kit::ManagedContext;
+use crb_runtime::kit::{Context, InteractiveTask, ManagedContext};
 
 #[async_trait]
 pub trait Actor: Sized + Send + 'static {
@@ -31,4 +31,15 @@ pub trait Actor: Sized + Send + 'static {
     async fn finalize(&mut self, _ctx: &mut Self::Context) -> Result<()> {
         Ok(())
     }
+}
+
+pub trait Standalone: Actor {
+    fn spawn(self) -> <Self::Context as Context>::Address
+    where
+        Self::Context: Default,
+    {
+        DoActor::new(self).spawn_connected()
+    }
+
+    // TODO: spawn_with_context()
 }

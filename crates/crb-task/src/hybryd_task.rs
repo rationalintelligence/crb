@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime};
+use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
 
@@ -187,6 +187,8 @@ impl<T: HybrydTask> DoHybrid<T> {
         }
     }
 }
+
+impl<T: HybrydTask> Task<T> for DoHybrid<T> {}
 
 #[async_trait]
 impl<T> Runtime for DoHybrid<T>

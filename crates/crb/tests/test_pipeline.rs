@@ -23,11 +23,12 @@ impl Actor for FirstProcessor {
 
 #[async_trait]
 impl Stage for FirstProcessor {
+    type State = ();
     type Config = ();
     type Input = u8;
     type Output = u16;
 
-    fn construct(_config: Self::Config, input: Self::Input) -> Self {
+    fn construct(_config: Self::Config, input: Self::Input, _state: &mut Self::State) -> Self {
         Self {
             value: Some(input as u16),
         }
@@ -56,11 +57,12 @@ impl Actor for SecondProcessor {
 
 #[async_trait]
 impl Stage for SecondProcessor {
+    type State = ();
     type Config = ();
     type Input = u16;
     type Output = u32;
 
-    fn construct(_config: Self::Config, input: Self::Input) -> Self {
+    fn construct(_config: Self::Config, input: Self::Input, _state: &mut Self::State) -> Self {
         Self {
             value: Some(input as u32),
         }
@@ -77,7 +79,7 @@ async fn test_pipeline() -> Result<(), Error> {
 
     // Routing
     use crb_pipeline::kit::*;
-    pipeline.route::<Input<u8>, Actor<FirstProcessor>>();
+    pipeline.route::<Input<u8, _>, Actor<FirstProcessor>>();
     pipeline.route::<Actor<FirstProcessor>, Actor<SecondProcessor>>();
 
     // pipeline.route_map::<FirstProcessor, SecondProcessor>();

@@ -33,7 +33,7 @@ where
 
     pub fn do_async<S>(state: S) -> Self
     where
-        T: Activity<S>,
+        T: AsyncActivity<S>,
         S: HybrydState,
     {
         let runner = AsyncPerformer {
@@ -136,12 +136,13 @@ struct AsyncPerformer<T, S> {
 #[async_trait]
 impl<T, S> StatePerformer<T> for AsyncPerformer<T, S>
 where
-    T: Activity<S>,
+    T: AsyncActivity<S>,
     S: HybrydState,
 {
-    async fn perform(&mut self, mut task: T, _session: &mut HybrydSession) -> Transition<T> {
-        let state = self.state.take().unwrap();
-        let next_state = task.perform(state).await;
+    async fn perform(&mut self, mut task: T, session: &mut HybrydSession) -> Transition<T> {
+        let interruptor = session.controller.interruptor.clone();
+        let mut state = self.state.take().unwrap();
+        let next_state = task.perform(state, interruptor).await;
         Transition::Next(task, next_state)
     }
 
@@ -157,8 +158,36 @@ pub trait HybrydTask: Sized + Send + 'static {
 }
 
 #[async_trait]
-pub trait Activity<S>: HybrydTask {
-    async fn perform(&mut self, state: S) -> Result<NextState<Self>>;
+pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
+    async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<NextState<Self>> {
+        self.interruptable(&mut state, &interruptor).await
+    }
+
+    async fn interruptable(
+        &mut self,
+        state: &mut S,
+        interruptor: &Interruptor,
+    ) -> Result<NextState<Self>> {
+        while interruptor.is_active() {
+            let result = self.repeatable(state).await;
+            match result {
+                Ok(Some(state)) => {
+                    return Ok(state);
+                }
+                Ok(None) => {}
+                Err(_) => {}
+            }
+        }
+        Ok(NextState::interrupt(None))
+    }
+
+    async fn repeatable(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
+        self.once(state).await.map(Some)
+    }
+
+    async fn once(&mut self, state: &mut S) -> Result<NextState<Self>> {
+        Ok(NextState::done())
+    }
 
     async fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)

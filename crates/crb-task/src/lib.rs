@@ -13,5 +13,5 @@ pub mod kit {
     pub use crate::sync_task::{DoSync, SyncTask};
 
     #[cfg(feature = "sync")]
-    pub use crate::hybryd_task::{Activity, DoHybrid, HybrydTask, NextState, SyncActivity};
+    pub use crate::hybryd_task::{AsyncActivity, DoHybrid, HybrydTask, NextState, SyncActivity};
 }

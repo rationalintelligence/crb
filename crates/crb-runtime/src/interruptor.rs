@@ -7,25 +7,6 @@ use std::sync::{
 };
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
-pub struct ActiveFlag {
-    flag: Arc<AtomicBool>,
-}
-
-impl Default for ActiveFlag {
-    fn default() -> Self {
-        Self {
-            flag: Arc::new(AtomicBool::new(true)),
-        }
-    }
-}
-
-impl ActiveFlag {
-    pub fn is_active(&self) -> bool {
-        self.flag.load(Ordering::Relaxed)
-    }
-}
-
 #[derive(Error, Debug)]
 #[error("The registration has taken already")]
 pub struct RegistrationTaken;
@@ -71,5 +52,24 @@ impl Interruptor {
             self.handle.abort();
         }
         Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ActiveFlag {
+    flag: Arc<AtomicBool>,
+}
+
+impl Default for ActiveFlag {
+    fn default() -> Self {
+        Self {
+            flag: Arc::new(AtomicBool::new(true)),
+        }
+    }
+}
+
+impl ActiveFlag {
+    pub fn is_active(&self) -> bool {
+        self.flag.load(Ordering::Relaxed)
     }
 }

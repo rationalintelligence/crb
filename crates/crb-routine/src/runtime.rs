@@ -3,8 +3,7 @@ use crate::routine::Routine;
 use async_trait::async_trait;
 use crb_core::time::Duration;
 use crb_runtime::kit::{
-    Context, Controller, Entrypoint, Failures, InteractiveRuntime, Interruptor, ManagedContext,
-    Runtime,
+    Context, Controller, Failures, InteractiveRuntime, Interruptor, ManagedContext, Runtime, Task,
 };
 
 pub struct RoutineRuntime<R: Routine> {
@@ -120,14 +119,18 @@ pub trait Standalone: Routine {
         Self::Context: Default;
 }
 
-impl<T: Routine + 'static> Standalone for T {
+impl<R> Standalone for R
+where
+    R: Routine + 'static,
+    RoutineRuntime<R>: Task<R>,
+{
     fn spawn(self)
     where
         Self::Context: Default,
     {
         let mut runtime = RoutineRuntime::new(self);
         let address = runtime.context.session().address().clone();
-        crb_core::spawn(runtime.entrypoint());
+        runtime.spawn();
         address
     }
 }

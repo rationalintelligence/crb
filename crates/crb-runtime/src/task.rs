@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 
 #[async_trait]
 pub trait Task<T>: Runtime + Sized {
-    async fn spawn(mut self) -> TaskHandle<T> {
+    fn spawn(mut self) -> TaskHandle<T> {
         let interruptor = self.get_interruptor();
         let handle = crb_core::spawn(async move {
             self.routine().await;

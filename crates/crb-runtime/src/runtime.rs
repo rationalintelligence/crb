@@ -23,15 +23,6 @@ pub trait InteractiveRuntime: Runtime {
 }
 
 #[async_trait]
-pub trait Entrypoint: Runtime + Sized {
-    async fn entrypoint(mut self) {
-        self.routine().await;
-    }
-}
-
-impl<T> Entrypoint for T where T: Runtime + Sized {}
-
-#[async_trait]
 impl Runtime for Box<dyn Runtime> {
     fn get_interruptor(&mut self) -> Interruptor {
         self.deref_mut().get_interruptor()

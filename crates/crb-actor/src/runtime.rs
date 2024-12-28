@@ -4,8 +4,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_runtime::kit::{
-    Context, Controller, Entrypoint, Failures, InteractiveRuntime, Interruptor, ManagedContext,
-    Runtime,
+    Context, Controller, Failures, InteractiveRuntime, Interruptor, ManagedContext, Runtime, Task,
 };
 
 pub struct ActorRuntime<A: Actor> {
@@ -180,14 +179,18 @@ pub trait Standalone: Actor {
         Self::Context: Default;
 }
 
-impl<T: Actor + 'static> Standalone for T {
+impl<A> Standalone for A
+where
+    A: Actor + 'static,
+    ActorRuntime<A>: Task<A>,
+{
     fn spawn(self) -> Address<Self>
     where
         Self::Context: Default,
     {
         let mut runtime = ActorRuntime::new(self);
         let address = runtime.context.session().address().clone();
-        crb_core::spawn(runtime.entrypoint());
+        runtime.spawn();
         address
     }
 }

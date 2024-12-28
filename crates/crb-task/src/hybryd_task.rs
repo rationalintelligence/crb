@@ -22,7 +22,7 @@ where
         T: SyncActivity<S>,
         S: HybrydState,
     {
-        let runner = SyncRunner {
+        let runner = SyncPerformer {
             _task: PhantomData,
             state: Some(state),
         };
@@ -36,7 +36,7 @@ where
         T: Activity<S>,
         S: HybrydState,
     {
-        let runner = AsyncRunner {
+        let runner = AsyncPerformer {
             _task: PhantomData,
             state: Some(state),
         };
@@ -60,17 +60,17 @@ where
 {
     fn interrupt(error: Option<Error>) -> Self {
         Self {
-            transition: Box::new(Interrupt { error }),
+            transition: Box::new(InterruptPerformer { error }),
         }
     }
 }
 
-pub struct Interrupt {
+pub struct InterruptPerformer {
     error: Option<Error>,
 }
 
 #[async_trait]
-impl<T> StatePerformer<T> for Interrupt
+impl<T> StatePerformer<T> for InterruptPerformer
 where
     T: HybrydTask,
 {
@@ -99,13 +99,13 @@ trait StatePerformer<T>: Send {
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
 
-struct SyncRunner<T, S> {
+struct SyncPerformer<T, S> {
     _task: PhantomData<T>,
     state: Option<S>,
 }
 
 #[async_trait]
-impl<T, S> StatePerformer<T> for SyncRunner<T, S>
+impl<T, S> StatePerformer<T> for SyncPerformer<T, S>
 where
     T: SyncActivity<S>,
     S: HybrydState,
@@ -128,13 +128,13 @@ where
     }
 }
 
-struct AsyncRunner<T, S> {
+struct AsyncPerformer<T, S> {
     _task: PhantomData<T>,
     state: Option<S>,
 }
 
 #[async_trait]
-impl<T, S> StatePerformer<T> for AsyncRunner<T, S>
+impl<T, S> StatePerformer<T> for AsyncPerformer<T, S>
 where
     T: Activity<S>,
     S: HybrydState,

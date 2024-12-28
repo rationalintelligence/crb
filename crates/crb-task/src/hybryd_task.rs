@@ -161,16 +161,8 @@ pub trait HybrydTask: Sized + Send + 'static {
 #[async_trait]
 pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
     async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<NextState<Self>> {
-        self.interruptable(&mut state, &interruptor).await
-    }
-
-    async fn interruptable(
-        &mut self,
-        state: &mut S,
-        interruptor: &Interruptor,
-    ) -> Result<NextState<Self>> {
         while interruptor.is_active() {
-            let result = self.repeatable(state).await;
+            let result = self.many(&mut state).await;
             match result {
                 Ok(Some(state)) => {
                     return Ok(state);
@@ -182,7 +174,7 @@ pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
         Ok(NextState::interrupt(None))
     }
 
-    async fn repeatable(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
+    async fn many(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
         self.once(state).await.map(Some)
     }
 
@@ -197,16 +189,8 @@ pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
 
 pub trait SyncActivity<S>: HybrydTask {
     fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<NextState<Self>> {
-        self.interruptable(&mut state, &interruptor)
-    }
-
-    fn interruptable(
-        &mut self,
-        state: &mut S,
-        interruptor: &Interruptor,
-    ) -> Result<NextState<Self>> {
         while interruptor.is_active() {
-            let result = self.repeatable(state);
+            let result = self.many(&mut state);
             match result {
                 Ok(Some(state)) => {
                     return Ok(state);
@@ -218,7 +202,7 @@ pub trait SyncActivity<S>: HybrydTask {
         Ok(NextState::interrupt(None))
     }
 
-    fn repeatable(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
+    fn many(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
         self.once(state).map(Some)
     }
 

@@ -26,11 +26,11 @@ pub trait Routine: Sized + Send + 'static {
     type Output: Send;
 
     async fn routine(&mut self, ctx: &mut Self::Context) -> Result<(), Error> {
-        let reg = ctx.session().controller().take_registration()?;
+        // let reg = ctx.session().controller().take_registration()?;
         // TODO: Get time limit from the context (and make it ajustable in real-time)
         let time_limit = self.time_limit().await;
         let fut = timeout(time_limit, self.basic_routine(ctx));
-        Abortable::new(fut, reg).await???;
+        fut.await??;
         Ok(())
     }
 

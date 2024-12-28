@@ -6,9 +6,9 @@ use futures::stream::Abortable;
 #[async_trait]
 pub trait AsyncTask: Send + 'static {
     async fn controlled_routine(&mut self, ctrl: &mut Controller) -> Result<()> {
-        let reg = ctrl.take_registration()?;
+        // let reg = ctrl.take_registration()?;
         let fut = self.routine();
-        Abortable::new(fut, reg).await??;
+        fut.await?;
         Ok(())
     }
 

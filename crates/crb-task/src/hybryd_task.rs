@@ -1,6 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
+use futures::stream::Abortable;
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
 
@@ -9,7 +10,7 @@ pub trait HybrydState: Send + 'static {}
 impl<T> HybrydState for T where T: Send + 'static {}
 
 pub struct NextState<T: ?Sized> {
-    transition: Box<dyn TransitionFor<T>>,
+    transition: Box<dyn StatePerformer<T>>,
 }
 
 impl<T> NextState<T>
@@ -69,7 +70,7 @@ pub struct Interrupt {
 }
 
 #[async_trait]
-impl<T> TransitionFor<T> for Interrupt
+impl<T> StatePerformer<T> for Interrupt
 where
     T: HybrydTask,
 {
@@ -93,7 +94,7 @@ enum Transition<T> {
 }
 
 #[async_trait]
-trait TransitionFor<T>: Send {
+trait StatePerformer<T>: Send {
     async fn perform(&mut self, task: T) -> Transition<T>;
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
@@ -104,7 +105,7 @@ struct SyncRunner<T, S> {
 }
 
 #[async_trait]
-impl<T, S> TransitionFor<T> for SyncRunner<T, S>
+impl<T, S> StatePerformer<T> for SyncRunner<T, S>
 where
     T: SyncActivity<S>,
     S: HybrydState,
@@ -133,7 +134,7 @@ struct AsyncRunner<T, S> {
 }
 
 #[async_trait]
-impl<T, S> TransitionFor<T> for AsyncRunner<T, S>
+impl<T, S> StatePerformer<T> for AsyncRunner<T, S>
 where
     T: Activity<S>,
     S: HybrydState,
@@ -190,16 +191,15 @@ impl<T: HybrydTask> DoHybrid<T> {
 
 impl<T: HybrydTask> Task<T> for DoHybrid<T> {}
 
-#[async_trait]
-impl<T> Runtime for DoHybrid<T>
-where
-    T: HybrydTask,
-{
-    fn get_interruptor(&mut self) -> Interruptor {
-        self.controller.interruptor.clone()
+impl<T: HybrydTask> DoHybrid<T> {
+    async fn perform_routine(&mut self) -> Result<(), Error> {
+        let reg = self.controller.take_registration()?;
+        let fut = self.perform_task();
+        Abortable::new(fut, reg).await??;
+        Ok(())
     }
 
-    async fn routine(&mut self) {
+    async fn perform_task(&mut self) -> Result<(), Error> {
         if let Some(mut task) = self.task.take() {
             let next_state = task.begin().await;
             let mut pair = (task, next_state);
@@ -215,7 +215,7 @@ where
                         pair = (task, next_state);
                     }
                     Transition::Crashed(err) => {
-                        break;
+                        return Err(err);
                     }
                     Transition::Interrupted => {
                         break;
@@ -223,5 +223,21 @@ where
                 }
             }
         }
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl<T> Runtime for DoHybrid<T>
+where
+    T: HybrydTask,
+{
+    fn get_interruptor(&mut self) -> Interruptor {
+        self.controller.interruptor.clone()
+    }
+
+    async fn routine(&mut self) {
+        let result = self.perform_routine().await;
+        self.failures.put(result);
     }
 }

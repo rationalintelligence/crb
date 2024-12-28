@@ -7,7 +7,7 @@ use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
 
 pub trait InteractiveTask<T>: Task<T> + InteractiveRuntime {
-    fn spawn_connected(mut self) -> <Self::Context as Context>::Address {
+    fn spawn_connected(self) -> <Self::Context as Context>::Address {
         let address = self.address();
         self.spawn();
         address

@@ -74,7 +74,7 @@ impl<T> StatePerformer<T> for InterruptPerformer
 where
     T: HybrydTask,
 {
-    async fn perform(&mut self, _task: T, session: &mut HybrydSession) -> Transition<T> {
+    async fn perform(&mut self, _task: T, _session: &mut HybrydSession) -> Transition<T> {
         match self.error.take() {
             None => Transition::Interrupted,
             Some(err) => Transition::Crashed(err),
@@ -110,10 +110,11 @@ where
     T: SyncActivity<S>,
     S: HybrydState,
 {
-    async fn perform(&mut self, mut task: T, _session: &mut HybrydSession) -> Transition<T> {
+    async fn perform(&mut self, mut task: T, session: &mut HybrydSession) -> Transition<T> {
+        let interruptor = session.controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
-            let next_state = task.perform(state);
+            let next_state = task.perform(state, interruptor);
             Transition::Next(task, next_state)
         });
         match handle.await {
@@ -141,7 +142,7 @@ where
 {
     async fn perform(&mut self, mut task: T, session: &mut HybrydSession) -> Transition<T> {
         let interruptor = session.controller.interruptor.clone();
-        let mut state = self.state.take().unwrap();
+        let state = self.state.take().unwrap();
         let next_state = task.perform(state, interruptor).await;
         Transition::Next(task, next_state)
     }
@@ -185,7 +186,7 @@ pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
         self.once(state).await.map(Some)
     }
 
-    async fn once(&mut self, state: &mut S) -> Result<NextState<Self>> {
+    async fn once(&mut self, _state: &mut S) -> Result<NextState<Self>> {
         Ok(NextState::done())
     }
 
@@ -195,7 +196,35 @@ pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
 }
 
 pub trait SyncActivity<S>: HybrydTask {
-    fn perform(&mut self, state: S) -> Result<NextState<Self>>;
+    fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<NextState<Self>> {
+        self.interruptable(&mut state, &interruptor)
+    }
+
+    fn interruptable(
+        &mut self,
+        state: &mut S,
+        interruptor: &Interruptor,
+    ) -> Result<NextState<Self>> {
+        while interruptor.is_active() {
+            let result = self.repeatable(state);
+            match result {
+                Ok(Some(state)) => {
+                    return Ok(state);
+                }
+                Ok(None) => {}
+                Err(_) => {}
+            }
+        }
+        Ok(NextState::interrupt(None))
+    }
+
+    fn repeatable(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
+        self.once(state).map(Some)
+    }
+
+    fn once(&mut self, _state: &mut S) -> Result<NextState<Self>> {
+        Ok(NextState::done())
+    }
 
     fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)

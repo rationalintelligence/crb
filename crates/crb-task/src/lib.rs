@@ -16,6 +16,8 @@ pub mod kit {
     #[cfg(feature = "sync")]
     pub use crate::performers::sync_performer::SyncActivity;
 
+    pub use crate::performers::async_performer::AsyncActivity;
+
     #[cfg(feature = "sync")]
-    pub use crate::hybryd_task::{AsyncActivity, DoHybrid, HybrydTask, NextState};
+    pub use crate::hybryd_task::{DoHybrid, HybrydTask, NextState};
 }

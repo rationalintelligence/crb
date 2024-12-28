@@ -74,7 +74,7 @@ impl<T> StatePerformer<T> for Interrupt
 where
     T: HybrydTask,
 {
-    async fn perform(&mut self, _task: T) -> Transition<T> {
+    async fn perform(&mut self, _task: T, session: &mut HybrydSession) -> Transition<T> {
         match self.error.take() {
             None => Transition::Interrupted,
             Some(err) => Transition::Crashed(err),
@@ -95,7 +95,7 @@ enum Transition<T> {
 
 #[async_trait]
 trait StatePerformer<T>: Send {
-    async fn perform(&mut self, task: T) -> Transition<T>;
+    async fn perform(&mut self, task: T, session: &mut HybrydSession) -> Transition<T>;
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
 
@@ -110,7 +110,7 @@ where
     T: SyncActivity<S>,
     S: HybrydState,
 {
-    async fn perform(&mut self, mut task: T) -> Transition<T> {
+    async fn perform(&mut self, mut task: T, _session: &mut HybrydSession) -> Transition<T> {
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
             let next_state = task.perform(state);
@@ -139,7 +139,7 @@ where
     T: Activity<S>,
     S: HybrydState,
 {
-    async fn perform(&mut self, mut task: T) -> Transition<T> {
+    async fn perform(&mut self, mut task: T, _session: &mut HybrydSession) -> Transition<T> {
         let state = self.state.take().unwrap();
         let next_state = task.perform(state).await;
         Transition::Next(task, next_state)
@@ -173,17 +173,24 @@ pub trait SyncActivity<S>: HybrydTask {
     }
 }
 
+pub struct HybrydSession {
+    controller: Controller,
+}
+
 pub struct DoHybrid<T> {
     pub task: Option<T>,
-    pub controller: Controller,
+    pub session: HybrydSession,
     pub failures: Failures,
 }
 
 impl<T: HybrydTask> DoHybrid<T> {
     pub fn new(task: T) -> Self {
+        let session = HybrydSession {
+            controller: Controller::default(),
+        };
         Self {
             task: Some(task),
-            controller: Controller::default(),
+            session,
             failures: Failures::default(),
         }
     }
@@ -193,7 +200,7 @@ impl<T: HybrydTask> Task<T> for DoHybrid<T> {}
 
 impl<T: HybrydTask> DoHybrid<T> {
     async fn perform_routine(&mut self) -> Result<(), Error> {
-        let reg = self.controller.take_registration()?;
+        let reg = self.session.controller.take_registration()?;
         let fut = self.perform_task();
         Abortable::new(fut, reg).await??;
         Ok(())
@@ -201,11 +208,12 @@ impl<T: HybrydTask> DoHybrid<T> {
 
     async fn perform_task(&mut self) -> Result<(), Error> {
         if let Some(mut task) = self.task.take() {
+            let session = &mut self.session;
             let next_state = task.begin().await;
             let mut pair = (task, next_state);
             loop {
                 let (task, mut next_state) = pair;
-                let res = next_state.transition.perform(task).await;
+                let res = next_state.transition.perform(task, session).await;
                 match res {
                     Transition::Next(task, Ok(next_state)) => {
                         pair = (task, next_state);
@@ -233,7 +241,7 @@ where
     T: HybrydTask,
 {
     fn get_interruptor(&mut self) -> Interruptor {
-        self.controller.interruptor.clone()
+        self.session.controller.interruptor.clone()
     }
 
     async fn routine(&mut self) {

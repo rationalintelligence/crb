@@ -35,6 +35,17 @@ impl<T: AsyncTask> DoAsync<T> {
             failures: Failures::default(),
         }
     }
+
+    /*
+    pub fn new_fn<F>(fut: F) -> Self
+    where
+        F: Future<Output = Result<()>>,
+        F: Send + 'static,
+    {
+        let task = FnAsyncTask { fut: Some(fut) };
+        TypedAsyncTask::spawn(task).into()
+    }
+    */
 }
 
 impl<T: AsyncTask> Task<T> for DoAsync<T> {}
@@ -54,60 +65,11 @@ where
     }
 }
 
-#[derive(Deref, DerefMut)]
-pub struct TypedAsyncTask<T> {
-    #[deref]
-    #[deref_mut]
-    task: TypelessAsyncTask,
-    _run: PhantomData<T>,
+/*
+pub struct AsyncFn {
+    async_fn: Box<dyn Future<>,
 }
 
-impl<T: AsyncTask> TypedAsyncTask<T> {
-    pub fn spawn(task: T) -> Self {
-        let mut runtime = DoAsync::new(task);
-        let interruptor = runtime.get_interruptor();
-        let handle = crb_core::spawn(runtime.entrypoint());
-        let task = TypelessAsyncTask {
-            interruptor,
-            handle,
-            cancel_on_drop: false,
-        };
-        Self {
-            task,
-            _run: PhantomData,
-        }
-    }
-}
-
-impl<T> From<TypedAsyncTask<T>> for TypelessAsyncTask {
-    fn from(typed: TypedAsyncTask<T>) -> Self {
-        typed.task
-    }
-}
-
-pub struct TypelessAsyncTask {
-    interruptor: Interruptor,
-    handle: JoinHandle<()>,
-    cancel_on_drop: bool,
-}
-
-impl TypelessAsyncTask {
-    pub fn cancel_on_drop(&mut self, cancel: bool) {
-        self.cancel_on_drop = cancel;
-    }
-
-    pub fn interrupt(&mut self) {
-        self.interruptor.stop(true).ok();
-    }
-}
-
-impl Drop for TypelessAsyncTask {
-    fn drop(&mut self) {
-        if self.cancel_on_drop {
-            self.handle.abort();
-        }
-    }
-}
 
 impl TypelessAsyncTask {
     pub fn spawn<T>(fut: T) -> Self
@@ -137,3 +99,4 @@ where
             .await
     }
 }
+*/

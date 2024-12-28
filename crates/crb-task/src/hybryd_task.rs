@@ -3,14 +3,13 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
 use crb_runtime::kit::{Controller, Entrypoint, Failures, Interruptor, Runtime};
+use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
-use derive_more::{Deref, DerefMut};
 
 pub trait HybrydState: Send + 'static {}
 
-impl<T> HybrydState for T
-where T: Send + 'static {}
+impl<T> HybrydState for T where T: Send + 'static {}
 
 pub struct NextState<T: ?Sized> {
     transition: Box<dyn TransitionFor<T>>,

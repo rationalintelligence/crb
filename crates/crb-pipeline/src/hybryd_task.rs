@@ -4,7 +4,7 @@ use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
 use crb_actor::kit::Address;
 use crb_runtime::kit::{Interruptor, Runtime};
-use crb_task::kit::{HybrydTask, HybrydTaskRuntime};
+use crb_task::kit::{DoHybrid, HybrydTask};
 
 pub mod stage {
     pub use super::*;
@@ -63,7 +63,7 @@ where
 pub struct HybrydTaskStageRuntime<T: HybrydTask + Stage> {
     meta: Metadata,
     pipeline: Address<Pipeline<T::State>>,
-    runtime: HybrydTaskRuntime<T>,
+    runtime: DoHybrid<T>,
 }
 
 #[async_trait]
@@ -123,7 +123,7 @@ where
     ) -> Box<dyn Runtime> {
         let config = self.config.clone();
         let instance = T::construct(config, input, state);
-        let runtime = HybrydTaskRuntime::new(instance);
+        let runtime = DoHybrid::new(instance);
         let conducted_runtime = HybrydTaskStageRuntime::<T> {
             meta,
             pipeline,

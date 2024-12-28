@@ -17,4 +17,5 @@ log.workspace = true
 tokio = { workspace = true, optional = true }
 
 [features]
+default = ["sync"]
 sync = ["tokio"]

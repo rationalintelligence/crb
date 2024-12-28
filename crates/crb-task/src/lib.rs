@@ -8,12 +8,12 @@ pub mod sync_task;
 pub mod hybryd_task;
 
 pub mod kit {
-    pub use crate::task::{Task, TaskHandle, JobHandle};
     pub use crate::async_task::{AsyncTask, DoAsync};
+    pub use crate::task::{JobHandle, Task, TaskHandle};
 
     #[cfg(feature = "sync")]
-    pub use crate::sync_task::{SyncTask, DoSync};
+    pub use crate::sync_task::{DoSync, SyncTask};
 
     #[cfg(feature = "sync")]
-    pub use crate::hybryd_task::{HybrydTask, DoHybrid, NextState, Activity, SyncActivity};
+    pub use crate::hybryd_task::{Activity, DoHybrid, HybrydTask, NextState, SyncActivity};
 }

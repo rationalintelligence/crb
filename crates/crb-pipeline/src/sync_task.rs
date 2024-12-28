@@ -4,7 +4,7 @@ use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
 use crb_actor::kit::Address;
 use crb_runtime::kit::{Interruptor, Runtime};
-use crb_task::kit::{SyncTask, SyncTaskRuntime};
+use crb_task::kit::{DoSync, SyncTask};
 
 pub mod stage {
     pub use super::*;
@@ -63,7 +63,7 @@ where
 pub struct SyncTaskStageRuntime<T: SyncTask + Stage> {
     meta: Metadata,
     pipeline: Address<Pipeline<T::State>>,
-    runtime: SyncTaskRuntime<T>,
+    runtime: DoSync<T>,
 }
 
 #[async_trait]
@@ -123,7 +123,7 @@ where
     ) -> Box<dyn Runtime> {
         let config = self.config.clone();
         let instance = T::construct(config, input, state);
-        let runtime = SyncTaskRuntime::new(instance);
+        let runtime = DoSync::new(instance);
         let conducted_runtime = SyncTaskStageRuntime::<T> {
             meta,
             pipeline,

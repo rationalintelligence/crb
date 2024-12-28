@@ -1,8 +1,8 @@
+use async_trait::async_trait;
 use crb_core::JoinHandle;
 use crb_runtime::kit::{Interruptor, Runtime};
-use async_trait::async_trait;
-use std::marker::PhantomData;
 use derive_more::{Deref, DerefMut};
+use std::marker::PhantomData;
 
 #[async_trait]
 pub trait Task<T>: Runtime + Sized {

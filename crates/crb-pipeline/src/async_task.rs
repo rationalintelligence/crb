@@ -4,27 +4,27 @@ use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
 use crb_actor::kit::Address;
 use crb_runtime::kit::{Interruptor, Runtime};
-use crb_task::kit::{Task, TaskRuntime};
+use crb_task::kit::{AsyncTask, DoAsync};
 
 pub mod stage {
     use super::*;
 
-    pub type Task<T> = TaskStage<T>;
+    pub type AsyncTask<T> = AsyncTaskStage<T>;
 
-    pub fn task<T>() -> TaskStage<T>
+    pub fn task<T>() -> AsyncTaskStage<T>
     where
         T: Stage,
         T::Config: Default,
     {
-        TaskStage::<T>::default()
+        AsyncTaskStage::<T>::default()
     }
 }
 
-pub struct TaskStage<T: Stage> {
+pub struct AsyncTaskStage<T: Stage> {
     config: T::Config,
 }
 
-impl<T> Default for TaskStage<T>
+impl<T> Default for AsyncTaskStage<T>
 where
     T: Stage,
     T::Config: Default,
@@ -36,7 +36,7 @@ where
     }
 }
 
-impl<T> StageSource for TaskStage<T>
+impl<T> StageSource for AsyncTaskStage<T>
 where
     T: Stage,
 {
@@ -48,28 +48,28 @@ where
     }
 }
 
-impl<T> StageDestination for TaskStage<T>
+impl<T> StageDestination for AsyncTaskStage<T>
 where
-    T: Task + Stage,
+    T: AsyncTask + Stage,
 {
     type Stage = T;
 
     fn destination(&self) -> RoutePoint<T::Input, T::State> {
-        let generator = TaskStageRuntimeGenerator::<T>::new(self.config.clone());
+        let generator = AsyncTaskStageRuntimeGenerator::<T>::new(self.config.clone());
         RoutePoint::new(generator)
     }
 }
 
-pub struct TaskStageRuntime<T: Task + Stage> {
+pub struct AsyncTaskStageRuntime<T: AsyncTask + Stage> {
     meta: Metadata,
     pipeline: Address<Pipeline<T::State>>,
-    runtime: TaskRuntime<T>,
+    runtime: DoAsync<T>,
 }
 
 #[async_trait]
-impl<T> Runtime for TaskStageRuntime<T>
+impl<T> Runtime for AsyncTaskStageRuntime<T>
 where
-    T: Task + Stage,
+    T: AsyncTask + Stage,
 {
     fn get_interruptor(&mut self) -> Interruptor {
         self.runtime.get_interruptor()
@@ -85,13 +85,13 @@ where
     }
 }
 
-pub struct TaskStageRuntimeGenerator<T: Stage> {
+pub struct AsyncTaskStageRuntimeGenerator<T: Stage> {
     config: T::Config,
 }
 
-impl<T> TaskStageRuntimeGenerator<T>
+impl<T> AsyncTaskStageRuntimeGenerator<T>
 where
-    T: Task + Stage,
+    T: AsyncTask + Stage,
 {
     pub fn new(config: T::Config) -> impl RuntimeGenerator<Input = T::Input, State = T::State>
     where
@@ -101,11 +101,11 @@ where
     }
 }
 
-unsafe impl<T: Stage> Sync for TaskStageRuntimeGenerator<T> {}
+unsafe impl<T: Stage> Sync for AsyncTaskStageRuntimeGenerator<T> {}
 
-impl<T> RuntimeGenerator for TaskStageRuntimeGenerator<T>
+impl<T> RuntimeGenerator for AsyncTaskStageRuntimeGenerator<T>
 where
-    T: Task + Stage,
+    T: AsyncTask + Stage,
 {
     type State = T::State;
     type Input = T::Input;
@@ -119,8 +119,8 @@ where
     ) -> Box<dyn Runtime> {
         let config = self.config.clone();
         let instance = T::construct(config, input, state);
-        let runtime = TaskRuntime::new(instance);
-        let conducted_runtime = TaskStageRuntime::<T> {
+        let runtime = DoAsync::new(instance);
+        let conducted_runtime = AsyncTaskStageRuntime::<T> {
             meta,
             pipeline,
             runtime,

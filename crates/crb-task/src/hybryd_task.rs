@@ -3,7 +3,6 @@ use async_trait::async_trait;
 use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
 use futures::stream::Abortable;
 use std::marker::PhantomData;
-use tokio::task::spawn_blocking;
 
 pub trait HybrydState: Send + 'static {}
 
@@ -17,17 +16,9 @@ impl<T> NextState<T>
 where
     T: HybrydTask,
 {
-    pub fn do_sync<S>(state: S) -> Self
-    where
-        T: SyncActivity<S>,
-        S: HybrydState,
-    {
-        let runner = SyncPerformer {
-            _task: PhantomData,
-            state: Some(state),
-        };
+    pub(crate) fn new(performer: impl StatePerformer<T>) -> Self {
         Self {
-            transition: Box::new(runner),
+            transition: Box::new(performer),
         }
     }
 
@@ -58,7 +49,7 @@ impl<T> NextState<T>
 where
     T: HybrydTask,
 {
-    fn interrupt(error: Option<Error>) -> Self {
+    pub(crate) fn interrupt(error: Option<Error>) -> Self {
         Self {
             transition: Box::new(InterruptPerformer { error }),
         }
@@ -87,46 +78,16 @@ where
     }
 }
 
-enum Transition<T> {
+pub enum Transition<T> {
     Next(T, Result<NextState<T>>),
     Crashed(Error),
     Interrupted,
 }
 
 #[async_trait]
-trait StatePerformer<T>: Send {
+pub trait StatePerformer<T>: Send + 'static {
     async fn perform(&mut self, task: T, session: &mut HybrydSession) -> Transition<T>;
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
-}
-
-struct SyncPerformer<T, S> {
-    _task: PhantomData<T>,
-    state: Option<S>,
-}
-
-#[async_trait]
-impl<T, S> StatePerformer<T> for SyncPerformer<T, S>
-where
-    T: SyncActivity<S>,
-    S: HybrydState,
-{
-    async fn perform(&mut self, mut task: T, session: &mut HybrydSession) -> Transition<T> {
-        let interruptor = session.controller.interruptor.clone();
-        let state = self.state.take().unwrap();
-        let handle = spawn_blocking(move || {
-            let next_state = task.perform(state, interruptor);
-            Transition::Next(task, next_state)
-        });
-        match handle.await {
-            Ok(transition) => transition,
-            Err(err) => Transition::Crashed(err.into()),
-        }
-    }
-
-    async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
-        let next_state = task.fallback(err);
-        (task, next_state)
-    }
 }
 
 struct AsyncPerformer<T, S> {
@@ -187,36 +148,8 @@ pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
     }
 }
 
-pub trait SyncActivity<S>: HybrydTask {
-    fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<NextState<Self>> {
-        while interruptor.is_active() {
-            let result = self.many(&mut state);
-            match result {
-                Ok(Some(state)) => {
-                    return Ok(state);
-                }
-                Ok(None) => {}
-                Err(_) => {}
-            }
-        }
-        Ok(NextState::interrupt(None))
-    }
-
-    fn many(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
-        self.once(state).map(Some)
-    }
-
-    fn once(&mut self, _state: &mut S) -> Result<NextState<Self>> {
-        Ok(NextState::done())
-    }
-
-    fn fallback(&mut self, err: Error) -> NextState<Self> {
-        NextState::fail(err)
-    }
-}
-
 pub struct HybrydSession {
-    controller: Controller,
+    pub controller: Controller,
 }
 
 pub struct DoHybrid<T> {

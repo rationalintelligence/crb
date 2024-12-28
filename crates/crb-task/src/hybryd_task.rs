@@ -1,3 +1,4 @@
+use crate::task::Task;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
@@ -175,13 +176,13 @@ pub trait SyncActivity<S>: HybrydTask {
     }
 }
 
-pub struct HybrydTaskRuntime<T> {
+pub struct DoHybrid<T> {
     pub task: Option<T>,
     pub controller: Controller,
     pub failures: Failures,
 }
 
-impl<T: HybrydTask> HybrydTaskRuntime<T> {
+impl<T: HybrydTask> DoHybrid<T> {
     pub fn new(task: T) -> Self {
         Self {
             task: Some(task),
@@ -191,8 +192,10 @@ impl<T: HybrydTask> HybrydTaskRuntime<T> {
     }
 }
 
+impl<T: HybrydTask> Task<T> for DoHybrid<T> {}
+
 #[async_trait]
-impl<T> Runtime for HybrydTaskRuntime<T>
+impl<T> Runtime for DoHybrid<T>
 where
     T: HybrydTask,
 {
@@ -237,7 +240,7 @@ pub struct TypedHybrydTask<T> {
 
 impl<T: HybrydTask> TypedHybrydTask<T> {
     pub fn spawn(task: T) -> Self {
-        let mut runtime = HybrydTaskRuntime::new(task);
+        let mut runtime = DoHybrid::new(task);
         let interruptor = runtime.get_interruptor();
         let handle = crb_core::spawn(runtime.entrypoint());
         let task = TypelessHybrydTask {

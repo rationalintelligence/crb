@@ -1,3 +1,4 @@
+use crate::task::Task;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
@@ -10,14 +11,14 @@ pub trait SyncTask: Send + 'static {
     fn routine(&mut self) -> Result<()>;
 }
 
-pub struct SyncTaskRuntime<T> {
+pub struct DoSync<T> {
     // The task has to be detachable to move that to a separate thread
     pub task: Option<T>,
     pub controller: Controller,
     pub failures: Failures,
 }
 
-impl<T: SyncTask> SyncTaskRuntime<T> {
+impl<T: SyncTask> DoSync<T> {
     pub fn new(task: T) -> Self {
         Self {
             task: Some(task),
@@ -27,8 +28,10 @@ impl<T: SyncTask> SyncTaskRuntime<T> {
     }
 }
 
+impl<T: SyncTask> Task<T> for DoSync<T> {}
+
 #[async_trait]
-impl<T> Runtime for SyncTaskRuntime<T>
+impl<T> Runtime for DoSync<T>
 where
     T: SyncTask,
 {
@@ -62,7 +65,7 @@ pub struct TypedSyncTask<T> {
 
 impl<T: SyncTask> TypedSyncTask<T> {
     pub fn spawn(task: T) -> Self {
-        let mut runtime = SyncTaskRuntime::new(task);
+        let mut runtime = DoSync::new(task);
         let interruptor = runtime.get_interruptor();
         let handle = crb_core::spawn(runtime.entrypoint());
         let task = TypelessSyncTask {

@@ -1,4 +1,5 @@
 pub mod async_task;
+pub mod task;
 
 #[cfg(feature = "sync")]
 pub mod sync_task;
@@ -7,11 +8,12 @@ pub mod sync_task;
 pub mod hybryd_task;
 
 pub mod kit {
-    pub use crate::async_task::{Task, TaskRuntime, TypedTask, TypelessTask};
+    pub use crate::task::{Task, TaskHandle, JobHandle};
+    pub use crate::async_task::{AsyncTask, DoAsync, TypedAsyncTask, TypelessAsyncTask};
 
     #[cfg(feature = "sync")]
-    pub use crate::sync_task::{SyncTask, SyncTaskRuntime, TypedSyncTask, TypelessSyncTask};
+    pub use crate::sync_task::{SyncTask, DoSync, TypedSyncTask, TypelessSyncTask};
 
     #[cfg(feature = "sync")]
-    pub use crate::hybryd_task::{HybrydTask, HybrydTaskRuntime, TypedHybrydTask, TypelessHybrydTask, NextState, Activity, SyncActivity};
+    pub use crate::hybryd_task::{HybrydTask, DoHybrid, TypedHybrydTask, TypelessHybrydTask, NextState, Activity, SyncActivity};
 }

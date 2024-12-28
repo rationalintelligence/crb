@@ -4,7 +4,7 @@ use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
 
 #[async_trait]
 pub trait AsyncTask: Send + 'static {
-    async fn controlled_routine(&mut self, ctrl: &mut Controller) -> Result<()> {
+    async fn controlled_routine(&mut self, _ctrl: &mut Controller) -> Result<()> {
         // let reg = ctrl.take_registration()?;
         let fut = self.routine();
         fut.await?;

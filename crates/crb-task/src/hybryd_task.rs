@@ -20,47 +20,6 @@ where
             transition: Box::new(performer),
         }
     }
-
-    pub fn done() -> Self {
-        Self::interrupt(None)
-    }
-
-    pub fn fail(err: Error) -> Self {
-        Self::interrupt(Some(err))
-    }
-}
-
-impl<T> NextState<T>
-where
-    T: HybrydTask,
-{
-    pub(crate) fn interrupt(error: Option<Error>) -> Self {
-        Self {
-            transition: Box::new(InterruptPerformer { error }),
-        }
-    }
-}
-
-pub struct InterruptPerformer {
-    error: Option<Error>,
-}
-
-#[async_trait]
-impl<T> StatePerformer<T> for InterruptPerformer
-where
-    T: HybrydTask,
-{
-    async fn perform(&mut self, _task: T, _session: &mut HybrydSession) -> Transition<T> {
-        match self.error.take() {
-            None => Transition::Interrupted,
-            Some(err) => Transition::Crashed(err),
-        }
-    }
-
-    async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>) {
-        let error = self.error.take().unwrap_or(err);
-        (task, NextState::interrupt(Some(error)))
-    }
 }
 
 pub enum Transition<T> {

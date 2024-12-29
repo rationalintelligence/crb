@@ -13,6 +13,11 @@ pub trait Agent: Sized + Send + 'static {
         NextState::process()
     }
 
+    fn interrupt(&mut self, ctx: &mut Self::Context) {
+        // Closes the channel
+        ctx.session().shutdown();
+    }
+
     async fn event(&mut self, ctx: &mut Self::Context) -> Result<()> {
         let envelope = ctx.session().joint().next_envelope();
         if let Some(envelope) = envelope.await {

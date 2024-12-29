@@ -26,9 +26,9 @@ where
 
 pub enum Transition<T> {
     Next(T, Result<NextState<T>>),
-    Crashed(Error),
-    Interrupted,
+    Interrupted(T),
     Process(T),
+    Crashed(Error),
 }
 
 #[async_trait]
@@ -93,7 +93,8 @@ impl<T: Agent> RunAgent<T> {
                         Transition::Crashed(err) => {
                             return Err(err);
                         }
-                        Transition::Interrupted => {
+                        Transition::Interrupted(task) => {
+                            pair = (task, None);
                             break;
                         }
                     }
@@ -106,8 +107,11 @@ impl<T: Agent> RunAgent<T> {
             // Finalize
             // TODO: Call finalizers to deliver the result
             // TODO: The default finalizer is = oneshot address self channel!!!!!
+            // let output = task.finalize(&mut self.context);
+            Ok(())
+        } else {
+            Ok(())
         }
-        Ok(())
     }
 }
 

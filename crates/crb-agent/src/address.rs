@@ -1,6 +1,6 @@
 use crb_core::{mpsc, watch};
 use crate::agent::Agent;
-use anyhow::Error;
+use anyhow::{Result, Error};
 use async_trait::async_trait;
 
 pub struct AddressJoint<A: Agent> {
@@ -21,7 +21,7 @@ impl<A: Agent> AddressJoint<A> {
         self.msg_rx.recv().await
     }
 
-    pub fn report(&mut self, output: A::Output) -> Result<(), Error> {
+    pub fn report(&mut self, output: A::Output) -> Result<()> {
         let status = AgentStatus::Done(output);
         self.status_tx.send(status)
             .map_err(Error::from)
@@ -38,7 +38,7 @@ pub struct Address<A: Agent> {
 }
 
 impl<A: Agent> Address<A> {
-    pub fn send(&self, msg: impl MessageFor<A>) -> Result<(), Error> {
+    pub fn send(&self, msg: impl MessageFor<A>) -> Result<()> {
         self.msg_tx
             .send(Box::new(msg))
             .map_err(|_| Error::msg("Can't send the message to the actor"))
@@ -82,5 +82,5 @@ pub type Envelope<A> = Box<dyn MessageFor<A>>;
 
 #[async_trait]
 pub trait MessageFor<A: Agent + ?Sized>: Send + 'static {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<(), Error>;
+    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()>;
 }

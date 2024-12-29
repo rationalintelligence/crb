@@ -6,7 +6,7 @@ pub mod performers;
 pub mod runtime;
 
 pub mod kit {
-    pub use crate::address::Address;
+    pub use crate::address::{Address, MessageFor};
     pub use crate::agent::Agent;
     pub use crate::context::{AgentContext, AgentSession};
     pub use crate::performers::async_performer::DoAsync;

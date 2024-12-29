@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use crb_actor::kit::{Actor, Address, MessageFor, Standalone};
 use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
-use crb_supervisor::{Supervisor, SupervisorSession};
+use crb_supervisor::actor::{Supervisor, SupervisorSession};
 use derive_more::Deref;
 use std::any::type_name;
 use std::marker::PhantomData;

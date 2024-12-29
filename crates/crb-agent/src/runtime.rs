@@ -2,7 +2,9 @@ use crate::agent::Agent;
 use crate::context::AgentContext;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::{Failures, Interruptor, Runtime, Task};
+use crb_runtime::kit::{
+    Context, Failures, InteractiveRuntime, InteractiveTask, Interruptor, Runtime, Task,
+};
 use futures::stream::Abortable;
 
 pub trait AgentState: Send + 'static {}
@@ -57,6 +59,16 @@ impl<T: Agent> RunAgent<T> {
 }
 
 impl<T: Agent> Task<T> for RunAgent<T> {}
+impl<A: Agent> InteractiveTask<A> for RunAgent<A> {}
+
+#[async_trait]
+impl<A: Agent> InteractiveRuntime for RunAgent<A> {
+    type Context = A::Context;
+
+    fn address(&self) -> <Self::Context as Context>::Address {
+        self.context.address().clone()
+    }
+}
 
 impl<T: Agent> RunAgent<T> {
     async fn perform_routine(&mut self) -> Result<(), Error> {

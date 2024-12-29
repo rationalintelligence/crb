@@ -2,7 +2,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_actor::kit::{Actor, ActorSession, DoActor, OnEvent};
 use crb_runtime::task::InteractiveTask;
-use crb_supervisor::{Supervisor, SupervisorSession};
+use crb_supervisor::actor::{Supervisor, SupervisorSession};
 
 struct Printer;
 

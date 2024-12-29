@@ -10,6 +10,7 @@ repository.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 crb-actor.workspace = true
+crb-agent.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
 derive_more.workspace = true

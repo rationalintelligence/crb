@@ -37,7 +37,7 @@ pub trait StatePerformer<T: Agent>: Send + 'static {
 }
 
 pub trait Agent: Sized + Send + 'static {
-    type Output: Default;
+    type Output: Default + Clone;
     type Context: AgentContext<Self>;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> NextState<Self> {

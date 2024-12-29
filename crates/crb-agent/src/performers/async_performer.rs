@@ -97,28 +97,24 @@ where
     }
 }
 
-pub trait AnyAsyncFut<T>: Future<Output = Result<T>> + Send + 'static {}
+pub trait AnyAsyncFut<T>: Future<Output = T> + Send + 'static {}
 
-impl<F, T> AnyAsyncFut<T> for F where F: Future<Output = Result<T>> + Send + 'static {}
+impl<F, T> AnyAsyncFut<T> for F where F: Future<Output = T> + Send + 'static {}
 
 struct AsyncFn<T> {
     fut: Option<Box<dyn AnyAsyncFut<T>>>,
     output: Option<T>,
 }
 
-impl<T> Agent for AsyncFn<T>
-where
-    T: Output,
-{
+impl<T: Output> Agent for AsyncFn<T> {
     type Context = AgentSession<Self>;
-    // TODO: Get an output from Fn
     type Output = T;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         Next::do_async(CallFn)
     }
 
-    fn finalize(mut self, _ctx: &mut Self::Context) -> Self::Output {
+    fn finalize(self, _ctx: &mut Self::Context) -> Self::Output {
         self.output.unwrap_or_default()
     }
 }
@@ -126,14 +122,11 @@ where
 struct CallFn;
 
 #[async_trait]
-impl<T> DoAsync<CallFn> for AsyncFn<T>
-where
-    T: Output,
-{
+impl<T: Output> DoAsync<CallFn> for AsyncFn<T> {
     async fn once(&mut self, _state: &mut CallFn) -> Result<Next<Self>> {
         let fut = self.fut.take().unwrap();
         let pinned_fut = Box::into_pin(fut);
-        let output = pinned_fut.await?;
+        let output = pinned_fut.await;
         self.output = Some(output);
         Ok(Next::done())
     }

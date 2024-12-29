@@ -3,7 +3,7 @@ use crate::runtime::{
     RunAgent,
     AgentState, Next, StatePerformer, Transition,
 };
-use crate::agent::{ Agent };
+use crate::agent::{Agent, Output};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::Interruptor;
@@ -91,39 +91,45 @@ where
     }
 }
 
-impl RunAgent<SyncFn> {
-    pub fn new_sync<F: AnySyncFn>(func: F) -> Self {
-        let task = SyncFn {
+impl<T: Output> RunAgent<SyncFn<T>> {
+    pub fn new_sync<F: AnySyncFn<T>>(func: F) -> Self {
+        let task = SyncFn::<T> {
             func: Some(Box::new(func)),
+            output: None,
         };
         Self::new(task)
     }
 }
 
-pub trait AnySyncFn: FnOnce() -> Result<()> + Send + 'static {}
+pub trait AnySyncFn<T>: FnOnce() -> T + Send + 'static {}
 
-impl<F> AnySyncFn for F where F: FnOnce() -> Result<()> + Send + 'static {}
+impl<F, T> AnySyncFn<T> for F where F: FnOnce() -> T + Send + 'static {}
 
-struct SyncFn {
-    func: Option<Box<dyn AnySyncFn>>,
+struct SyncFn<T> {
+    func: Option<Box<dyn AnySyncFn<T>>>,
+    output: Option<T>,
 }
 
-impl Agent for SyncFn {
+impl<T: Output> Agent for SyncFn<T> {
     type Context = AgentSession<Self>;
-    // TODO: Get an output from Fut
-    type Output = ();
+    type Output = T;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         Next::do_sync(CallFn)
+    }
+
+    fn finalize(self, _ctx: &mut Self::Context) -> Self::Output {
+        self.output.unwrap_or_default()
     }
 }
 
 struct CallFn;
 
-impl DoSync<CallFn> for SyncFn {
+impl<T: Output> DoSync<CallFn> for SyncFn<T> {
     fn once(&mut self, _state: &mut CallFn) -> Result<Next<Self>> {
         let func = self.func.take().unwrap();
-        func()?;
+        let output = func();
+        self.output = Some(output);
         Ok(Next::done())
     }
 }

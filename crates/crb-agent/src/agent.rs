@@ -1,5 +1,6 @@
 use crate::context::AgentContext;
-use crate::runtime::{Next, RunAgent};
+use crate::runtime::RunAgent;
+use crate::performers::Next;
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_runtime::kit::{Context, InteractiveTask, ManagedContext};

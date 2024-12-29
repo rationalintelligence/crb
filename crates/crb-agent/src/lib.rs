@@ -11,7 +11,8 @@ pub mod kit {
     pub use crate::context::{AgentContext, AgentSession};
     pub use crate::event::OnEvent;
     pub use crate::performers::async_performer::DoAsync;
-    pub use crate::runtime::{Next, RunAgent};
+    pub use crate::runtime::RunAgent;
+    pub use crate::performers::Next;
 
     #[cfg(feature = "sync")]
     pub use crate::performers::sync_performer::DoSync;

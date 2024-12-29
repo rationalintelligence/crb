@@ -69,8 +69,8 @@ where
     T: SyncActivity<S>,
     S: AgentState,
 {
-    async fn perform(&mut self, mut task: T, session: &mut AgentSession<T>) -> Transition<T> {
-        let interruptor = session.controller.interruptor.clone();
+    async fn perform(&mut self, mut task: T, session: &mut T::Context) -> Transition<T> {
+        let interruptor = session.as_mut().controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
             let next_state = task.perform(state, interruptor);
@@ -106,7 +106,11 @@ struct SyncFn {
 }
 
 impl Agent for SyncFn {
-    fn initial_state(&mut self) -> NextState<Self> {
+    type Context = AgentSession<Self>;
+    // TODO: Get an output from Fut
+    type Output = ();
+
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> NextState<Self> {
         NextState::do_sync(CallFn)
     }
 }

@@ -18,7 +18,7 @@ impl<T> StatePerformer<T> for ProcessPerformer
 where
     T: Agent,
 {
-    async fn perform(&mut self, task: T, _session: &mut AgentSession<T>) -> Transition<T> {
+    async fn perform(&mut self, task: T, _session: &mut T::Context) -> Transition<T> {
         Transition::Process(task)
     }
 

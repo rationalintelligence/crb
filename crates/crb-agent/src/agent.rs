@@ -29,17 +29,36 @@ pub enum Transition<T> {
     Process(T),
 }
 
+// TODO: Replace `AsMut` to methods?
+pub trait AgentContext<T>: AsMut<AgentSession<T>> + Send {
+}
+
+impl<T: Agent> AgentContext<T> for AgentSession<T> {
+}
+
+impl<T: Agent> AsMut<AgentSession<T>> for AgentSession<T> {
+    fn as_mut(&mut self) -> &mut AgentSession<T> {
+        self
+    }
+}
+
 #[async_trait]
-pub trait StatePerformer<T>: Send + 'static {
-    async fn perform(&mut self, task: T, session: &mut AgentSession<T>) -> Transition<T>;
+pub trait StatePerformer<T: Agent>: Send + 'static {
+    async fn perform(&mut self, task: T, session: &mut T::Context) -> Transition<T>;
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
 
 pub trait Agent: Sized + Send + 'static {
-    // TODO: `initialize` has to return an optional `Next`
-    // TODO: Initialize MUST not fail!
-    fn initial_state(&mut self) -> NextState<Self> {
+    type Output: Default;
+    type Context: AgentContext<Self>;
+
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> NextState<Self> {
         NextState::process()
+    }
+
+
+    fn finalize(&mut self, _ctx: &mut Self::Context) -> Self::Output {
+        Self::Output::default()
     }
 
     // TODO: Add finalizers
@@ -47,26 +66,34 @@ pub trait Agent: Sized + Send + 'static {
 
 }
 
-pub struct AgentSession<T> {
+pub struct AgentSession<T: ?Sized> {
     pub controller: Controller,
     pub next_state: Option<NextState<T>>,
 }
 
-pub struct RunAgent<T> {
+impl<T> Default for AgentSession<T> {
+    fn default() -> Self {
+        Self {
+            controller: Controller::default(),
+            next_state: None,
+        }
+    }
+}
+
+pub struct RunAgent<T: Agent> {
     pub task: Option<T>,
-    pub session: AgentSession<T>,
+    pub session: T::Context,
     pub failures: Failures,
 }
 
 impl<T: Agent> RunAgent<T> {
-    pub fn new(task: T) -> Self {
-        let session = AgentSession {
-            controller: Controller::default(),
-            next_state: None,
-        };
+    pub fn new(task: T) -> Self
+    where
+        T::Context: Default,
+    {
         Self {
             task: Some(task),
-            session,
+            session: T::Context::default(),
             failures: Failures::default(),
         }
     }
@@ -76,7 +103,7 @@ impl<T: Agent> Task<T> for RunAgent<T> {}
 
 impl<T: Agent> RunAgent<T> {
     async fn perform_routine(&mut self) -> Result<(), Error> {
-        let reg = self.session.controller.take_registration()?;
+        let reg = self.session.as_mut().controller.take_registration()?;
         let fut = self.perform_task();
         Abortable::new(fut, reg).await??;
         Ok(())
@@ -84,17 +111,17 @@ impl<T: Agent> RunAgent<T> {
 
     async fn perform_task(&mut self) -> Result<(), Error> {
         if let Some(mut task) = self.task.take() {
-            let session = &mut self.session;
+            // let session = self.session.as_mut();
 
             // Initialize
-            let initial_state = task.initial_state();
+            let initial_state = task.initialize(&mut self.session);
             let mut pair = (task, Some(initial_state));
 
             // Events or States
-            while session.controller.is_active() {
+            while self.session.as_mut().controller.is_active() {
                 let (task, mut next_state) = pair;
                 if let Some(mut next_state) = next_state {
-                    let res = next_state.transition.perform(task, session).await;
+                    let res = next_state.transition.perform(task, &mut self.session).await;
                     match res {
                         Transition::Next(task, Ok(next_state)) => {
                             pair = (task, Some(next_state));
@@ -115,7 +142,7 @@ impl<T: Agent> RunAgent<T> {
                     }
                 } else {
                     // TODO: Actor's events loop here
-                    pair = (task, session.next_state.take());
+                    pair = (task, self.session.as_mut().next_state.take());
                 }
             }
 
@@ -133,7 +160,7 @@ where
     T: Agent,
 {
     fn get_interruptor(&mut self) -> Interruptor {
-        self.session.controller.interruptor.clone()
+        self.session.as_mut().controller.interruptor.clone()
     }
 
     async fn routine(&mut self) {

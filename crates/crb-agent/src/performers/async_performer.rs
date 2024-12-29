@@ -68,8 +68,8 @@ where
     T: AsyncActivity<S>,
     S: AgentState,
 {
-    async fn perform(&mut self, mut task: T, session: &mut AgentSession<T>) -> Transition<T> {
-        let interruptor = session.controller.interruptor.clone();
+    async fn perform(&mut self, mut task: T, session: &mut T::Context) -> Transition<T> {
+        let interruptor = session.as_mut().controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let next_state = task.perform(state, interruptor).await;
         Transition::Next(task, next_state)
@@ -82,7 +82,7 @@ where
 }
 
 impl RunAgent<AsyncFn> {
-    pub fn new_async<F: AnyAsyncFn>(fut: F) -> Self {
+    pub fn new_async<F: AnyAsyncFut>(fut: F) -> Self {
         let task = AsyncFn {
             fut: Some(Box::new(fut)),
         };
@@ -90,16 +90,20 @@ impl RunAgent<AsyncFn> {
     }
 }
 
-pub trait AnyAsyncFn: Future<Output = Result<()>> + Send + 'static {}
+pub trait AnyAsyncFut: Future<Output = Result<()>> + Send + 'static {}
 
-impl<F> AnyAsyncFn for F where F: Future<Output = Result<()>> + Send + 'static {}
+impl<F> AnyAsyncFut for F where F: Future<Output = Result<()>> + Send + 'static {}
 
 struct AsyncFn {
-    fut: Option<Box<dyn AnyAsyncFn>>,
+    fut: Option<Box<dyn AnyAsyncFut>>,
 }
 
 impl Agent for AsyncFn {
-    fn initial_state(&mut self) -> NextState<Self> {
+    type Context = AgentSession<Self>;
+    // TODO: Get an output from Fn
+    type Output = ();
+
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> NextState<Self> {
         NextState::do_async(CallFn)
     }
 }

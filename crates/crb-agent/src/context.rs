@@ -1,7 +1,7 @@
 use crate::address::{Address, AddressJoint};
 use crate::agent::Agent;
 use crate::runtime::Next;
-use crb_runtime::kit::{Controller, Context, ManagedContext};
+use crb_runtime::kit::{Context, Controller, ManagedContext};
 
 pub trait AgentContext<T: Agent>: Context {
     fn session(&mut self) -> &mut AgentSession<T>;
@@ -56,4 +56,3 @@ impl<T: Agent> AgentContext<T> for AgentSession<T> {
         self
     }
 }
-

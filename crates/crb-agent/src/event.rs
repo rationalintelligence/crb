@@ -1,7 +1,7 @@
-use crate::agent::Agent;
-use crate::address::MessageFor;
 use crate::address::Address;
-use anyhow::{Result, Error};
+use crate::address::MessageFor;
+use crate::agent::Agent;
+use anyhow::{Error, Result};
 use async_trait::async_trait;
 
 impl<T: Agent> Address<T> {
@@ -48,7 +48,6 @@ where
         }
     }
 }
-
 
 impl<A: Agent> Address<A> {
     pub fn interrupt(&self) -> Result<()> {

@@ -1,9 +1,6 @@
-use crate::context::{AgentContext, AgentSession};
-use crate::runtime::{
-    RunAgent,
-    AgentState, Next, StatePerformer, Transition,
-};
 use crate::agent::{Agent, Output};
+use crate::context::{AgentContext, AgentSession};
+use crate::runtime::{AgentState, Next, RunAgent, StatePerformer, Transition};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::Interruptor;
@@ -118,8 +115,8 @@ impl<T: Output> Agent for SyncFn<T> {
         Next::do_sync(CallFn)
     }
 
-    fn finalize(self, _ctx: &mut Self::Context) -> Self::Output {
-        self.output.unwrap_or_default()
+    fn finalize(&mut self, _ctx: &mut Self::Context) -> Self::Output {
+        self.output.take().unwrap_or_default()
     }
 }
 

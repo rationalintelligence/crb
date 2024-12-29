@@ -15,6 +15,7 @@ anyhow = "1.0.94"
 async-trait = "0.1.83"
 crb-actor = { version = "0.0.20", path = "crates/crb-actor" }
 crb-actor-ext = { version = "0.0.20", path = "crates/crb-actor-ext" }
+crb-agent = { version = "0.0.20", path = "crates/crb-agent" }
 crb-core = { version = "0.0.20", path = "crates/crb-core" }
 crb-pipeline = { version = "0.0.20", path = "crates/crb-pipeline" }
 crb-routine = { version = "0.0.20", path = "crates/crb-routine" }

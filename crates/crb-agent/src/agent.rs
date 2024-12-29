@@ -1,8 +1,8 @@
 use crate::context::AgentContext;
-use crb_runtime::context::ManagedContext;
 use crate::runtime::Next;
 use anyhow::Result;
 use async_trait::async_trait;
+use crb_runtime::context::ManagedContext;
 
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
@@ -29,12 +29,11 @@ pub trait Agent: Sized + Send + 'static {
         Ok(())
     }
 
-    fn finalize(self, _ctx: &mut Self::Context) -> Self::Output {
+    fn finalize(&mut self, _ctx: &mut Self::Context) -> Self::Output {
         Self::Output::default()
     }
 }
 
 pub trait Output: Default + Clone + Sync + Send + 'static {}
 
-impl<T> Output for T
-where T: Default + Clone + Sync + Send + 'static {}
+impl<T> Output for T where T: Default + Clone + Sync + Send + 'static {}

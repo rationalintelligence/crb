@@ -1,7 +1,7 @@
-use crb_core::{mpsc, watch};
 use crate::agent::Agent;
-use anyhow::{Result, Error};
+use anyhow::{Error, Result};
 use async_trait::async_trait;
+use crb_core::{mpsc, watch};
 
 pub struct AddressJoint<A: Agent> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
@@ -23,8 +23,7 @@ impl<A: Agent> AddressJoint<A> {
 
     pub fn report(&mut self, output: A::Output) -> Result<()> {
         let status = AgentStatus::Done(output);
-        self.status_tx.send(status)
-            .map_err(Error::from)
+        self.status_tx.send(status).map_err(Error::from)
     }
 
     pub fn close(&mut self) {
@@ -46,7 +45,9 @@ impl<A: Agent> Address<A> {
 
     pub async fn join(&mut self) -> Result<A::Output, Error> {
         let status = self.status_rx.wait_for(AgentStatus::is_done).await?;
-        status.take().ok_or_else(|| Error::msg("Can't extract the output from the agent"))
+        status
+            .take()
+            .ok_or_else(|| Error::msg("Can't extract the output from the agent"))
     }
 }
 

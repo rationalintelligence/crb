@@ -33,23 +33,23 @@ pub enum Transition<T> {
 
 #[async_trait]
 pub trait StatePerformer<T: Agent>: Send + 'static {
-    async fn perform(&mut self, task: T, session: &mut T::Context) -> Transition<T>;
-    async fn fallback(&mut self, task: T, err: Error) -> (T, Next<T>);
+    async fn perform(&mut self, agent: T, session: &mut T::Context) -> Transition<T>;
+    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>);
 }
 
 pub struct RunAgent<T: Agent> {
-    pub task: Option<T>,
+    pub agent: Option<T>,
     pub context: T::Context,
     pub failures: Failures,
 }
 
 impl<T: Agent> RunAgent<T> {
-    pub fn new(task: T) -> Self
+    pub fn new(agent: T) -> Self
     where
         T::Context: Default,
     {
         Self {
-            task: Some(task),
+            agent: Some(agent),
             context: T::Context::default(),
             failures: Failures::default(),
         }
@@ -71,50 +71,55 @@ impl<T: Agent> RunAgent<T> {
     }
 
     async fn perform_task(&mut self) -> Result<T::Output, Error> {
-        if let Some(mut task) = self.task.take() {
+        if let Some(mut agent) = self.agent.take() {
             // let session = self.context.session();
 
             // Initialize
-            let initial_state = task.initialize(&mut self.context);
-            let mut pair = (task, Some(initial_state));
+            let initial_state = agent.initialize(&mut self.context);
+            let mut pair = (agent, Some(initial_state));
 
             // Events or States
             while self.context.session().controller.is_active() {
-                let (mut task, next_state) = pair;
+                let (mut agent, next_state) = pair;
                 if let Some(mut next_state) = next_state {
-                    let res = next_state.transition.perform(task, &mut self.context).await;
+                    let res = next_state
+                        .transition
+                        .perform(agent, &mut self.context)
+                        .await;
                     match res {
-                        Transition::Next(task, Ok(next_state)) => {
-                            pair = (task, Some(next_state));
+                        Transition::Next(agent, Ok(next_state)) => {
+                            pair = (agent, Some(next_state));
                         }
-                        Transition::Next(task, Err(err)) => {
-                            let (task, next_state) = next_state.transition.fallback(task, err).await;
-                            pair = (task, Some(next_state));
+                        Transition::Next(agent, Err(err)) => {
+                            let (agent, next_state) =
+                                next_state.transition.fallback(agent, err).await;
+                            pair = (agent, Some(next_state));
                         }
-                        Transition::Process(task) => {
-                            pair = (task, None);
+                        Transition::Process(agent) => {
+                            pair = (agent, None);
                         }
                         Transition::Crashed(err) => {
                             return Err(err);
                         }
-                        Transition::Interrupted(task) => {
-                            pair = (task, None);
+                        Transition::Interrupted(agent) => {
+                            pair = (agent, None);
                             break;
                         }
                     }
                 } else {
-                    let result = task.event(&mut self.context).await;
+                    let result = agent.event(&mut self.context).await;
                     self.failures.put(result);
-                    pair = (task, self.context.session().next_state.take());
+                    pair = (agent, self.context.session().next_state.take());
                 }
             }
 
             // Finalize
-            let task = pair.0;
-            let output = task.finalize(&mut self.context);
+            let mut agent = pair.0;
+            let output = agent.finalize(&mut self.context);
+            self.agent = Some(agent);
             Ok(output)
         } else {
-            Err(Error::msg("Agent's task has consumed already."))
+            Err(Error::msg("Agent's agent has consumed already."))
         }
     }
 }

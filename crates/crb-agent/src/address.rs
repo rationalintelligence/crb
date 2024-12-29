@@ -9,8 +9,20 @@ pub struct AddressJoint<A: Agent> {
 }
 
 impl<A: Agent> AddressJoint<A> {
+    pub fn new_pair() -> (Address<A>, AddressJoint<A>) {
+        let (msg_tx, msg_rx) = mpsc::unbounded_channel();
+        let (status_tx, status_rx) = watch::channel(AgentStatus::Active);
+        let address = Address { msg_tx, status_rx };
+        let joint = AddressJoint { msg_rx, status_tx };
+        (address, joint)
+    }
+
     pub async fn next_envelope(&mut self) -> Option<Envelope<A>> {
         self.msg_rx.recv().await
+    }
+
+    pub fn close(&mut self) {
+        self.msg_rx.close();
     }
 }
 

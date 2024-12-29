@@ -93,8 +93,8 @@ impl<A> AddressJoint<A> {
 
 pub struct ActorSession<A> {
     joint: AddressJoint<A>,
-    controller: Controller,
     address: Address<A>,
+    controller: Controller,
 }
 
 impl<A> Default for ActorSession<A> {

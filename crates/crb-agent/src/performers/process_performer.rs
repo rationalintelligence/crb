@@ -1,5 +1,5 @@
 use crate::agent::Agent;
-use crate::runtime::{Next, StatePerformer, Transition};
+use crate::runtime::{Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::Error;
 use async_trait::async_trait;
 
@@ -19,11 +19,12 @@ impl<T> StatePerformer<T> for ProcessPerformer
 where
     T: Agent,
 {
-    async fn perform(&mut self, task: T, _session: &mut T::Context) -> Transition<T> {
-        Transition::Process(task)
+    async fn perform(&mut self, agent: T, _session: &mut T::Context) -> Transition<T> {
+        let command = TransitionCommand::Process;
+        Transition::Continue { agent, command }
     }
 
-    async fn fallback(&mut self, task: T, err: Error) -> (T, Next<T>) {
-        (task, Next::interrupt(Some(err)))
+    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>) {
+        (agent, Next::interrupt(Some(err)))
     }
 }

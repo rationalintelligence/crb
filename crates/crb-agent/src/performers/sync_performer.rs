@@ -1,6 +1,6 @@
 use crate::agent::{Agent, Output};
 use crate::context::{AgentContext, AgentSession};
-use crate::runtime::{AgentState, Next, RunAgent, StatePerformer, Transition};
+use crate::runtime::{AgentState, Next, RunAgent, StatePerformer, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::Interruptor;
@@ -69,12 +69,13 @@ where
     T: DoSync<S>,
     S: AgentState,
 {
-    async fn perform(&mut self, mut task: T, ctx: &mut T::Context) -> Transition<T> {
+    async fn perform(&mut self, mut agent: T, ctx: &mut T::Context) -> Transition<T> {
         let interruptor = ctx.session().controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
-            let next_state = task.perform(state, interruptor);
-            Transition::Next(task, next_state)
+            let next_state = agent.perform(state, interruptor);
+            let command = TransitionCommand::Next(next_state);
+            Transition::Continue { agent, command }
         });
         match handle.await {
             Ok(transition) => transition,
@@ -82,9 +83,9 @@ where
         }
     }
 
-    async fn fallback(&mut self, mut task: T, err: Error) -> (T, Next<T>) {
-        let next_state = task.fallback(err);
-        (task, next_state)
+    async fn fallback(&mut self, mut agent: T, err: Error) -> (T, Next<T>) {
+        let next_state = agent.fallback(err);
+        (agent, next_state)
     }
 }
 

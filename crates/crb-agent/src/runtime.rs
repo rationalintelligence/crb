@@ -26,10 +26,17 @@ where
     }
 }
 
+pub enum TransitionCommand<T> {
+    Next(Result<Next<T>>),
+    Interrupted,
+    Process,
+}
+
 pub enum Transition<T> {
-    Next(T, Result<Next<T>>),
-    Interrupted(T),
-    Process(T),
+    Continue {
+        agent: T,
+        command: TransitionCommand<T>,
+    },
     Crashed(Error),
 }
 
@@ -99,23 +106,27 @@ impl<T: Agent> RunAgent<T> {
                         .perform(agent, &mut self.context)
                         .await;
                     match res {
-                        Transition::Next(agent, Ok(next_state)) => {
-                            pair = (agent, Some(next_state));
-                        }
-                        Transition::Next(agent, Err(err)) => {
-                            let (agent, next_state) =
-                                next_state.transition.fallback(agent, err).await;
-                            pair = (agent, Some(next_state));
-                        }
-                        Transition::Process(agent) => {
-                            pair = (agent, None);
+                        Transition::Continue { agent, command } => {
+                            match command {
+                                TransitionCommand::Next(Ok(next_state)) => {
+                                    pair = (agent, Some(next_state));
+                                }
+                                TransitionCommand::Next(Err(err)) => {
+                                    let (agent, next_state) =
+                                        next_state.transition.fallback(agent, err).await;
+                                    pair = (agent, Some(next_state));
+                                }
+                                TransitionCommand::Process => {
+                                    pair = (agent, None);
+                                }
+                                TransitionCommand::Interrupted => {
+                                    pair = (agent, None);
+                                    break;
+                                }
+                            }
                         }
                         Transition::Crashed(err) => {
                             return Err(err);
-                        }
-                        Transition::Interrupted(agent) => {
-                            pair = (agent, None);
-                            break;
                         }
                     }
                 } else {

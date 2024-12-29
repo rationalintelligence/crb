@@ -1,5 +1,5 @@
 use crate::agent::Agent;
-use crate::runtime::{Next, StatePerformer, Transition};
+use crate::runtime::{Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::Error;
 use async_trait::async_trait;
 
@@ -29,15 +29,18 @@ impl<T> StatePerformer<T> for InterruptPerformer
 where
     T: Agent,
 {
-    async fn perform(&mut self, task: T, _session: &mut T::Context) -> Transition<T> {
+    async fn perform(&mut self, agent: T, _session: &mut T::Context) -> Transition<T> {
         match self.error.take() {
-            None => Transition::Interrupted(task),
+            None => {
+                let command = TransitionCommand::Interrupted;
+                Transition::Continue { agent, command }
+            }
             Some(err) => Transition::Crashed(err),
         }
     }
 
-    async fn fallback(&mut self, task: T, err: Error) -> (T, Next<T>) {
+    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>) {
         let error = self.error.take().unwrap_or(err);
-        (task, Next::interrupt(Some(error)))
+        (agent, Next::interrupt(Some(error)))
     }
 }

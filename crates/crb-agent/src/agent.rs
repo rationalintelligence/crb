@@ -6,8 +6,8 @@ use crb_runtime::kit::{Context, InteractiveTask, ManagedContext};
 
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
-    type Output: Output;
     type Context: AgentContext<Self>;
+    type Output: Output;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         Next::process()

@@ -1,8 +1,8 @@
 use crate::context::AgentContext;
-use crate::runtime::Next;
+use crate::runtime::{Next, RunAgent};
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_runtime::context::ManagedContext;
+use crb_runtime::kit::{Context, InteractiveTask, ManagedContext};
 
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
@@ -37,3 +37,14 @@ pub trait Agent: Sized + Send + 'static {
 pub trait Output: Default + Clone + Sync + Send + 'static {}
 
 impl<T> Output for T where T: Default + Clone + Sync + Send + 'static {}
+
+pub trait Standalone: Agent {
+    fn spawn(self) -> <Self::Context as Context>::Address
+    where
+        Self::Context: Default,
+    {
+        RunAgent::new(self).spawn_connected()
+    }
+
+    // TODO: spawn_with_context()
+}

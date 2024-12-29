@@ -1,8 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_actor::kit::{Actor, ActorSession, Standalone};
+use crb_agent::kit::{Agent, AgentSession, Next, Standalone};
 use crb_pipeline::kit::Stage;
-use crb_runtime::kit::ManagedContext;
 use tokio::time::{sleep, Duration};
 
 struct FirstProcessor {
@@ -10,14 +9,14 @@ struct FirstProcessor {
 }
 
 #[async_trait]
-impl Actor for FirstProcessor {
-    type Context = ActorSession<Self>;
+impl Agent for FirstProcessor {
+    type Context = AgentSession<Self>;
+    type Output = ();
 
-    async fn initialize(&mut self, ctx: &mut Self::Context) -> Result<()> {
+    fn initialize(&mut self, ctx: &mut Self::Context) -> Next<Self> {
         println!("FirstProcessor");
         self.value.as_mut().map(|value| *value *= 2);
-        ctx.shutdown();
-        Ok(())
+        Next::done()
     }
 }
 
@@ -44,14 +43,14 @@ struct SecondProcessor {
 }
 
 #[async_trait]
-impl Actor for SecondProcessor {
-    type Context = ActorSession<Self>;
+impl Agent for SecondProcessor {
+    type Context = AgentSession<Self>;
+    type Output = ();
 
-    async fn initialize(&mut self, ctx: &mut Self::Context) -> Result<()> {
+    fn initialize(&mut self, ctx: &mut Self::Context) -> Next<Self> {
         println!("SecondProcessor");
         self.value.as_mut().map(|value| *value *= 2);
-        ctx.shutdown();
-        Ok(())
+        Next::done()
     }
 }
 
@@ -79,8 +78,8 @@ async fn test_pipeline() -> Result<(), Error> {
 
     // Routing
     use crb_pipeline::kit::*;
-    pipeline.route::<Input<u8, _>, Actor<FirstProcessor>>();
-    pipeline.route::<Actor<FirstProcessor>, Actor<SecondProcessor>>();
+    pipeline.route::<Input<u8, _>, Agent<FirstProcessor>>();
+    pipeline.route::<Agent<FirstProcessor>, Agent<SecondProcessor>>();
 
     // pipeline.route_map::<FirstProcessor, SecondProcessor>();
     // pipeline.route_split::<FirstProcessor, SecondProcessor>();

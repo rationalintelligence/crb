@@ -2,10 +2,10 @@ use crate::meta::{Metadata, Sequencer};
 use crate::stage::{InitialKey, Stage, StageDestination, StageKey, StageSource};
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_actor::kit::{Actor, Address, MessageFor, Standalone};
+use crb_agent::kit::{Address, Agent, MessageFor, Standalone};
 use crb_core::types::Clony;
 use crb_runtime::kit::{Context, Runtime};
-use crb_supervisor::actor::{Supervisor, SupervisorSession};
+use crb_supervisor::agent::{Supervisor, SupervisorSession};
 use derive_more::Deref;
 use std::any::type_name;
 use std::marker::PhantomData;
@@ -70,8 +70,9 @@ impl<State: PipelineState> Supervisor for Pipeline<State> {
 
 impl<State: PipelineState> Standalone for Pipeline<State> {}
 
-impl<State: PipelineState> Actor for Pipeline<State> {
+impl<State: PipelineState> Agent for Pipeline<State> {
     type Context = SupervisorSession<Self>;
+    type Output = ();
 }
 
 #[derive(Deref)]
@@ -155,13 +156,13 @@ where
 {
     async fn handle(
         self: Box<Self>,
-        actor: &mut Pipeline<State>,
+        agent: &mut Pipeline<State>,
         ctx: &mut SupervisorSession<Pipeline<State>>,
     ) -> Result<()> {
-        let layer = actor.sequencer.next();
+        let layer = agent.sequencer.next();
         let meta = Metadata::new(layer);
         let key = InitialKey::<M, State>::new();
-        actor.spawn_workers(meta, key, self.message, ctx);
+        agent.spawn_workers(meta, key, self.message, ctx);
         Ok(())
     }
 }
@@ -184,11 +185,11 @@ where
 {
     async fn handle(
         self: Box<Self>,
-        actor: &mut Pipeline<A::State>,
+        agent: &mut Pipeline<A::State>,
         ctx: &mut SupervisorSession<Pipeline<A::State>>,
     ) -> Result<()> {
         let key = StageKey::<A>::new();
-        actor.spawn_workers(self.meta, key, self.message, ctx);
+        agent.spawn_workers(self.meta, key, self.message, ctx);
         Ok(())
     }
 }

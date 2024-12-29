@@ -2,8 +2,7 @@ use crate::meta::Metadata;
 use crate::pipeline::{Pipeline, RoutePoint, RuntimeGenerator, StageReport};
 use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
-use crb_actor::kit::Address as ActorAddress;
-use crb_agent::kit::{Agent, RunAgent};
+use crb_agent::kit::{Address, Agent, RunAgent};
 use crb_runtime::kit::{Interruptor, Runtime};
 
 pub mod stage {
@@ -63,7 +62,7 @@ where
 
 pub struct AgentStageRuntime<A: Agent + Stage> {
     meta: Metadata,
-    pipeline: ActorAddress<Pipeline<A::State>>,
+    pipeline: Address<Pipeline<A::State>>,
     runtime: RunAgent<A>,
 }
 
@@ -120,7 +119,7 @@ where
     fn generate(
         &self,
         meta: Metadata,
-        pipeline: ActorAddress<Pipeline<Self::State>>,
+        pipeline: Address<Pipeline<Self::State>>,
         input: Self::Input,
         state: &mut Self::State,
     ) -> Box<dyn Runtime> {

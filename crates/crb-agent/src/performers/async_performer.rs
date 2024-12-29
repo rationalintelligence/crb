@@ -1,5 +1,6 @@
+use crate::context::{AgentContext, AgentSession};
 use crate::agent::{
-    RunAgent, AgentSession, AgentState, Agent, NextState, StatePerformer, Transition, AgentContext,
+    RunAgent, AgentState, Agent, NextState, StatePerformer, Transition,
 };
 use anyhow::{Error, Result};
 use async_trait::async_trait;

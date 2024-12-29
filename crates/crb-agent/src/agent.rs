@@ -1,6 +1,7 @@
+use crate::context::AgentContext;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task, Context};
+use crb_runtime::kit::{Failures, Interruptor, Runtime, Task};
 use futures::stream::Abortable;
 
 pub trait AgentState: Send + 'static {}
@@ -29,24 +30,6 @@ pub enum Transition<T> {
     Process(T),
 }
 
-pub trait AgentContext<T>: Context {
-    fn session(&mut self) -> &mut AgentSession<T>;
-}
-
-impl<T> Context for AgentSession<T> {
-    type Address = ();
-
-    fn address(&self) -> &Self::Address {
-        &()
-    }
-}
-
-impl<T: Agent> AgentContext<T> for AgentSession<T> {
-    fn session(&mut self) -> &mut AgentSession<T> {
-        self
-    }
-}
-
 #[async_trait]
 pub trait StatePerformer<T: Agent>: Send + 'static {
     async fn perform(&mut self, task: T, session: &mut T::Context) -> Transition<T>;
@@ -69,20 +52,6 @@ pub trait Agent: Sized + Send + 'static {
     // TODO: Add finalizers
     // type Output: Default;
 
-}
-
-pub struct AgentSession<T: ?Sized> {
-    pub controller: Controller,
-    pub next_state: Option<NextState<T>>,
-}
-
-impl<T> Default for AgentSession<T> {
-    fn default() -> Self {
-        Self {
-            controller: Controller::default(),
-            next_state: None,
-        }
-    }
 }
 
 pub struct RunAgent<T: Agent> {
@@ -124,7 +93,7 @@ impl<T: Agent> RunAgent<T> {
 
             // Events or States
             while self.context.session().controller.is_active() {
-                let (task, mut next_state) = pair;
+                let (task, next_state) = pair;
                 if let Some(mut next_state) = next_state {
                     let res = next_state.transition.perform(task, &mut self.context).await;
                     match res {

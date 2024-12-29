@@ -1,5 +1,6 @@
 pub mod agent;
 pub mod performers;
+pub mod context;
 
 pub mod kit {
     pub use crate::agent::{RunAgent, Agent, NextState};

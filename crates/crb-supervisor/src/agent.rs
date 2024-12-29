@@ -4,7 +4,7 @@ use crb_agent::kit::{Address, Agent, AgentContext, AgentSession, MessageFor, Run
 use crb_runtime::kit::{
     Context, Controller, InteractiveRuntime, Interruptor, ManagedContext, Runtime,
 };
-use derive_more::{From, Into};
+use derive_more::{Deref, DerefMut, From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -18,7 +18,10 @@ pub trait SupervisorContext<S: Supervisor> {
     fn session(&mut self) -> &mut SupervisorSession<S>;
 }
 
+#[derive(Deref, DerefMut)]
 pub struct SupervisorSession<S: Supervisor> {
+    #[deref]
+    #[deref_mut]
     session: AgentSession<S>,
     tracker: Tracker<S>,
 }

@@ -2,15 +2,19 @@ use crate::address::{Address, AddressJoint};
 use crate::agent::Agent;
 use crate::runtime::Next;
 use crb_runtime::kit::{Context, Controller, ManagedContext};
+use derive_more::{Deref, DerefMut};
 
 pub trait AgentContext<T: Agent>: Context<Address = Address<T>> {
     fn session(&mut self) -> &mut AgentSession<T>;
 }
 
+#[derive(Deref, DerefMut)]
 pub struct AgentSession<T: Agent> {
     pub controller: Controller,
     pub next_state: Option<Next<T>>,
     pub joint: AddressJoint<T>,
+    #[deref]
+    #[deref_mut]
     pub address: Address<T>,
 }
 

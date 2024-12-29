@@ -3,6 +3,7 @@ pub mod performers;
 pub mod context;
 pub mod address;
 pub mod runtime;
+pub mod event;
 
 pub mod kit {
     pub use crate::agent::Agent;

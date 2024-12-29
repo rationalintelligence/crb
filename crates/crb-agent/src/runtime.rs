@@ -64,6 +64,9 @@ impl<T: Agent> RunAgent<T> {
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
         // TODO: Distribute outputs
+        // TODO: Call finalizers to deliver the result
+        // TODO: The default finalizer is = oneshot address self channel!!!!!
+        self.context.session().joint.report(output)?;
         Ok(())
     }
 
@@ -77,7 +80,7 @@ impl<T: Agent> RunAgent<T> {
 
             // Events or States
             while self.context.session().controller.is_active() {
-                let (task, next_state) = pair;
+                let (mut task, next_state) = pair;
                 if let Some(mut next_state) = next_state {
                     let res = next_state.transition.perform(task, &mut self.context).await;
                     match res {
@@ -100,14 +103,13 @@ impl<T: Agent> RunAgent<T> {
                         }
                     }
                 } else {
-                    // TODO: Actor's events loop here
+                    let result = task.event(&mut self.context).await;
+                    self.failures.put(result);
                     pair = (task, self.context.session().next_state.take());
                 }
             }
 
             // Finalize
-            // TODO: Call finalizers to deliver the result
-            // TODO: The default finalizer is = oneshot address self channel!!!!!
             let task = pair.0;
             let output = task.finalize(&mut self.context);
             Ok(output)

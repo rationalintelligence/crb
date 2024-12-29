@@ -32,8 +32,4 @@ pub trait Agent: Sized + Send + 'static {
     fn finalize(self, _ctx: &mut Self::Context) -> Self::Output {
         Self::Output::default()
     }
-
-    // TODO: Add finalizers
-    // type Output: Default;
-
 }

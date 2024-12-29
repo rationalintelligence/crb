@@ -21,6 +21,12 @@ impl<A: Agent> AddressJoint<A> {
         self.msg_rx.recv().await
     }
 
+    pub fn report(&mut self, output: A::Output) -> Result<(), Error> {
+        let status = AgentStatus::Done(output);
+        self.status_tx.send(status)
+            .map_err(Error::from)
+    }
+
     pub fn close(&mut self) {
         self.msg_rx.close();
     }

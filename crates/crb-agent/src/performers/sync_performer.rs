@@ -1,5 +1,5 @@
 use crate::agent::{
-    RunAgent, AgentSession, AgentState, Agent, NextState, StatePerformer, Transition,
+    RunAgent, AgentSession, AgentState, Agent, NextState, StatePerformer, Transition, AgentContext,
 };
 use anyhow::{Error, Result};
 use async_trait::async_trait;
@@ -69,8 +69,8 @@ where
     T: SyncActivity<S>,
     S: AgentState,
 {
-    async fn perform(&mut self, mut task: T, session: &mut T::Context) -> Transition<T> {
-        let interruptor = session.as_mut().controller.interruptor.clone();
+    async fn perform(&mut self, mut task: T, ctx: &mut T::Context) -> Transition<T> {
+        let interruptor = ctx.session().controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
             let next_state = task.perform(state, interruptor);

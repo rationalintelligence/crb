@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task};
+use crb_runtime::kit::{Controller, Failures, Interruptor, Runtime, Task, Context};
 use futures::stream::Abortable;
 
 pub trait AgentState: Send + 'static {}
@@ -29,15 +29,20 @@ pub enum Transition<T> {
     Process(T),
 }
 
-// TODO: Replace `AsMut` to methods?
-pub trait AgentContext<T>: AsMut<AgentSession<T>> + Send {
+pub trait AgentContext<T>: Context {
+    fn session(&mut self) -> &mut AgentSession<T>;
+}
+
+impl<T> Context for AgentSession<T> {
+    type Address = ();
+
+    fn address(&self) -> &Self::Address {
+        &()
+    }
 }
 
 impl<T: Agent> AgentContext<T> for AgentSession<T> {
-}
-
-impl<T: Agent> AsMut<AgentSession<T>> for AgentSession<T> {
-    fn as_mut(&mut self) -> &mut AgentSession<T> {
+    fn session(&mut self) -> &mut AgentSession<T> {
         self
     }
 }
@@ -82,7 +87,7 @@ impl<T> Default for AgentSession<T> {
 
 pub struct RunAgent<T: Agent> {
     pub task: Option<T>,
-    pub session: T::Context,
+    pub context: T::Context,
     pub failures: Failures,
 }
 
@@ -93,7 +98,7 @@ impl<T: Agent> RunAgent<T> {
     {
         Self {
             task: Some(task),
-            session: T::Context::default(),
+            context: T::Context::default(),
             failures: Failures::default(),
         }
     }
@@ -103,7 +108,7 @@ impl<T: Agent> Task<T> for RunAgent<T> {}
 
 impl<T: Agent> RunAgent<T> {
     async fn perform_routine(&mut self) -> Result<(), Error> {
-        let reg = self.session.as_mut().controller.take_registration()?;
+        let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         Abortable::new(fut, reg).await??;
         Ok(())
@@ -111,17 +116,17 @@ impl<T: Agent> RunAgent<T> {
 
     async fn perform_task(&mut self) -> Result<(), Error> {
         if let Some(mut task) = self.task.take() {
-            // let session = self.session.as_mut();
+            // let session = self.context.session();
 
             // Initialize
-            let initial_state = task.initialize(&mut self.session);
+            let initial_state = task.initialize(&mut self.context);
             let mut pair = (task, Some(initial_state));
 
             // Events or States
-            while self.session.as_mut().controller.is_active() {
+            while self.context.session().controller.is_active() {
                 let (task, mut next_state) = pair;
                 if let Some(mut next_state) = next_state {
-                    let res = next_state.transition.perform(task, &mut self.session).await;
+                    let res = next_state.transition.perform(task, &mut self.context).await;
                     match res {
                         Transition::Next(task, Ok(next_state)) => {
                             pair = (task, Some(next_state));
@@ -142,7 +147,7 @@ impl<T: Agent> RunAgent<T> {
                     }
                 } else {
                     // TODO: Actor's events loop here
-                    pair = (task, self.session.as_mut().next_state.take());
+                    pair = (task, self.context.session().next_state.take());
                 }
             }
 
@@ -160,7 +165,7 @@ where
     T: Agent,
 {
     fn get_interruptor(&mut self) -> Interruptor {
-        self.session.as_mut().controller.interruptor.clone()
+        self.context.session().controller.interruptor.clone()
     }
 
     async fn routine(&mut self) {

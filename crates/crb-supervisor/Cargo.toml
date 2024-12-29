@@ -13,4 +13,5 @@ crb-actor.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
 derive_more.workspace = true
+log.workspace = true
 typed-slab.workspace = true

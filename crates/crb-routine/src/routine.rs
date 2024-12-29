@@ -3,7 +3,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_core::time::{sleep, timeout, Duration, Elapsed};
 use crb_runtime::kit::{ManagedContext, RegistrationTaken};
-use futures::stream::{Abortable, Aborted};
+use futures::stream::Aborted;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -54,7 +54,7 @@ pub trait Routine: Sized + Send + 'static {
                     self.routine_wait(true, ctx).await;
                 }
                 Err(err) => {
-                    // TODO: Report about the error
+                    log::error!("Routine's iteration is failed: {err}");
                     self.routine_wait(false, ctx).await;
                 }
             }

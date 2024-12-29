@@ -115,7 +115,7 @@ impl<S: Supervisor> Tracker<S> {
             for id in group.ids.iter() {
                 if let Some(activity) = self.activities.get_mut(*id) {
                     if let Err(err) = activity.interrupt() {
-                        // TODO: Log
+                        log::error!("Can't interrupt an activity in a group: {err}");
                     }
                 }
             }
@@ -170,7 +170,9 @@ impl<S: Supervisor> Tracker<S> {
                     // Send an interruption signal to all active members of the group.
                     for id in group.ids.iter() {
                         if let Some(activity) = self.activities.get_mut(*id) {
-                            if let Err(err) = activity.interrupt() {}
+                            if let Err(err) = activity.interrupt() {
+                                log::error!("Can't interrupt the next activity: {err}");
+                            }
                         }
                     }
                 }
@@ -214,7 +216,9 @@ where
         let fut = async move {
             trackable.routine().await;
             // This notification equals calling `detach_trackable`
-            if let Err(err) = detacher.detach() {}
+            if let Err(err) = detacher.detach() {
+                log::error!("Can't notify a supervisor to detach an activity: {err}");
+            }
         };
         crb_core::spawn(fut);
     }

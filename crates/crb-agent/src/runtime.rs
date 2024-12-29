@@ -62,11 +62,12 @@ impl<T: Agent> RunAgent<T> {
     async fn perform_routine(&mut self) -> Result<(), Error> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
-        Abortable::new(fut, reg).await??;
+        let output = Abortable::new(fut, reg).await??;
+        // TODO: Distribute outputs
         Ok(())
     }
 
-    async fn perform_task(&mut self) -> Result<(), Error> {
+    async fn perform_task(&mut self) -> Result<T::Output, Error> {
         if let Some(mut task) = self.task.take() {
             // let session = self.context.session();
 
@@ -107,10 +108,11 @@ impl<T: Agent> RunAgent<T> {
             // Finalize
             // TODO: Call finalizers to deliver the result
             // TODO: The default finalizer is = oneshot address self channel!!!!!
-            // let output = task.finalize(&mut self.context);
-            Ok(())
+            let task = pair.0;
+            let output = task.finalize(&mut self.context);
+            Ok(output)
         } else {
-            Ok(())
+            Err(Error::msg("Agent's task has consumed already."))
         }
     }
 }

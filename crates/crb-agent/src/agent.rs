@@ -29,7 +29,7 @@ pub trait Agent: Sized + Send + 'static {
         Ok(())
     }
 
-    fn finalize(&mut self, _ctx: &mut Self::Context) -> Self::Output {
+    fn finalize(self, _ctx: &mut Self::Context) -> Self::Output {
         Self::Output::default()
     }
 

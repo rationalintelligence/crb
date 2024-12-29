@@ -1,6 +1,6 @@
 use crate::context::AgentContext;
 use crb_runtime::context::ManagedContext;
-use crate::runtime::NextState;
+use crate::runtime::Next;
 use anyhow::Result;
 use async_trait::async_trait;
 
@@ -9,8 +9,8 @@ pub trait Agent: Sized + Send + 'static {
     type Output: Default + Clone + Sync + Send;
     type Context: AgentContext<Self>;
 
-    fn initialize(&mut self, _ctx: &mut Self::Context) -> NextState<Self> {
-        NextState::process()
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+        Next::process()
     }
 
     fn interrupt(&mut self, ctx: &mut Self::Context) {

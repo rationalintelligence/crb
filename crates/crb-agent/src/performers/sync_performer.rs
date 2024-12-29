@@ -1,7 +1,7 @@
 use crate::context::{AgentContext, AgentSession};
 use crate::runtime::{
     RunAgent,
-    AgentState, NextState, StatePerformer, Transition,
+    AgentState, Next, StatePerformer, Transition,
 };
 use crate::agent::{ Agent };
 use anyhow::{Error, Result};
@@ -10,13 +10,13 @@ use crb_runtime::kit::Interruptor;
 use std::marker::PhantomData;
 use tokio::task::spawn_blocking;
 
-impl<T> NextState<T>
+impl<T> Next<T>
 where
     T: Agent,
 {
     pub fn do_sync<S>(state: S) -> Self
     where
-        T: SyncActivity<S>,
+        T: DoSync<S>,
         S: AgentState,
     {
         let performer = SyncPerformer {
@@ -27,8 +27,8 @@ where
     }
 }
 
-pub trait SyncActivity<S>: Agent {
-    fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<NextState<Self>> {
+pub trait DoSync<S>: Agent {
+    fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
         while interruptor.is_active() {
             let result = self.many(&mut state);
             match result {
@@ -41,23 +41,23 @@ pub trait SyncActivity<S>: Agent {
                 }
             }
         }
-        Ok(NextState::interrupt(None))
+        Ok(Next::interrupt(None))
     }
 
-    fn many(&mut self, state: &mut S) -> Result<Option<NextState<Self>>> {
+    fn many(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
         self.once(state).map(Some)
     }
 
-    fn once(&mut self, _state: &mut S) -> Result<NextState<Self>> {
-        Ok(NextState::done())
+    fn once(&mut self, _state: &mut S) -> Result<Next<Self>> {
+        Ok(Next::done())
     }
 
     fn repair(&mut self, err: Error) -> Result<(), Error> {
         Err(err)
     }
 
-    fn fallback(&mut self, err: Error) -> NextState<Self> {
-        NextState::fail(err)
+    fn fallback(&mut self, err: Error) -> Next<Self> {
+        Next::fail(err)
     }
 }
 
@@ -69,7 +69,7 @@ struct SyncPerformer<T, S> {
 #[async_trait]
 impl<T, S> StatePerformer<T> for SyncPerformer<T, S>
 where
-    T: SyncActivity<S>,
+    T: DoSync<S>,
     S: AgentState,
 {
     async fn perform(&mut self, mut task: T, ctx: &mut T::Context) -> Transition<T> {
@@ -85,7 +85,7 @@ where
         }
     }
 
-    async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
+    async fn fallback(&mut self, mut task: T, err: Error) -> (T, Next<T>) {
         let next_state = task.fallback(err);
         (task, next_state)
     }
@@ -113,17 +113,17 @@ impl Agent for SyncFn {
     // TODO: Get an output from Fut
     type Output = ();
 
-    fn initialize(&mut self, _ctx: &mut Self::Context) -> NextState<Self> {
-        NextState::do_sync(CallFn)
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+        Next::do_sync(CallFn)
     }
 }
 
 struct CallFn;
 
-impl SyncActivity<CallFn> for SyncFn {
-    fn once(&mut self, _state: &mut CallFn) -> Result<NextState<Self>> {
+impl DoSync<CallFn> for SyncFn {
+    fn once(&mut self, _state: &mut CallFn) -> Result<Next<Self>> {
         let func = self.func.take().unwrap();
         func()?;
-        Ok(NextState::done())
+        Ok(Next::done())
     }
 }

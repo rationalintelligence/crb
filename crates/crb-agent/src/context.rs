@@ -1,6 +1,6 @@
 use crate::address::{Address, AddressJoint};
 use crate::agent::Agent;
-use crate::runtime::NextState;
+use crate::runtime::Next;
 use crb_runtime::kit::{Controller, Context, ManagedContext};
 
 pub trait AgentContext<T: Agent>: Context {
@@ -9,7 +9,7 @@ pub trait AgentContext<T: Agent>: Context {
 
 pub struct AgentSession<T: Agent> {
     pub controller: Controller,
-    pub next_state: Option<NextState<T>>,
+    pub next_state: Option<Next<T>>,
     pub joint: AddressJoint<T>,
     pub address: Address<T>,
 }

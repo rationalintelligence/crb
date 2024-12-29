@@ -9,11 +9,11 @@ pub trait AgentState: Send + 'static {}
 
 impl<T> AgentState for T where T: Send + 'static {}
 
-pub struct NextState<T: ?Sized> {
+pub struct Next<T: ?Sized> {
     transition: Box<dyn StatePerformer<T>>,
 }
 
-impl<T> NextState<T>
+impl<T> Next<T>
 where
     T: Agent,
 {
@@ -25,7 +25,7 @@ where
 }
 
 pub enum Transition<T> {
-    Next(T, Result<NextState<T>>),
+    Next(T, Result<Next<T>>),
     Interrupted(T),
     Process(T),
     Crashed(Error),
@@ -34,7 +34,7 @@ pub enum Transition<T> {
 #[async_trait]
 pub trait StatePerformer<T: Agent>: Send + 'static {
     async fn perform(&mut self, task: T, session: &mut T::Context) -> Transition<T>;
-    async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
+    async fn fallback(&mut self, task: T, err: Error) -> (T, Next<T>);
 }
 
 pub struct RunAgent<T: Agent> {

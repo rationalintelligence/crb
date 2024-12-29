@@ -28,7 +28,7 @@ impl<T> StatePerformer<T> for InterruptPerformer
 where
     T: Agent,
 {
-    async fn perform(&mut self, _task: T, _session: &mut AgentSession) -> Transition<T> {
+    async fn perform(&mut self, _task: T, _session: &mut AgentSession<T>) -> Transition<T> {
         match self.error.take() {
             None => Transition::Interrupted,
             Some(err) => Transition::Crashed(err),

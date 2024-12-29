@@ -68,7 +68,7 @@ where
     T: AsyncActivity<S>,
     S: AgentState,
 {
-    async fn perform(&mut self, mut task: T, session: &mut AgentSession) -> Transition<T> {
+    async fn perform(&mut self, mut task: T, session: &mut AgentSession<T>) -> Transition<T> {
         let interruptor = session.controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let next_state = task.perform(state, interruptor).await;

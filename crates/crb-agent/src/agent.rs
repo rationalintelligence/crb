@@ -30,7 +30,7 @@ pub enum Transition<T> {
 
 #[async_trait]
 pub trait StatePerformer<T>: Send + 'static {
-    async fn perform(&mut self, task: T, session: &mut AgentSession) -> Transition<T>;
+    async fn perform(&mut self, task: T, session: &mut AgentSession<T>) -> Transition<T>;
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
 
@@ -38,13 +38,14 @@ pub trait Agent: Sized + Send + 'static {
     fn initial_state(&mut self) -> NextState<Self>;
 }
 
-pub struct AgentSession {
+pub struct AgentSession<T> {
     pub controller: Controller,
+    pub next_state: Option<NextState<T>>,
 }
 
 pub struct RunAgent<T> {
     pub task: Option<T>,
-    pub session: AgentSession,
+    pub session: AgentSession<T>,
     pub failures: Failures,
 }
 
@@ -52,6 +53,7 @@ impl<T: Agent> RunAgent<T> {
     pub fn new(task: T) -> Self {
         let session = AgentSession {
             controller: Controller::default(),
+            next_state: None,
         };
         Self {
             task: Some(task),

@@ -1,6 +1,6 @@
 [package]
-name = "crb-actor"
-description = "CRB | Composable Runtime Blocks | Actor"
+name = "crb-agent-ext"
+description = "CRB | Composable Runtime Blocks | Agent Ext"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,9 +9,9 @@ repository.workspace = true
 [dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
+crb-agent.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
+futures.workspace = true
 log.workspace = true
-
-[dev-dependencies]
-tokio.workspace = true
+thiserror.workspace = true

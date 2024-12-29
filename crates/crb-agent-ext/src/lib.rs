@@ -1,6 +1,6 @@
 use anyhow::{anyhow as err, Result};
 use async_trait::async_trait;
-use crb_actor::kit::{Actor, Address, MessageFor};
+use crb_agent::kit::{Agent, Address, MessageFor};
 use futures::{
     channel::oneshot::{self, Canceled},
     task::{Context as FutContext, Poll},
@@ -32,13 +32,13 @@ where
     A: OnRequest<T>,
     T: Request,
 {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()> {
-        actor.handle(*self, ctx).await
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+        agent.handle(*self, ctx).await
     }
 }
 
 #[async_trait]
-pub trait OnRequest<T: Request>: Actor {
+pub trait OnRequest<T: Request>: Agent {
     async fn handle(&mut self, msg: Interaction<T>, ctx: &mut Self::Context) -> Result<()> {
         let resp = self.on_request(msg.request, ctx).await;
         msg.tx
@@ -99,7 +99,7 @@ where
 }
 
 #[async_trait]
-pub trait OnResponse<T: Request>: Actor {
+pub trait OnResponse<T: Request>: Agent {
     async fn on_response(
         &mut self,
         response: Output<T::Response>,
@@ -119,7 +119,7 @@ where
     A: OnResponse<T>,
     T: Request,
 {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()> {
-        actor.on_response(self.response, ctx).await
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+        agent.on_response(self.response, ctx).await
     }
 }

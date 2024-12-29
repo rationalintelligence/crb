@@ -7,16 +7,12 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-crb-actor.workspace = true
 crb-agent.workspace = true
+crb-agent-ext.workspace = true
 crb-core.workspace = true
 crb-pipeline.workspace = true
 crb-runtime.workspace = true
 crb-supervisor.workspace = true
-
-crb-routine.workspace = true
-crb-actor-ext.workspace = true
-crb-task.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true

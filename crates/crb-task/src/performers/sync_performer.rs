@@ -1,5 +1,5 @@
 use crate::hybryd_task::{
-    HybrydSession, HybrydState, HybrydTask, NextState, StatePerformer, Transition,
+    DoHybrid, HybrydSession, HybrydState, HybrydTask, NextState, StatePerformer, Transition,
 };
 use anyhow::{Error, Result};
 use async_trait::async_trait;
@@ -33,7 +33,9 @@ pub trait SyncActivity<S>: HybrydTask {
                     return Ok(state);
                 }
                 Ok(None) => {}
-                Err(_) => {}
+                Err(err) => {
+                    self.repair(err)?;
+                }
             }
         }
         Ok(NextState::interrupt(None))
@@ -45,6 +47,10 @@ pub trait SyncActivity<S>: HybrydTask {
 
     fn once(&mut self, _state: &mut S) -> Result<NextState<Self>> {
         Ok(NextState::done())
+    }
+
+    fn repair(&mut self, err: Error) -> Result<(), Error> {
+        Err(err)
     }
 
     fn fallback(&mut self, err: Error) -> NextState<Self> {
@@ -79,5 +85,38 @@ where
     async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
         let next_state = task.fallback(err);
         (task, next_state)
+    }
+}
+
+impl DoHybrid<SyncFn> {
+    pub fn new_sync<F: AnySyncFn>(func: F) -> Self {
+        let task = SyncFn {
+            func: Some(Box::new(func)),
+        };
+        Self::new(task)
+    }
+}
+
+pub trait AnySyncFn: FnOnce() -> Result<()> + Send + 'static {}
+
+impl<F> AnySyncFn for F where F: FnOnce() -> Result<()> + Send + 'static {}
+
+struct SyncFn {
+    func: Option<Box<dyn AnySyncFn>>,
+}
+
+impl HybrydTask for SyncFn {
+    fn initial_state(&mut self) -> NextState<Self> {
+        NextState::do_sync(CallFn)
+    }
+}
+
+struct CallFn;
+
+impl SyncActivity<CallFn> for SyncFn {
+    fn once(&mut self, _state: &mut CallFn) -> Result<NextState<Self>> {
+        let func = self.func.take().unwrap();
+        func()?;
+        Ok(NextState::done())
     }
 }

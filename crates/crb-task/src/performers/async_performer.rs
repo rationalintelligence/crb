@@ -1,9 +1,10 @@
 use crate::hybryd_task::{
-    HybrydSession, HybrydState, HybrydTask, NextState, StatePerformer, Transition,
+    DoHybrid, HybrydSession, HybrydState, HybrydTask, NextState, StatePerformer, Transition,
 };
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::Interruptor;
+use futures::Future;
 use std::marker::PhantomData;
 
 impl<T> NextState<T>
@@ -47,6 +48,10 @@ pub trait AsyncActivity<S: Send + 'static>: HybrydTask {
         Ok(NextState::done())
     }
 
+    async fn repair(&mut self, err: Error) -> Result<(), Error> {
+        Err(err)
+    }
+
     async fn fallback(&mut self, err: Error) -> NextState<Self> {
         NextState::fail(err)
     }
@@ -73,5 +78,40 @@ where
     async fn fallback(&mut self, mut task: T, err: Error) -> (T, NextState<T>) {
         let next_state = task.fallback(err).await;
         (task, next_state)
+    }
+}
+
+impl DoHybrid<AsyncFn> {
+    pub fn new_async<F: AnyAsyncFn>(fut: F) -> Self {
+        let task = AsyncFn {
+            fut: Some(Box::new(fut)),
+        };
+        Self::new(task)
+    }
+}
+
+pub trait AnyAsyncFn: Future<Output = Result<()>> + Send + 'static {}
+
+impl<F> AnyAsyncFn for F where F: Future<Output = Result<()>> + Send + 'static {}
+
+struct AsyncFn {
+    fut: Option<Box<dyn AnyAsyncFn>>,
+}
+
+impl HybrydTask for AsyncFn {
+    fn initial_state(&mut self) -> NextState<Self> {
+        NextState::do_async(CallFn)
+    }
+}
+
+struct CallFn;
+
+#[async_trait]
+impl AsyncActivity<CallFn> for AsyncFn {
+    async fn once(&mut self, _state: &mut CallFn) -> Result<NextState<Self>> {
+        let fut = self.fut.take().unwrap();
+        let pinned_fut = Box::into_pin(fut);
+        pinned_fut.await?;
+        Ok(NextState::done())
     }
 }

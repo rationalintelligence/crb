@@ -26,6 +26,7 @@ pub enum Transition<T> {
     Next(T, Result<NextState<T>>),
     Crashed(Error),
     Interrupted,
+    Process(T),
 }
 
 #[async_trait]
@@ -35,7 +36,15 @@ pub trait StatePerformer<T>: Send + 'static {
 }
 
 pub trait Agent: Sized + Send + 'static {
-    fn initial_state(&mut self) -> NextState<Self>;
+    // TODO: `initialize` has to return an optional `Next`
+    // TODO: Initialize MUST not fail!
+    fn initial_state(&mut self) -> NextState<Self> {
+        NextState::process()
+    }
+
+    // TODO: Add finalizers
+    // type Output: Default;
+
 }
 
 pub struct AgentSession<T> {
@@ -76,27 +85,43 @@ impl<T: Agent> RunAgent<T> {
     async fn perform_task(&mut self) -> Result<(), Error> {
         if let Some(mut task) = self.task.take() {
             let session = &mut self.session;
+
+            // Initialize
             let initial_state = task.initial_state();
-            let mut pair = (task, initial_state);
-            loop {
+            let mut pair = (task, Some(initial_state));
+
+            // Events or States
+            while session.controller.is_active() {
                 let (task, mut next_state) = pair;
-                let res = next_state.transition.perform(task, session).await;
-                match res {
-                    Transition::Next(task, Ok(next_state)) => {
-                        pair = (task, next_state);
+                if let Some(mut next_state) = next_state {
+                    let res = next_state.transition.perform(task, session).await;
+                    match res {
+                        Transition::Next(task, Ok(next_state)) => {
+                            pair = (task, Some(next_state));
+                        }
+                        Transition::Next(task, Err(err)) => {
+                            let (task, next_state) = next_state.transition.fallback(task, err).await;
+                            pair = (task, Some(next_state));
+                        }
+                        Transition::Process(task) => {
+                            pair = (task, None);
+                        }
+                        Transition::Crashed(err) => {
+                            return Err(err);
+                        }
+                        Transition::Interrupted => {
+                            break;
+                        }
                     }
-                    Transition::Next(task, Err(err)) => {
-                        let (task, next_state) = next_state.transition.fallback(task, err).await;
-                        pair = (task, next_state);
-                    }
-                    Transition::Crashed(err) => {
-                        return Err(err);
-                    }
-                    Transition::Interrupted => {
-                        break;
-                    }
+                } else {
+                    // TODO: Actor's events loop here
+                    pair = (task, session.next_state.take());
                 }
             }
+
+            // Finalize
+            // TODO: Call finalizers to deliver the result
+            // TODO: The default finalizer is = oneshot address self channel!!!!!
         }
         Ok(())
     }

@@ -1,4 +1,5 @@
-use crate::agent::{Agent, NextState};
+use crate::agent::Agent;
+use crate::runtime::NextState;
 use crb_runtime::kit::{Controller, Context};
 
 pub trait AgentContext<T>: Context {

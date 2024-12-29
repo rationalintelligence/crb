@@ -1,7 +1,9 @@
 use crate::context::{AgentContext, AgentSession};
-use crate::agent::{
-    RunAgent, AgentState, Agent, NextState, StatePerformer, Transition,
+use crate::runtime::{
+    RunAgent,
+    AgentState, NextState, StatePerformer, Transition,
 };
+use crate::agent::{ Agent };
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::Interruptor;

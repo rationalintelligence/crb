@@ -1,4 +1,8 @@
-use crate::agent::{Agent, NextState, StatePerformer, Transition};
+use crate::runtime::{
+    RunAgent,
+    AgentState, NextState, StatePerformer, Transition,
+};
+use crate::agent::{ Agent };
 use anyhow::Error;
 use async_trait::async_trait;
 

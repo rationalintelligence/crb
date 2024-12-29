@@ -1,6 +1,7 @@
 pub mod kit {
     pub mod actor {
         pub use crb_actor::kit::*;
+        pub use crb_actor_ext::*;
         pub use crb_runtime::kit::{InteractiveTask, Task};
     }
 

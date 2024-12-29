@@ -3,7 +3,7 @@ use crate::runtime::{
     RunAgent,
     AgentState, Next, StatePerformer, Transition,
 };
-use crate::agent::{ Agent };
+use crate::agent::{Agent, Output};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::Interruptor;
@@ -84,41 +84,57 @@ where
     }
 }
 
-impl RunAgent<AsyncFn> {
-    pub fn new_async<F: AnyAsyncFut>(fut: F) -> Self {
-        let task = AsyncFn {
+impl<T> RunAgent<AsyncFn<T>>
+where
+    T: Output,
+{
+    pub fn new_async<F: AnyAsyncFut<T>>(fut: F) -> Self {
+        let task = AsyncFn::<T> {
             fut: Some(Box::new(fut)),
+            output: None,
         };
         Self::new(task)
     }
 }
 
-pub trait AnyAsyncFut: Future<Output = Result<()>> + Send + 'static {}
+pub trait AnyAsyncFut<T>: Future<Output = Result<T>> + Send + 'static {}
 
-impl<F> AnyAsyncFut for F where F: Future<Output = Result<()>> + Send + 'static {}
+impl<F, T> AnyAsyncFut<T> for F where F: Future<Output = Result<T>> + Send + 'static {}
 
-struct AsyncFn {
-    fut: Option<Box<dyn AnyAsyncFut>>,
+struct AsyncFn<T> {
+    fut: Option<Box<dyn AnyAsyncFut<T>>>,
+    output: Option<T>,
 }
 
-impl Agent for AsyncFn {
+impl<T> Agent for AsyncFn<T>
+where
+    T: Output,
+{
     type Context = AgentSession<Self>;
     // TODO: Get an output from Fn
-    type Output = ();
+    type Output = T;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         Next::do_async(CallFn)
+    }
+
+    fn finalize(mut self, _ctx: &mut Self::Context) -> Self::Output {
+        self.output.unwrap_or_default()
     }
 }
 
 struct CallFn;
 
 #[async_trait]
-impl DoAsync<CallFn> for AsyncFn {
+impl<T> DoAsync<CallFn> for AsyncFn<T>
+where
+    T: Output,
+{
     async fn once(&mut self, _state: &mut CallFn) -> Result<Next<Self>> {
         let fut = self.fut.take().unwrap();
         let pinned_fut = Box::into_pin(fut);
-        pinned_fut.await?;
+        let output = pinned_fut.await?;
+        self.output = Some(output);
         Ok(Next::done())
     }
 }

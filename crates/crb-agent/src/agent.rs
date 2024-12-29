@@ -6,7 +6,7 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
-    type Output: Default + Clone + Sync + Send;
+    type Output: Output;
     type Context: AgentContext<Self>;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
@@ -33,3 +33,8 @@ pub trait Agent: Sized + Send + 'static {
         Self::Output::default()
     }
 }
+
+pub trait Output: Default + Clone + Sync + Send + 'static {}
+
+impl<T> Output for T
+where T: Default + Clone + Sync + Send + 'static {}

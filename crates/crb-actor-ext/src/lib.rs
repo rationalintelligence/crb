@@ -1,4 +1,4 @@
-use anyhow::Error;
+use anyhow::{anyhow as err, Result};
 use async_trait::async_trait;
 use crb_actor::kit::{Actor, Address, MessageFor};
 use futures::{
@@ -12,7 +12,7 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum ResponseError {
     #[error("Request failed: {0}")]
-    Failed(#[from] Error),
+    Failed(#[from] anyhow::Error),
     #[error("Request canceled: {0}")]
     Canceled(#[from] Canceled),
 }
@@ -23,7 +23,7 @@ pub trait Request: Send + 'static {
 
 pub struct Interaction<T: Request> {
     request: T,
-    tx: oneshot::Sender<Result<T::Response, Error>>,
+    tx: oneshot::Sender<Result<T::Response>>,
 }
 
 #[async_trait]
@@ -32,30 +32,28 @@ where
     A: OnRequest<T>,
     T: Request,
 {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<(), Error> {
+    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()> {
         actor.handle(*self, ctx).await
     }
 }
 
 #[async_trait]
 pub trait OnRequest<T: Request>: Actor {
-    async fn handle(&mut self, msg: Interaction<T>, ctx: &mut Self::Context) -> Result<(), Error> {
+    async fn handle(&mut self, msg: Interaction<T>, ctx: &mut Self::Context) -> Result<()> {
         let resp = self.on_request(msg.request, ctx).await;
         msg.tx
             .send(resp)
-            .map_err(|_| Error::msg("Can't send the response"))
+            .map_err(|_| err!("Can't send the response."))
     }
 
-    async fn on_request(
-        &mut self,
-        request: T,
-        ctx: &mut Self::Context,
-    ) -> Result<T::Response, Error>;
+    async fn on_request(&mut self, request: T, ctx: &mut Self::Context) -> Result<T::Response> {
+        Err(err!("The on_request method in not implemented."))
+    }
 }
 
 #[must_use]
 pub struct Responder<T: Request> {
-    rx: oneshot::Receiver<Result<T::Response, Error>>,
+    rx: oneshot::Receiver<Result<T::Response>>,
 }
 
 impl<T: Request> Responder<T> {
@@ -84,7 +82,7 @@ impl<T: Request> Future for Responder<T> {
 }
 
 pub trait AddressExt<T: Request> {
-    fn interact(&self, request: T) -> Result<Responder<T>, Error>;
+    fn interact(&self, request: T) -> Result<Responder<T>>;
 }
 
 impl<A, T> AddressExt<T> for Address<A>
@@ -92,7 +90,7 @@ where
     A: OnRequest<T>,
     T: Request,
 {
-    fn interact(&self, request: T) -> Result<Responder<T>, Error> {
+    fn interact(&self, request: T) -> Result<Responder<T>> {
         let (tx, rx) = oneshot::channel();
         let interaction = Interaction { request, tx };
         self.send(interaction)?;
@@ -106,7 +104,7 @@ pub trait OnResponse<T: Request>: Actor {
         &mut self,
         response: Output<T::Response>,
         ctx: &mut Self::Context,
-    ) -> Result<(), Error>;
+    ) -> Result<()>;
 }
 
 type Output<T> = Result<T, ResponseError>;
@@ -121,7 +119,7 @@ where
     A: OnResponse<T>,
     T: Request,
 {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<(), Error> {
+    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()> {
         actor.on_response(self.response, ctx).await
     }
 }

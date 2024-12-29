@@ -34,9 +34,8 @@ pub trait StatePerformer<T>: Send + 'static {
     async fn fallback(&mut self, task: T, err: Error) -> (T, NextState<T>);
 }
 
-#[async_trait]
 pub trait HybrydTask: Sized + Send + 'static {
-    async fn begin(&mut self) -> NextState<Self>;
+    fn initial_state(&mut self) -> NextState<Self>;
 }
 
 pub struct HybrydSession {
@@ -75,8 +74,8 @@ impl<T: HybrydTask> DoHybrid<T> {
     async fn perform_task(&mut self) -> Result<(), Error> {
         if let Some(mut task) = self.task.take() {
             let session = &mut self.session;
-            let next_state = task.begin().await;
-            let mut pair = (task, next_state);
+            let initial_state = task.initial_state();
+            let mut pair = (task, initial_state);
             loop {
                 let (task, mut next_state) = pair;
                 let res = next_state.transition.perform(task, session).await;

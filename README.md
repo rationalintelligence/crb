@@ -13,7 +13,9 @@ I created this project to build an free AI-curated Rust magazine called [Cratefu
 
 # Examples
 
-Code examples are simplified!
+Code examples are simplified! Imports like `async_trait` macro, and `anyhow::Result` are not presented in the examples.
+
+Also all the agents require `Context` and `Output` parameter that provides advanced features to extend agents behaviour and gather results, but that examples are not presented here.
 
 ## Single-state single-run `async` task
 
@@ -200,7 +202,91 @@ impl DoAsync<StateThree> for Fsm {
 
 ## Actor Model
 
+```rust
+struct Actor;
+
+impl Agent for Actor {}
+
+struct Download;
+
+impl OnEvent<Download> for Actor {
+    async handle(&mut self, event: Download, ctx: &mut Self::Context) -> Result<()> {
+        todo!()
+    }
+}
+```
+
+## Interactions
+
+```rust
+struct Server {
+    slab: Slab<Record>,
+}
+
+struct GetId;
+
+impl Request for GetId {
+    type Response = usize;
+}
+
+impl OnRequest<GetId> for Server {
+    async on_request(&mut self, _: GetId, ctx: &mut Self::Context) -> Result<usize> {
+        let record = Record { ... };
+        Ok(self.slab.insert(record))
+    }
+}
+```
+
+```rust
+struct Client {
+    server: Address<Server>,
+}
+
+impl Agent for Client {
+    fn begin(&mut self) -> Next<Self> {
+        Next::in_context(Configure)
+    }
+}
+
+struct Configure;
+
+impl InContext<Configure> for Client {
+    async fn once(&mut self, _: Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
+        self.server.request(GetId)?.forward(ctx)?;
+        Ok(Next::process())
+    }
+}
+
+impl OnResponse<GetId> for Client {
+    async on_response(&mut self, id: usize, ctx: &mut Self::Context) -> Result<()> {
+        println!("Reserved id: {id}");
+        Ok(())
+    }
+}
+```
+
+## Fallbacks
+
+```rust
+impl InContext<Configure> for Client {
+    async fn fallback(&mut self, err: Error) -> Next<Self> {
+        println!("Server is not available :(");
+        Next::do_async(TryAnotherServer)
+    }
+}
+```
+
+## Supervisor
+
+Agents can launch and controls lifetime of child actors.
+
 ## Agent | Hybryd Actor
+
+Agents can combine everything: actor mode and processing sync and async tasks.
+
+## Pipelines
+
+The crate contains an experimental implemntation of a `Pipeline` that will allow to build fully-automamted processing flows suitable for AI development cases.
 
 ## Compatibility
 

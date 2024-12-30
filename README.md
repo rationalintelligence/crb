@@ -17,22 +17,51 @@ Code examples are simplified!
 
 ## Async Task
 
-### Single run async task
+### Single-state single-run `async` task
 
 ```rust
 pub struct Task;
 
 impl Agent for Task {
     fn begin(&mut self) -> Next<Self> {
-        Next::do_async(GetWebPage)
+        Next::do_async(())
     }
 }
 
-struct GetWebPage;
-
 impl DoAsync for Task {
-    async fn once(&mut self, _: GetWebPage) -> Result<Next<Self>> {
+    async fn once(&mut self, _: ()) -> Result<Next<Self>> {
         reqwest::get("https://www.rust-lang.org").await?.text().await?;
+        Next::done()
+    }
+}
+```
+
+### Multi-state single-run `async` than `sync` task
+
+```rust
+pub struct Task;
+
+impl Agent for Task {
+    fn begin(&mut self) -> Next<Self> {
+        let url = "https://www.rust-lang.org".into();
+        Next::do_async(GetPage { url })
+    }
+}
+
+struct GetPage { url: String }
+
+impl DoAsync<GetPage> for Task {
+    async fn once(&mut self, state: GetPage) -> Result<Next<Self>> {
+        let text = reqwest::get(state.url).await?.text().await?;
+        Next::do_sync(Print { text })
+    }
+}
+
+struct Print { text: String }
+
+impl DoSync<Print> for Task {
+    fn once(&mut self, state: Print) -> Result<Next<Self>> {
+        printlnt!("{}", state.text);
         Next::done()
     }
 }

@@ -28,7 +28,7 @@ where
 pub trait DoSync<S = ()>: Agent {
     fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
         while interruptor.is_active() {
-            let result = self.many(&mut state);
+            let result = self.repeat(&mut state);
             match result {
                 Ok(Some(state)) => {
                     return Ok(state);
@@ -42,7 +42,7 @@ pub trait DoSync<S = ()>: Agent {
         Ok(Next::interrupt(None))
     }
 
-    fn many(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
+    fn repeat(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
         self.once(state).map(Some)
     }
 

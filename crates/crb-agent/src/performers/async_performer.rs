@@ -29,7 +29,7 @@ where
 pub trait DoAsync<S: Send + 'static = ()>: Agent {
     async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
         while interruptor.is_active() {
-            let result = self.many(&mut state).await;
+            let result = self.repeat(&mut state).await;
             match result {
                 Ok(Some(state)) => {
                     return Ok(state);
@@ -41,7 +41,7 @@ pub trait DoAsync<S: Send + 'static = ()>: Agent {
         Ok(Next::interrupt(None))
     }
 
-    async fn many(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
+    async fn repeat(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
         self.once(state).await.map(Some)
     }
 

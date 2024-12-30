@@ -97,18 +97,16 @@ impl DoAsync<Monitor> for Task {
 ### Concurrent Task
 
 ```rust
-pub struct Task;
+pub struct ConcurrentTask;
 
 impl Agent for Task {
     fn begin(&mut self) -> Next<Self> {
-        Next::do_async(Concurrent)
+        Next::do_async(())
     }
 }
 
-struct Concurrent;
-
-impl DoAsync<Concurrent> for Task {
-    async fn once(&mut self, _: Concurrent) -> Result<Next<Self>> {
+impl DoAsync for Task {
+    async fn once(&mut self, _: ()) -> Result<Next<Self>> {
         let urls = vec![
             "https://www.rust-lang.org",
             "https://www.crates.io",
@@ -122,7 +120,31 @@ impl DoAsync<Concurrent> for Task {
 }
 ```
 
+### Parallel Task
+
+```rust
+pub struct ParallelTask;
+
+impl Agent for ParallelTask {
+    fn begin(&mut self) -> Next<Self> {
+        Next::do_sync(())
+    }
+}
+
+impl DoSync for Task {
+    fn once(&mut self, _: ()) -> Result<Next<Self>> {
+        let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let squares = numbers.into_par_iter().map(|n| n * n).collect();
+        Ok(Next::done())
+    }
+}
+```
+
 ### Task split
+
+```rust
+Call both, concurrent and parallel in parallel.
+```
 
 ## Sync Task
 

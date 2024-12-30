@@ -31,7 +31,7 @@ impl Agent for Task {
 impl DoAsync for Task {
     async fn once(&mut self, _: ()) -> Result<Next<Self>> {
         reqwest::get("https://www.rust-lang.org").await?.text().await?;
-        Next::done()
+        Ok(Next::done())
     }
 }
 ```
@@ -53,7 +53,7 @@ struct GetPage { url: String }
 impl DoAsync<GetPage> for Task {
     async fn once(&mut self, state: GetPage) -> Result<Next<Self>> {
         let text = reqwest::get(state.url).await?.text().await?;
-        Next::do_sync(Print { text })
+        Ok(Next::do_sync(Print { text }))
     }
 }
 
@@ -62,7 +62,7 @@ struct Print { text: String }
 impl DoSync<Print> for Task {
     fn once(&mut self, state: Print) -> Result<Next<Self>> {
         printlnt!("{}", state.text);
-        Next::done()
+        Ok(Next::done())
     }
 }
 ```
@@ -109,8 +109,15 @@ struct Concurrent;
 
 impl DoAsync<Concurrent> for Task {
     async fn once(&mut self, _: Concurrent) -> Result<Next<Self>> {
-        let text = reqwest::get(state.url).await?.text().await?;
-        Next::do_sync(Print { text })
+        let urls = vec![
+            "https://www.rust-lang.org",
+            "https://www.crates.io",
+            "https://crateful.substack.com",
+            "https://knowledge.dev",
+        ];
+        let futures = urls.into_iter().map(|url| reqwest::get(url));
+        future::join_all(futures).await
+        Ok(Next::done())
     }
 }
 ```

@@ -162,11 +162,43 @@ impl DoAsync for RunBoth {
 }
 ```
 
-## Sync Task
-
-### Parallel Task
-
 ## State Machine
+
+```rust
+pub struct Fsm;
+
+impl Agent for Fsm {
+    fn begin(&mut self) -> Next<Self> {
+        Next::do_async(StateOne)
+    }
+}
+
+struct StateOne;
+
+impl DoAsync<StateOne> for Fsm {
+    async fn once(&mut self, _: StateOne) -> Result<Next<Self>> {
+        Ok(Next::do_async(StateTwo))
+    }
+}
+
+struct StateTwo;
+
+impl DoAsync<StateTwo> for Fsm {
+    async fn once(&mut self, _: StateTwo) -> Result<Next<Self>> {
+        Ok(Next::do_async(StateThree::default()))
+    }
+}
+
+#[derive(Default)]
+struct StateThree { counter: u64 }
+
+impl DoAsync<StateThree> for Fsm {
+    async fn once(&mut self, mut state: StateThree) -> Result<Next<Self>> {
+        state.counter += 1;
+        Ok(Next::do_async(state))
+    }
+}
+```
 
 ## Actor Model
 

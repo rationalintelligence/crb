@@ -8,7 +8,7 @@ members = [
 version = "0.0.20"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/rationalintelligence/crb"
+repository = "https://github.com/runtime-blocks/crb"
 
 [workspace.dependencies]
 anyhow = "1.0.94"

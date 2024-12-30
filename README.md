@@ -1,14 +1,57 @@
+<img src="./assets/crb-header.png" width="100%" />
+
 # CRB | Composable Runtime Blocks
 
-**CRB** is a collection of asynchronous and synchronous blocks for Rust designed to build large modular applications.
+A unique framework that implementes **hybrid workloads**, seamlessly combining synchronous and asynchronous activities, state machines, routines, the actor model, and supervisors.
 
-The library combines various approaches, including workers, actors, agents, routines, concurrency, parallelism, and pipelines.
-
+It’s perfect for building massive applications and serves as an ideal low-level framework for creating your own frameworks, for example AI-agents.
 The core idea is to ensure all blocks are highly compatible with each other, enabling significant code reuse.
 
-<a href="https://crateful.substack.com/" target="_blank"><img src="./assets/crateful-logo.png" width="100" /></a>
+<a href="https://crateful.substack.com/" target="_blank"><img src="./assets/crateful-logo.png" width="100px" /></a>
 
 I created this project to build an free AI-curated Rust magazine called [Crateful](https://crateful.substack.com/), written entirely in Rust.
+
+# Examples
+
+Code examples are simplified!
+
+## Sync Task
+
+### Parallel Task
+
+## Async Task
+
+### Single run async task
+
+```rust
+pub struct Task;
+
+impl Agent for Task {
+    fn begin(&mut self, ctx: &mut AgentSession<Self>) -> Next<Self> {
+        Next::do_async(GetWebPage)
+    }
+}
+
+struct GetWebPage;
+
+impl DoAsync for Task {
+    async fn once(&mut self, _: GetWebPage) -> Result<Next<Self>> {
+        reqwest::get("https://www.rust-lang.org").await?.text().await?;
+        Next::done()
+    }
+}
+```
+
+### Repetetive async task
+
+### Concurrent Task
+
+## State Machine
+
+## Actor Model
+
+## Agent | Hybryd Actor
+
 
 # Key Advantages
 

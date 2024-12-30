@@ -69,6 +69,31 @@ impl DoSync<Print> for Task {
 
 ### Repetetive async task
 
+```rust
+pub struct Task;
+
+impl Agent for Task {
+    fn begin(&mut self) -> Next<Self> {
+        Next::do_async(Monitor)
+    }
+}
+
+struct Monitor {
+    total: u64,
+    success: u64,
+}
+
+impl DoAsync<Monitor> for Task {
+    async fn repeat(&mut self, mut state: Monitor) -> Result<Option<Next<Self>>> {
+        state.total += 1;
+        reqwest::get("https://www.rust-lang.org").await?.error_for_status()?;
+        state.success += 1;
+        sleep(Duration::from_secs(10)).await;
+        Ok(None)
+    }
+}
+```
+
 ### Concurrent Task
 
 

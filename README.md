@@ -96,6 +96,26 @@ impl DoAsync<Monitor> for Task {
 
 ### Concurrent Task
 
+```rust
+pub struct Task;
+
+impl Agent for Task {
+    fn begin(&mut self) -> Next<Self> {
+        Next::do_async(Concurrent)
+    }
+}
+
+struct Concurrent;
+
+impl DoAsync<Concurrent> for Task {
+    async fn once(&mut self, _: Concurrent) -> Result<Next<Self>> {
+        let text = reqwest::get(state.url).await?.text().await?;
+        Next::do_sync(Print { text })
+    }
+}
+```
+
+### Task split
 
 ## Sync Task
 
@@ -107,6 +127,21 @@ impl DoAsync<Monitor> for Task {
 
 ## Agent | Hybryd Actor
 
+## Compatibility
+
+### Threads (`async+sync` tasks) support
+
+```toml
+[dependencies]
+crb-agent = { version = "0.0.21", features = ["sync"] }
+```
+
+### WASM mode (`async` tasks only)
+
+```toml
+[dependencies]
+crb-agent = { version = "0.0.21", default-features = false }
+```
 
 # Key Advantages
 

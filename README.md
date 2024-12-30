@@ -15,9 +15,7 @@ I created this project to build an free AI-curated Rust magazine called [Cratefu
 
 Code examples are simplified!
 
-## Async Task
-
-### Single-state single-run `async` task
+## Single-state single-run `async` task
 
 ```rust
 pub struct Task;
@@ -36,7 +34,7 @@ impl DoAsync for Task {
 }
 ```
 
-### Multi-state single-run `async` than `sync` task
+## Multi-state single-run `async` than `sync` task
 
 ```rust
 pub struct Task;
@@ -67,7 +65,7 @@ impl DoSync<Print> for Task {
 }
 ```
 
-### Repetetive async task
+## Repetetive async task
 
 ```rust
 pub struct Task;
@@ -94,7 +92,7 @@ impl DoAsync<Monitor> for Task {
 }
 ```
 
-### Concurrent Task
+## Concurrent Task
 
 ```rust
 pub struct ConcurrentTask;
@@ -120,7 +118,7 @@ impl DoAsync for ConcurrentTask {
 }
 ```
 
-### Parallel Task
+## Parallel Task
 
 ```rust
 pub struct ParallelTask;
@@ -140,7 +138,7 @@ impl DoSync for ParallelTask {
 }
 ```
 
-### Task split
+## Task split
 
 ```rust
 pub struct RunBoth;

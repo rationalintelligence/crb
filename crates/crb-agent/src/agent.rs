@@ -11,6 +11,10 @@ pub trait Agent: Sized + Send + 'static {
     type Output: Output;
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+        self.begin()
+    }
+
+    fn begin(&mut self) -> Next<Self> {
         Next::process()
     }
 
@@ -31,6 +35,10 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     fn finalize(&mut self, _ctx: &mut Self::Context) -> Self::Output {
+        self.end()
+    }
+
+    fn end(&mut self) -> Self::Output {
         Self::Output::default()
     }
 }

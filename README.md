@@ -27,7 +27,7 @@ Code examples are simplified!
 pub struct Task;
 
 impl Agent for Task {
-    fn begin(&mut self, ctx: &mut AgentSession<Self>) -> Next<Self> {
+    fn begin(&mut self) -> Next<Self> {
         Next::do_async(GetWebPage)
     }
 }

@@ -99,13 +99,13 @@ impl DoAsync<Monitor> for Task {
 ```rust
 pub struct ConcurrentTask;
 
-impl Agent for Task {
+impl Agent for ConcurrentTask {
     fn begin(&mut self) -> Next<Self> {
         Next::do_async(())
     }
 }
 
-impl DoAsync for Task {
+impl DoAsync for ConcurrentTask {
     async fn once(&mut self, _: ()) -> Result<Next<Self>> {
         let urls = vec![
             "https://www.rust-lang.org",
@@ -131,7 +131,7 @@ impl Agent for ParallelTask {
     }
 }
 
-impl DoSync for Task {
+impl DoSync for ParallelTask {
     fn once(&mut self, _: ()) -> Result<Next<Self>> {
         let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let squares = numbers.into_par_iter().map(|n| n * n).collect();
@@ -143,7 +143,23 @@ impl DoSync for Task {
 ### Task split
 
 ```rust
-Call both, concurrent and parallel in parallel.
+pub struct RunBoth;
+
+impl Agent for RunBoth {
+    fn begin(&mut self) -> Next<Self> {
+        Next::do_async(())
+    }
+}
+
+impl DoAsync for RunBoth {
+    async fn once(&mut self, _: ()) -> Result<Next<Self>> {
+        join!(
+            RunAgent::new(ConcurrentTask).run(),
+            RunAgent::new(ParallelTask).run(),
+        ).await;
+        Ok(Next::done())
+    }
+}
 ```
 
 ## Sync Task

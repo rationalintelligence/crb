@@ -26,7 +26,7 @@ where
 }
 
 #[async_trait]
-pub trait DoAsync<S: Send + 'static>: Agent {
+pub trait DoAsync<S: Send + 'static = ()>: Agent {
     async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
         while interruptor.is_active() {
             let result = self.many(&mut state).await;

@@ -25,7 +25,7 @@ where
     }
 }
 
-pub trait DoSync<S>: Agent {
+pub trait DoSync<S = ()>: Agent {
     fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
         while interruptor.is_active() {
             let result = self.many(&mut state);

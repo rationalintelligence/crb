@@ -15,10 +15,6 @@ I created this project to build an free AI-curated Rust magazine called [Cratefu
 
 Code examples are simplified!
 
-## Sync Task
-
-### Parallel Task
-
 ## Async Task
 
 ### Single run async task
@@ -45,6 +41,11 @@ impl DoAsync for Task {
 ### Repetetive async task
 
 ### Concurrent Task
+
+
+## Sync Task
+
+### Parallel Task
 
 ## State Machine
 

@@ -13,7 +13,7 @@ impl Agent for FirstProcessor {
     type Context = AgentSession<Self>;
     type Output = ();
 
-    fn initialize(&mut self, ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         println!("FirstProcessor");
         self.value.as_mut().map(|value| *value *= 2);
         Next::done()
@@ -47,7 +47,7 @@ impl Agent for SecondProcessor {
     type Context = AgentSession<Self>;
     type Output = ();
 
-    fn initialize(&mut self, ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         println!("SecondProcessor");
         self.value.as_mut().map(|value| *value *= 2);
         Next::done()

@@ -1,4 +1,4 @@
-use crate::address::{MessageFor, Address};
+use crate::address::{Address, MessageFor};
 use crate::agent::Agent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;

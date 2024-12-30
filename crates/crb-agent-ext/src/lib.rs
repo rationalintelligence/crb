@@ -1,6 +1,6 @@
 use anyhow::{anyhow as err, Result};
 use async_trait::async_trait;
-use crb_agent::kit::{Agent, Address, MessageFor};
+use crb_agent::kit::{Address, Agent, MessageFor};
 use futures::{
     channel::oneshot::{self, Canceled},
     task::{Context as FutContext, Poll},

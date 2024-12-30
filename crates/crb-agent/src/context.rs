@@ -22,6 +22,10 @@ impl<T: Agent> AgentSession<T> {
     pub fn joint(&mut self) -> &mut AddressJoint<T> {
         &mut self.joint
     }
+
+    pub fn do_next(&mut self, next_state: Next<T>) {
+        self.next_state = Some(next_state);
+    }
 }
 
 impl<T: Agent> Default for AgentSession<T> {

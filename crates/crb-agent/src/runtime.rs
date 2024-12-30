@@ -1,13 +1,12 @@
-use crate::performers::{Transition, TransitionCommand};
 use crate::agent::Agent;
 use crate::context::AgentContext;
+use crate::performers::{Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::kit::{
     Context, Failures, InteractiveRuntime, InteractiveTask, Interruptor, Runtime, Task,
 };
 use futures::stream::Abortable;
-
 
 pub struct RunAgent<T: Agent> {
     pub agent: Option<T>,
@@ -69,25 +68,31 @@ impl<T: Agent> RunAgent<T> {
                         .perform(agent, &mut self.context)
                         .await;
                     match res {
-                        Transition::Continue { agent, command } => {
-                            match command {
-                                TransitionCommand::Next(Ok(next_state)) => {
-                                    pair = (agent, Some(next_state));
-                                }
-                                TransitionCommand::Next(Err(err)) => {
-                                    let (agent, next_state) =
-                                        next_state.transition.fallback(agent, err).await;
-                                    pair = (agent, Some(next_state));
-                                }
-                                TransitionCommand::Process => {
-                                    pair = (agent, None);
-                                }
-                                TransitionCommand::Interrupted => {
-                                    pair = (agent, None);
-                                    break;
-                                }
+                        Transition::Continue { mut agent, command } => match command {
+                            TransitionCommand::Next(Ok(next_state)) => {
+                                pair = (agent, Some(next_state));
                             }
-                        }
+                            TransitionCommand::Next(Err(err)) => {
+                                let (agent, next_state) =
+                                    next_state.transition.fallback(agent, err).await;
+                                pair = (agent, Some(next_state));
+                            }
+                            TransitionCommand::Process => {
+                                pair = (agent, None);
+                            }
+                            TransitionCommand::Interrupted => {
+                                pair = (agent, None);
+                                break;
+                            }
+                            TransitionCommand::InContext(envelope) => {
+                                envelope
+                                    .handle(&mut agent, &mut self.context)
+                                    .await
+                                    .expect("Agent's loopback should never fail");
+                                let next_state = self.context.session().next_state.take();
+                                pair = (agent, next_state);
+                            }
+                        },
                         Transition::Crashed(err) => {
                             return Err(err);
                         }
@@ -95,7 +100,8 @@ impl<T: Agent> RunAgent<T> {
                 } else {
                     let result = agent.event(&mut self.context).await;
                     self.failures.put(result);
-                    pair = (agent, self.context.session().next_state.take());
+                    let next_state = self.context.session().next_state.take();
+                    pair = (agent, next_state);
                 }
             }
 

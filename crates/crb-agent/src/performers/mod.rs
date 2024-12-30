@@ -1,13 +1,14 @@
 pub mod async_performer;
 pub mod interrupt_performer;
+pub mod loopback;
 pub mod process_performer;
 
 #[cfg(feature = "sync")]
 pub mod sync_performer;
 
-
-use anyhow::{Result, Error};
+use crate::address::Envelope;
 use crate::agent::Agent;
+use anyhow::{Error, Result};
 use async_trait::async_trait;
 
 pub trait AgentState: Send + 'static {}
@@ -33,8 +34,7 @@ pub enum TransitionCommand<T> {
     Next(Result<Next<T>>),
     Interrupted,
     Process,
-    // TODO: Add
-    // Event(Envelope<T>),
+    InContext(Envelope<T>),
 }
 
 pub enum Transition<T> {
@@ -48,5 +48,7 @@ pub enum Transition<T> {
 #[async_trait]
 pub trait StatePerformer<T: Agent>: Send + 'static {
     async fn perform(&mut self, agent: T, session: &mut T::Context) -> Transition<T>;
-    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>);
+    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>) {
+        (agent, Next::interrupt(Some(err)))
+    }
 }

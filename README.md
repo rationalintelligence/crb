@@ -2,14 +2,33 @@
 
 # CRB | Composable Runtime Blocks
 
+[![Crates.io][crates-badge]][crates-url]
+[![MIT licensed][mit-badge]][mit-url]
+[![Documentation][docs-badge]][docs-url]
+
+[crates-badge]: https://img.shields.io/crates/v/crb.svg
+[crates-url]: https://crates.io/crates/crb
+[mit-badge]: https://img.shields.io/badge/license-MIT-blue.svg
+[mit-url]: https://github.com/runtime-blocks/crb/blob/master/LICENSE
+[docs-badge]: https://docs.rs/crb/badge.svg
+[docs-url]: https://docs.rs/crb
+
 A unique framework that implementes **hybrid workloads**, seamlessly combining synchronous and asynchronous activities, state machines, routines, the actor model, and supervisors.
 
 It’s perfect for building massive applications and serves as an ideal low-level framework for creating your own frameworks, for example AI-agents.
 The core idea is to ensure all blocks are highly compatible with each other, enabling significant code reuse.
 
-<a href="https://crateful.substack.com/" target="_blank"><img src="./assets/crateful-logo.png" width="100px" /></a>
+# What is a hybrid workload?
 
-I created this project to build an free AI-curated Rust magazine called [Crateful](https://crateful.substack.com/), written entirely in Rust.
+A hybrid workload is a concurrent task capable of switching roles - it can function as a synchronous or asynchronous task, a finite state machine, or as an actor exchanging messages.
+
+The key feature is its ability to combine these roles, enabling the implementation of algorithms with complex branching that would be impossible in the flat structure of a standard function. This makes it ideal for building the framework of large-scale applications or implementing complex workflows, such as AI pipelines.
+
+[picutre]
+
+The implementation is designed as a fully portable solution that can run in a standard environment, a WASM virtual machine (e.g., in a browser), or a TEE enclave. This approach significantly reduces development costs by allowing you to reuse code across all parts of your application: backend, frontend, agents, and more.
+
+<img src="./assets/crb-arch.png" width="300px" />
 
 # Examples
 
@@ -29,7 +48,7 @@ impl Agent for Task {
 }
 
 impl DoAsync for Task {
-    async fn once(&mut self, _: ()) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         reqwest::get("https://www.rust-lang.org").await?.text().await?;
         Ok(Next::done())
     }
@@ -51,7 +70,7 @@ impl Agent for Task {
 struct GetPage { url: String }
 
 impl DoAsync<GetPage> for Task {
-    async fn once(&mut self, state: GetPage) -> Result<Next<Self>> {
+    async fn once(&mut self, state: &mut GetPage) -> Result<Next<Self>> {
         let text = reqwest::get(state.url).await?.text().await?;
         Ok(Next::do_sync(Print { text }))
     }
@@ -60,7 +79,7 @@ impl DoAsync<GetPage> for Task {
 struct Print { text: String }
 
 impl DoSync<Print> for Task {
-    fn once(&mut self, state: Print) -> Result<Next<Self>> {
+    fn once(&mut self, state: &mut Print) -> Result<Next<Self>> {
         printlnt!("{}", state.text);
         Ok(Next::done())
     }
@@ -84,7 +103,7 @@ struct Monitor {
 }
 
 impl DoAsync<Monitor> for Task {
-    async fn repeat(&mut self, mut state: Monitor) -> Result<Option<Next<Self>>> {
+    async fn repeat(&mut self, mut state: &mut Monitor) -> Result<Option<Next<Self>>> {
         state.total += 1;
         reqwest::get("https://www.rust-lang.org").await?.error_for_status()?;
         state.success += 1;
@@ -106,7 +125,7 @@ impl Agent for ConcurrentTask {
 }
 
 impl DoAsync for ConcurrentTask {
-    async fn once(&mut self, _: ()) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         let urls = vec![
             "https://www.rust-lang.org",
             "https://www.crates.io",
@@ -132,7 +151,7 @@ impl Agent for ParallelTask {
 }
 
 impl DoSync for ParallelTask {
-    fn once(&mut self, _: ()) -> Result<Next<Self>> {
+    fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let squares = numbers.into_par_iter().map(|n| n * n).collect();
         Ok(Next::done())
@@ -152,7 +171,7 @@ impl Agent for RunBoth {
 }
 
 impl DoAsync for RunBoth {
-    async fn once(&mut self, _: ()) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         join!(
             RunAgent::new(ConcurrentTask).run(),
             RunAgent::new(ParallelTask).run(),
@@ -176,7 +195,7 @@ impl Agent for Fsm {
 struct StateOne;
 
 impl DoAsync<StateOne> for Fsm {
-    async fn once(&mut self, _: StateOne) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut StateOne) -> Result<Next<Self>> {
         Ok(Next::do_async(StateTwo))
     }
 }
@@ -184,7 +203,7 @@ impl DoAsync<StateOne> for Fsm {
 struct StateTwo;
 
 impl DoAsync<StateTwo> for Fsm {
-    async fn once(&mut self, _: StateTwo) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut StateTwo) -> Result<Next<Self>> {
         Ok(Next::do_async(StateThree::default()))
     }
 }
@@ -193,7 +212,7 @@ impl DoAsync<StateTwo> for Fsm {
 struct StateThree { counter: u64 }
 
 impl DoAsync<StateThree> for Fsm {
-    async fn once(&mut self, mut state: StateThree) -> Result<Next<Self>> {
+    async fn once(&mut self, mut state: &mut StateThree) -> Result<Next<Self>> {
         state.counter += 1;
         Ok(Next::do_async(state))
     }
@@ -251,7 +270,7 @@ impl Agent for Client {
 struct Configure;
 
 impl InContext<Configure> for Client {
-    async fn once(&mut self, _: Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
         self.server.request(GetId)?.forward(ctx)?;
         Ok(Next::process())
     }
@@ -349,3 +368,17 @@ Let's start with how to use the library. Although it consists of numerous crates
 ```bash
 cargo add crb
 ```
+
+# Author
+
+The project was originally created by [@therustmonk](https://github.com/therustmonk) as a result of extensive experimental research into implementing a hybrid actor model in Rust.
+
+<a href="https://crateful.substack.com/" target="_blank"><img src="./assets/crateful-logo.png" width="100px" /></a>
+
+You can find more details in my blog, [Crateful](https://crateful.substack.com/). I also use this framework to produce and publish a free e-magazine of the same name about Rust crates, which leverages CRB agents to generate content.
+
+# License
+
+This project is licensed under the [MIT license].
+
+[MIT license]: https://github.com/runtime-blocks/crb/blob/master/LICENSE

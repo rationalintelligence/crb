@@ -5,15 +5,13 @@ pub mod message;
 pub mod performers;
 pub mod runtime;
 
-pub mod kit {
-    pub use crate::address::{Address, MessageFor};
-    pub use crate::agent::{Agent, Standalone};
-    pub use crate::context::{AgentContext, AgentSession};
-    pub use crate::message::event::OnEvent;
-    pub use crate::performers::async_performer::DoAsync;
-    pub use crate::performers::Next;
-    pub use crate::runtime::RunAgent;
+pub use address::{Address, MessageFor};
+pub use agent::{Agent, Standalone};
+pub use context::{AgentContext, AgentSession};
+pub use message::event::OnEvent;
+pub use performers::async_performer::DoAsync;
+pub use performers::Next;
+pub use runtime::RunAgent;
 
-    #[cfg(feature = "sync")]
-    pub use crate::performers::sync_performer::DoSync;
-}
+#[cfg(feature = "sync")]
+pub use performers::sync_performer::DoSync;

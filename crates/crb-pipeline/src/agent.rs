@@ -2,8 +2,8 @@ use crate::meta::Metadata;
 use crate::pipeline::{Pipeline, RoutePoint, RuntimeGenerator, StageReport};
 use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
-use crb_agent::kit::{Address, Agent, RunAgent};
-use crb_runtime::kit::{Interruptor, Runtime};
+use crb_agent::{Address, Agent, RunAgent};
+use crb_runtime::{Interruptor, Runtime};
 
 pub mod stage {
     use super::*;

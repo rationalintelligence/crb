@@ -3,7 +3,7 @@ use crate::context::AgentContext;
 use crate::performers::{Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::{
+use crb_runtime::{
     Context, Failures, InteractiveRuntime, InteractiveTask, Interruptor, Runtime, Task,
 };
 use futures::stream::Abortable;

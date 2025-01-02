@@ -4,7 +4,7 @@ use crate::performers::{AgentState, Next, StatePerformer, Transition, Transition
 use crate::runtime::RunAgent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::kit::Interruptor;
+use crb_runtime::Interruptor;
 use futures::Future;
 use std::marker::PhantomData;
 

@@ -3,7 +3,7 @@ use crate::performers::Next;
 use crate::runtime::RunAgent;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_runtime::kit::{Context, InteractiveTask, ManagedContext};
+use crb_runtime::{Context, InteractiveTask, ManagedContext};
 
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {

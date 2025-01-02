@@ -1,7 +1,7 @@
 use crate::address::{Address, AddressJoint};
 use crate::agent::Agent;
 use crate::performers::Next;
-use crb_runtime::kit::{Context, Controller, ManagedContext};
+use crb_runtime::{Context, Controller, ManagedContext};
 use derive_more::{Deref, DerefMut};
 
 pub trait AgentContext<T: Agent>: Context<Address = Address<T>> {

@@ -4,10 +4,8 @@ pub mod interruptor;
 pub mod runtime;
 pub mod task;
 
-pub mod kit {
-    pub use crate::context::{Context, ManagedContext};
-    pub use crate::error::Failures;
-    pub use crate::interruptor::{Controller, Interruptor, RegistrationTaken};
-    pub use crate::runtime::{InteractiveRuntime, Runtime};
-    pub use crate::task::{InteractiveTask, JobHandle, Task, TaskHandle};
-}
+pub use context::{Context, ManagedContext};
+pub use error::Failures;
+pub use interruptor::{Controller, Interruptor, RegistrationTaken};
+pub use runtime::{InteractiveRuntime, Runtime};
+pub use task::{InteractiveTask, JobHandle, Task, TaskHandle};

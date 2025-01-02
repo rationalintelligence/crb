@@ -5,10 +5,8 @@ pub mod pipeline;
 pub mod service;
 pub mod stage;
 
-pub mod kit {
-    pub use crate::agent::{stage::Agent, AgentStage};
-    pub use crate::extension::AddressExt;
-    pub use crate::pipeline::Pipeline;
-    pub use crate::service::{stage::Input, InputStage};
-    pub use crate::stage::Stage;
-}
+pub use agent::{stage::Agent, AgentStage};
+pub use extension::AddressExt;
+pub use pipeline::Pipeline;
+pub use service::{stage::Input, InputStage};
+pub use stage::Stage;

@@ -1,5 +1,6 @@
 use crate::agent::Agent;
 use crate::context::AgentContext;
+use crate::finalizer::FinalizerFor;
 use crate::performers::{Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
@@ -8,26 +9,28 @@ use crb_runtime::{
 };
 use futures::stream::Abortable;
 
-pub struct RunAgent<T: Agent> {
-    pub agent: Option<T>,
-    pub context: T::Context,
+pub struct RunAgent<A: Agent> {
+    pub agent: Option<A>,
+    pub context: A::Context,
     pub failures: Failures,
+    pub finalizers: Vec<Box<dyn FinalizerFor<A>>>,
 }
 
-impl<T: Agent> RunAgent<T> {
-    pub fn new(agent: T) -> Self
+impl<A: Agent> RunAgent<A> {
+    pub fn new(agent: A) -> Self
     where
-        T::Context: Default,
+        A::Context: Default,
     {
         Self {
             agent: Some(agent),
-            context: T::Context::default(),
+            context: A::Context::default(),
             failures: Failures::default(),
+            finalizers: Vec::new(),
         }
     }
 }
 
-impl<T: Agent> Task<T> for RunAgent<T> {}
+impl<A: Agent> Task<A> for RunAgent<A> {}
 impl<A: Agent> InteractiveTask<A> for RunAgent<A> {}
 
 #[async_trait]
@@ -44,9 +47,10 @@ impl<T: Agent> RunAgent<T> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
-        // TODO: Distribute outputs
-        // TODO: Call finalizers to deliver the result
-        // TODO: The default finalizer is = oneshot address self channel!!!!!
+        for finalizer in &mut self.finalizers {
+            let res = finalizer.finalize(output.clone());
+            self.failures.put(res);
+        }
         self.context.session().joint.report(output)?;
         Ok(())
     }

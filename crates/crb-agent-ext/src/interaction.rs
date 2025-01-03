@@ -57,10 +57,11 @@ pub struct Responder<T: Request> {
 }
 
 impl<T: Request> Responder<T> {
-    pub fn forward_to<A>(self, address: Address<A>)
+    pub fn forward_to<A>(self, address: impl AsRef<Address<A>>)
     where
         A: OnResponse<T>,
     {
+        let address = address.as_ref().clone();
         crb_core::spawn(async move {
             let response = self.await;
             if let Err(err) = address.send(Response { response }) {

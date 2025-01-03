@@ -1,6 +1,7 @@
 pub mod address;
 pub mod agent;
 pub mod context;
+pub mod finalizer;
 pub mod message;
 pub mod performers;
 pub mod runtime;

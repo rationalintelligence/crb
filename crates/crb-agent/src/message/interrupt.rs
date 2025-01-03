@@ -14,8 +14,8 @@ struct Interrupt;
 
 #[async_trait]
 impl<A: Agent> MessageFor<A> for Interrupt {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()> {
-        actor.interrupt(ctx);
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+        agent.interrupt(ctx);
         Ok(())
     }
 }

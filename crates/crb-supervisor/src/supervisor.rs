@@ -8,8 +8,13 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use typed_slab::TypedSlab;
 
+#[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, From, Into)]
+pub struct ActivityId(usize);
+
 pub trait Supervisor: Agent {
     type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;
+
+    fn finished(&mut self, _rel: &Relation<Self>, _ctx: &mut Self::Context) {}
 }
 
 pub trait SupervisorContext<S: Supervisor> {
@@ -79,9 +84,6 @@ impl<S: Supervisor> SupervisorSession<S> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, From, Into)]
-pub struct ActivityId(usize);
-
 #[derive(Debug, Default)]
 struct Group {
     interrupted: bool,
@@ -125,11 +127,7 @@ impl<S: Supervisor> Tracker<S> {
         self.try_terminate_next();
     }
 
-    fn register_activity(
-        &mut self,
-        group: S::GroupBy,
-        interruptor: Interruptor,
-    ) -> SupervisedBy<S> {
+    fn register_activity(&mut self, group: S::GroupBy, interruptor: Interruptor) -> Relation<S> {
         let activity = Activity {
             group: group.clone(),
             interruptor,
@@ -141,10 +139,10 @@ impl<S: Supervisor> Tracker<S> {
             // Interrupt if the group is terminating
             self.activities.get_mut(id).map(Activity::interrupt);
         }
-        SupervisedBy { id, group }
+        Relation { id, group }
     }
 
-    fn unregister_activity(&mut self, rel: &SupervisedBy<S>) {
+    fn unregister_activity(&mut self, rel: &Relation<S>) {
         if let Some(activity) = self.activities.remove(rel.id) {
             // TODO: check rel.group == activity.group ?
             if let Some(group) = self.groups.get_mut(&activity.group) {
@@ -201,7 +199,7 @@ where
         addr
     }
 
-    pub fn spawn_trackable<B>(&mut self, mut trackable: B, group: S::GroupBy)
+    pub fn spawn_trackable<B>(&mut self, mut trackable: B, group: S::GroupBy) -> Relation<S>
     where
         B: Runtime,
     {
@@ -209,7 +207,7 @@ where
         let rel = self.tracker.register_activity(group, interruptor);
         let detacher = DetacherFor {
             supervisor: self.address().clone(),
-            rel,
+            rel: rel.clone(),
         };
 
         let fut = async move {
@@ -220,6 +218,7 @@ where
             }
         };
         crb_core::spawn(fut);
+        rel
     }
 }
 
@@ -235,12 +234,12 @@ impl<S: Supervisor> Activity<S> {
     }
 }
 
-struct SupervisedBy<S: Supervisor> {
-    id: ActivityId,
-    group: S::GroupBy,
+pub struct Relation<S: Supervisor> {
+    pub id: ActivityId,
+    pub group: S::GroupBy,
 }
 
-impl<S: Supervisor> Clone for SupervisedBy<S> {
+impl<S: Supervisor> Clone for Relation<S> {
     fn clone(&self) -> Self {
         Self {
             id: self.id.clone(),
@@ -249,26 +248,27 @@ impl<S: Supervisor> Clone for SupervisedBy<S> {
     }
 }
 
-struct DetachTrackable<S: Supervisor> {
-    rel: SupervisedBy<S>,
+struct DetachFrom<S: Supervisor> {
+    rel: Relation<S>,
 }
 
 #[async_trait]
-impl<S> MessageFor<S> for DetachTrackable<S>
+impl<S> MessageFor<S> for DetachFrom<S>
 where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
-    async fn handle(self: Box<Self>, _actor: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
+    async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
         SupervisorContext::session(ctx)
             .tracker
             .unregister_activity(&self.rel);
+        agent.finished(&self.rel, ctx);
         Ok(())
     }
 }
 
 pub struct DetacherFor<S: Supervisor> {
-    rel: SupervisedBy<S>,
+    rel: Relation<S>,
     supervisor: <S::Context as Context>::Address,
 }
 
@@ -278,7 +278,7 @@ where
     S::Context: SupervisorContext<S>,
 {
     pub fn detach(self) -> Result<(), Error> {
-        let msg = DetachTrackable { rel: self.rel };
+        let msg = DetachFrom { rel: self.rel };
         self.supervisor.send(msg)
     }
 }

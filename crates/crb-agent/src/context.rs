@@ -4,31 +4,31 @@ use crate::performers::Next;
 use crb_runtime::{Context, Controller, ManagedContext};
 use derive_more::{Deref, DerefMut};
 
-pub trait AgentContext<T: Agent>: Context<Address = Address<T>> {
-    fn session(&mut self) -> &mut AgentSession<T>;
+pub trait AgentContext<A: Agent>: Context<Address = Address<A>> {
+    fn session(&mut self) -> &mut AgentSession<A>;
 }
 
 #[derive(Deref, DerefMut)]
-pub struct AgentSession<T: Agent> {
+pub struct AgentSession<A: Agent> {
     pub controller: Controller,
-    pub next_state: Option<Next<T>>,
-    pub joint: AddressJoint<T>,
+    pub next_state: Option<Next<A>>,
+    pub joint: AddressJoint<A>,
     #[deref]
     #[deref_mut]
-    pub address: Address<T>,
+    pub address: Address<A>,
 }
 
-impl<T: Agent> AgentSession<T> {
-    pub fn joint(&mut self) -> &mut AddressJoint<T> {
+impl<A: Agent> AgentSession<A> {
+    pub fn joint(&mut self) -> &mut AddressJoint<A> {
         &mut self.joint
     }
 
-    pub fn do_next(&mut self, next_state: Next<T>) {
+    pub fn do_next(&mut self, next_state: Next<A>) {
         self.next_state = Some(next_state);
     }
 }
 
-impl<T: Agent> Default for AgentSession<T> {
+impl<A: Agent> Default for AgentSession<A> {
     fn default() -> Self {
         let controller = Controller::default();
         let (address, joint) = AddressJoint::new_pair();
@@ -41,15 +41,21 @@ impl<T: Agent> Default for AgentSession<T> {
     }
 }
 
-impl<T: Agent> Context for AgentSession<T> {
-    type Address = Address<T>;
+impl<A: Agent> Context for AgentSession<A> {
+    type Address = Address<A>;
 
     fn address(&self) -> &Self::Address {
         &self.address
     }
 }
 
-impl<T: Agent> ManagedContext for AgentSession<T> {
+impl<A: Agent> AsRef<Address<A>> for AgentSession<A> {
+    fn as_ref(&self) -> &Address<A> {
+        self.address()
+    }
+}
+
+impl<A: Agent> ManagedContext for AgentSession<A> {
     fn controller(&mut self) -> &mut Controller {
         &mut self.controller
     }
@@ -59,8 +65,8 @@ impl<T: Agent> ManagedContext for AgentSession<T> {
     }
 }
 
-impl<T: Agent> AgentContext<T> for AgentSession<T> {
-    fn session(&mut self) -> &mut AgentSession<T> {
+impl<A: Agent> AgentContext<A> for AgentSession<A> {
+    fn session(&mut self) -> &mut AgentSession<A> {
         self
     }
 }

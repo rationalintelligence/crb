@@ -472,7 +472,7 @@ struct Configure;
 
 impl InContext<Configure> for Client {
     async fn once(&mut self, _: &mut Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
-        self.server.request(GetId)?.forward(ctx)?;
+        self.server.request(GetId)?.forward_to(ctx)?;
         Ok(Next::process())
     }
 }

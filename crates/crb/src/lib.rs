@@ -1,7 +1,7 @@
 pub mod agent {
     pub use crb_agent::*;
     pub use crb_agent_ext::*;
-    pub use crb_runtime::{InteractiveTask, Task};
+    pub use crb_runtime::{Context, InteractiveTask, Task};
 }
 
 pub mod core {
@@ -10,6 +10,10 @@ pub mod core {
 
 pub mod runtime {
     pub use crb_runtime::*;
+}
+
+pub mod send {
+    pub use crb_send::*;
 }
 
 pub mod supervisor {

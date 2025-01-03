@@ -1,16 +1,51 @@
 //! A module with notifiers.
 
 use crate::sender::{EventSender, Sender};
-use anyhow::Error;
-use std::sync::Arc;
+use anyhow::{anyhow as err, Result};
+use std::sync::{Arc, Mutex};
 
-/// A notifier that send an associated message to the sender.
-pub struct EventNotifier<M> {
+/// An abstract notifier.
+pub trait Notifier: Send + Sync {
+    /// Send a notification to the recipient.
+    fn notify(&self) -> Result<()>;
+
+    fn typeless(self) -> TypelessNotifier
+    where
+        Self: Sized + 'static,
+    {
+        TypelessNotifier {
+            notifier: Arc::new(self),
+        }
+    }
+}
+
+/// A notifier without a particular type.
+pub struct TypelessNotifier {
+    notifier: Arc<dyn Notifier>,
+}
+
+impl Notifier for TypelessNotifier {
+    fn notify(&self) -> Result<()> {
+        self.notifier.notify()
+    }
+}
+
+pub struct DropNotifier {
+    notifier: TypelessNotifier,
+}
+
+impl Drop for DropNotifier {
+    fn drop(&mut self) {
+        self.notifier.notify().ok();
+    }
+}
+
+pub struct TypedNotifier<M> {
     message: M,
     sender: EventSender<M>,
 }
 
-impl<M> EventNotifier<M> {
+impl<M> TypedNotifier<M> {
     /// Create a new notifier instance.
     pub fn new<S>(sender: S, message: M) -> Self
     where
@@ -20,61 +55,51 @@ impl<M> EventNotifier<M> {
         Self { message, sender }
     }
 
-    /// reates a new notifier instance.
-    pub fn new_with_sender(sender: EventSender<M>, message: M) -> Self {
-        Self { message, sender }
+    pub fn once(self) -> OnceNotifier<M> {
+        OnceNotifier {
+            notifier: Mutex::new(Some(self)),
+        }
+    }
+
+    pub fn notify_once(self) -> Result<()> {
+        self.sender.send(self.message)
     }
 }
 
-impl<M> EventNotifier<M>
+impl<M> Notifier for TypedNotifier<M>
 where
-    M: Clone,
+    M: Clone + Send + Sync + 'static,
 {
-    /// Send a notification.
-    pub fn notify(&self) -> Result<(), Error> {
+    fn notify(&self) -> Result<()> {
         self.sender.send(self.message.clone())
     }
 }
 
-impl<M> EventNotifier<M>
+pub struct OnceNotifier<M> {
+    notifier: Mutex<Option<TypedNotifier<M>>>,
+}
+
+impl<M> OnceNotifier<M>
 where
-    M: Clone + Send + Sync + 'static,
+    M: Send + Sync + 'static,
 {
-    /// Hides the type of a message of the notifier.
-    pub fn to_any(self) -> AnyNotifier {
-        AnyNotifier {
-            notifier: Arc::new(self),
+    pub fn into_drop_notifier(self) -> DropNotifier {
+        DropNotifier {
+            notifier: self.typeless(),
         }
     }
 }
 
-// TODO: Add `DropNotifier` - send a notification
-// once only on drop
-// TODO: `DropNotifier` must be used to hooks
-
-/// An abstract notifier.
-pub trait Notifier: Send + Sync {
-    /// Send a notification to the recipient.
-    fn notify(&self) -> Result<(), Error>;
-}
-
-impl<M> Notifier for EventNotifier<M>
+impl<M> Notifier for OnceNotifier<M>
 where
-    M: Clone + Send + Sync + 'static,
+    M: Send + Sync + 'static,
 {
-    fn notify(&self) -> Result<(), Error> {
-        self.sender.send(self.message.clone())
-    }
-}
-
-/// A notifier without a particular type.
-pub struct AnyNotifier {
-    notifier: Arc<dyn Notifier>,
-}
-
-impl AnyNotifier {
-    /// Send a notification to a recipient.
-    pub fn notify(&self) -> Result<(), Error> {
-        self.notifier.notify()
+    fn notify(&self) -> Result<()> {
+        self.notifier
+            .lock()
+            .map_err(|_| err!("Can't get access to a notifier"))?
+            .take()
+            .ok_or_else(|| err!("Notification has already sent"))?
+            .notify_once()
     }
 }

@@ -2,15 +2,22 @@
 //!
 //! The crate contains a trait and an implementation of a sender.
 
-use crate::notifier::EventNotifier;
-use anyhow::Error;
+use crate::notifier::TypedNotifier;
+use anyhow::Result;
 use std::fmt;
 use std::sync::Arc;
 
 /// An abstract sender.
 pub trait Sender<M>: Send + Sync {
     /// Sends an event (data) to a recipient.
-    fn send(&self, input: M) -> Result<(), Error>;
+    fn send(&self, input: M) -> Result<()>;
+
+    fn notifier(self, message: M) -> TypedNotifier<M>
+    where
+        Self: Sized + 'static,
+    {
+        TypedNotifier::new(self, message)
+    }
 }
 
 /// An empty sender that skips sending.
@@ -20,7 +27,7 @@ pub trait Sender<M>: Send + Sync {
 pub struct EmptySender;
 
 impl<M> Sender<M> for EmptySender {
-    fn send(&self, _msg: M) -> Result<(), Error> {
+    fn send(&self, _msg: M) -> Result<()> {
         Ok(())
     }
 }
@@ -30,10 +37,10 @@ pub struct FuncSender<F>(F);
 
 impl<F, IN> Sender<IN> for FuncSender<F>
 where
-    F: Fn(IN) -> Result<(), Error>,
+    F: Fn(IN) -> Result<()>,
     F: Send + Sync,
 {
-    fn send(&self, input: IN) -> Result<(), Error> {
+    fn send(&self, input: IN) -> Result<()> {
         (self.0)(input)
     }
 }
@@ -48,6 +55,12 @@ impl<M> Clone for EventSender<M> {
         Self {
             recipient: self.recipient.clone(),
         }
+    }
+}
+
+impl<M> Sender<M> for EventSender<M> {
+    fn send(&self, msg: M) -> Result<()> {
+        self.recipient.send(msg)
     }
 }
 
@@ -81,15 +94,5 @@ impl<M> EventSender<M> {
             recipient.send(output)
         });
         EventSender::new(func_sender)
-    }
-
-    /// Send an event using inner `Sender`.
-    pub fn send(&self, msg: M) -> Result<(), Error> {
-        self.recipient.send(msg)
-    }
-
-    /// Creates a sender with pre-created message.
-    pub fn to_notifier(self, message: M) -> EventNotifier<M> {
-        EventNotifier::new_with_sender(self, message)
     }
 }

@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_agent::kit::{Agent, AgentSession, Next, OnEvent, Standalone};
-use crb_supervisor::agent::{Supervisor, SupervisorSession};
+use crb::agent::{Agent, AgentSession, Next, OnEvent, Standalone};
+use crb::superagent::{Supervisor, SupervisorSession};
 
 struct Printer;
 

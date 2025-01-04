@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_agent::kit::{Agent, AgentSession, Next, Standalone};
-use crb_pipeline::kit::Stage;
+use crb::agent::{Agent, AgentSession, Next, Standalone};
+use crb_pipeline::Stage;
 use tokio::time::{sleep, Duration};
 
 struct FirstProcessor {
@@ -77,7 +77,7 @@ async fn test_pipeline() -> Result<(), Error> {
     let mut pipeline = Pipeline::new();
 
     // Routing
-    use crb_pipeline::kit::*;
+    use crb_pipeline::*;
     pipeline.route::<Input<u8, _>, Agent<FirstProcessor>>();
     pipeline.route::<Agent<FirstProcessor>, Agent<SecondProcessor>>();
 

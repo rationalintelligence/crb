@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_agent::kit::{Agent, AgentSession, DoAsync, Next, Standalone};
+use crb::agent::{Agent, AgentSession, DoAsync, Next, Standalone};
 
 enum State {
     First,

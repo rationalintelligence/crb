@@ -1,6 +1,6 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_agent::kit::{Agent, AgentSession, OnEvent, Standalone};
+use crb::agent::{Agent, AgentSession, OnEvent, Standalone};
 
 struct TestAgent;
 

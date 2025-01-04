@@ -10,6 +10,7 @@ use crate::address::Envelope;
 use crate::agent::Agent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
+use std::fmt;
 
 pub trait AgentState: Send + 'static {}
 
@@ -37,12 +38,37 @@ pub enum TransitionCommand<T> {
     InContext(Envelope<T>),
 }
 
+impl<T> fmt::Debug for TransitionCommand<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::Next(_) => "Next(_)",
+            Self::Interrupted => "Interrupted",
+            Self::Process => "Process",
+            Self::InContext(_) => "InContext(_)",
+        };
+        write!(f, "TransitionCommand::{}", value)
+    }
+}
+
 pub enum Transition<T> {
     Continue {
         agent: T,
         command: TransitionCommand<T>,
     },
     Crashed(Error),
+}
+
+impl<T> fmt::Debug for Transition<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Continue { command, .. } => {
+                write!(f, "Transition::{command:?}")
+            }
+            Self::Crashed(_) => {
+                write!(f, "Transition::Crashed")
+            }
+        }
+    }
 }
 
 #[async_trait]

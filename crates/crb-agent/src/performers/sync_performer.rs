@@ -35,7 +35,9 @@ pub trait DoSync<S = ()>: Agent {
                 }
                 Ok(None) => {}
                 Err(err) => {
-                    self.repair(err)?;
+                    if let Err(err) = self.repair(err) {
+                        return Ok(self.fallback(err));
+                    }
                 }
             }
         }

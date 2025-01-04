@@ -1,6 +1,6 @@
 [package]
-name = "crb-supervisor"
-description = "CRB | Composable Runtime Blocks | Supervisor"
+name = "crb-superagent"
+description = "CRB | Composable Runtime Blocks | Agent Extensions"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -13,5 +13,7 @@ crb-agent.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
 derive_more.workspace = true
+futures.workspace = true
 log.workspace = true
+thiserror.workspace = true
 typed-slab.workspace = true

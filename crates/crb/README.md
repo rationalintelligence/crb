@@ -569,7 +569,7 @@ The project was originally created by [@therustmonk](https://github.com/therustm
 
 <a href="https://crateful.substack.com/" target="_blank"><img src="./assets/crateful-logo.png" width="100px" /></a>
 
-You can find more details in my blog, [Crateful](https://crateful.substack.com/). I also use this framework to produce and publish a free e-magazine of the same name about Rust crates, which leverages CRB agents to generate content.
+To support the project, please subscribe to [Crateful](https://crateful.substack.com/), my newsletter about Rust crates, which gathers information using a cast of crab agents written in this framework.
 
 # License
 

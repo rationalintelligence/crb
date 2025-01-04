@@ -3,44 +3,43 @@ use crate::performers::{Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::Error;
 use async_trait::async_trait;
 
-impl<T> Next<T>
+impl<A> Next<A>
 where
-    T: Agent,
+    A: Agent,
 {
     pub fn done() -> Self {
-        Self::interrupt(None)
+        Self::stop(TransitionCommand::Done)
+    }
+
+    pub fn interrupt() -> Self {
+        Self::stop(TransitionCommand::Interrupted)
     }
 
     pub fn fail(err: Error) -> Self {
-        Self::interrupt(Some(err))
+        Self::stop(TransitionCommand::Failed(err))
     }
 
-    pub(crate) fn interrupt(error: Option<Error>) -> Self {
-        Self::new(InterruptPerformer { error })
+    pub(crate) fn stop(command: TransitionCommand<A>) -> Self {
+        Self::new(StopPerformer {
+            command: Some(command),
+        })
     }
 }
 
-pub struct InterruptPerformer {
-    error: Option<Error>,
+pub struct StopPerformer<A: Agent> {
+    command: Option<TransitionCommand<A>>,
 }
 
 #[async_trait]
-impl<T> StatePerformer<T> for InterruptPerformer
+impl<A> StatePerformer<A> for StopPerformer<A>
 where
-    T: Agent,
+    A: Agent,
 {
-    async fn perform(&mut self, agent: T, _session: &mut T::Context) -> Transition<T> {
-        match self.error.take() {
-            None => {
-                let command = TransitionCommand::Interrupted;
-                Transition::Continue { agent, command }
-            }
-            Some(err) => Transition::Crashed(err),
-        }
-    }
-
-    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>) {
-        let error = self.error.take().unwrap_or(err);
-        (agent, Next::interrupt(Some(error)))
+    async fn perform(&mut self, agent: A, _session: &mut A::Context) -> Transition<A> {
+        let command = self
+            .command
+            .take()
+            .unwrap_or(TransitionCommand::Interrupted);
+        Transition::Continue { agent, command }
     }
 }

@@ -26,22 +26,22 @@ where
 }
 
 pub trait DoSync<S = ()>: Agent {
-    fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
+    fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Next<Self> {
         while interruptor.is_active() {
             let result = self.repeat(&mut state);
             match result {
                 Ok(Some(state)) => {
-                    return Ok(state);
+                    return state;
                 }
                 Ok(None) => {}
                 Err(err) => {
                     if let Err(err) = self.repair(err) {
-                        return Ok(self.fallback(err));
+                        return self.fallback(err);
                     }
                 }
             }
         }
-        Ok(Next::interrupt(None))
+        Next::interrupt()
     }
 
     fn repeat(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
@@ -84,11 +84,6 @@ where
             Ok(transition) => transition,
             Err(err) => Transition::Crashed(err.into()),
         }
-    }
-
-    async fn fallback(&mut self, mut agent: T, err: Error) -> (T, Next<T>) {
-        let next_state = agent.fallback(err);
-        (agent, next_state)
     }
 }
 

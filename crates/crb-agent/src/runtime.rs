@@ -73,22 +73,28 @@ impl<T: Agent> RunAgent<T> {
                         .await;
                     match res {
                         Transition::Continue { mut agent, command } => match command {
-                            TransitionCommand::Next(Ok(next_state)) => {
-                                pair = (agent, Some(next_state));
-                            }
-                            TransitionCommand::Next(Err(err)) => {
-                                agent.failed(&err, &mut self.context);
-                                let (agent, next_state) =
-                                    next_state.transition.fallback(agent, err).await;
+                            TransitionCommand::Next(next_state) => {
                                 pair = (agent, Some(next_state));
                             }
                             TransitionCommand::Process => {
                                 pair = (agent, None);
                             }
+
+                            // TODO: Join to `Stop(reason)` command
+                            TransitionCommand::Failed(err) => {
+                                agent.failed(&err, &mut self.context);
+                                pair = (agent, None);
+                                break;
+                            }
                             TransitionCommand::Interrupted => {
                                 pair = (agent, None);
                                 break;
                             }
+                            TransitionCommand::Done => {
+                                pair = (agent, None);
+                                break;
+                            }
+
                             TransitionCommand::InContext(envelope) => {
                                 envelope
                                     .handle(&mut agent, &mut self.context)

@@ -27,22 +27,22 @@ where
 
 #[async_trait]
 pub trait DoAsync<S: Send + 'static = ()>: Agent {
-    async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
+    async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Next<Self> {
         while interruptor.is_active() {
             let result = self.repeat(&mut state).await;
             match result {
                 Ok(Some(state)) => {
-                    return Ok(state);
+                    return state;
                 }
                 Ok(None) => {}
                 Err(err) => {
                     if let Err(err) = self.repair(err).await {
-                        return Ok(self.fallback(err).await);
+                        return self.fallback(err).await;
                     }
                 }
             }
         }
-        Ok(Next::interrupt(None))
+        Next::interrupt()
     }
 
     async fn repeat(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
@@ -79,11 +79,6 @@ where
         let next_state = agent.perform(state, interruptor).await;
         let command = TransitionCommand::Next(next_state);
         Transition::Continue { agent, command }
-    }
-
-    async fn fallback(&mut self, mut agent: T, err: Error) -> (T, Next<T>) {
-        let next_state = agent.fallback(err).await;
-        (agent, next_state)
     }
 }
 

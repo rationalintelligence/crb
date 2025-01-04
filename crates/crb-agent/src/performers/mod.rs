@@ -8,7 +8,7 @@ pub mod sync_performer;
 
 use crate::address::Envelope;
 use crate::agent::Agent;
-use anyhow::{Error, Result};
+use anyhow::Error;
 use async_trait::async_trait;
 use std::fmt;
 
@@ -32,8 +32,12 @@ where
 }
 
 pub enum TransitionCommand<T> {
-    Next(Result<Next<T>>),
+    Next(Next<T>),
+    Failed(Error),
+
     Interrupted,
+    Done,
+
     Process,
     InContext(Envelope<T>),
 }
@@ -42,7 +46,9 @@ impl<T> fmt::Debug for TransitionCommand<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
             Self::Next(_) => "Next(_)",
+            Self::Failed(_) => "Failed(_)",
             Self::Interrupted => "Interrupted",
+            Self::Done => "Done",
             Self::Process => "Process",
             Self::InContext(_) => "InContext(_)",
         };
@@ -74,7 +80,4 @@ impl<T> fmt::Debug for Transition<T> {
 #[async_trait]
 pub trait StatePerformer<T: Agent>: Send + 'static {
     async fn perform(&mut self, agent: T, session: &mut T::Context) -> Transition<T>;
-    async fn fallback(&mut self, agent: T, err: Error) -> (T, Next<T>) {
-        (agent, Next::interrupt(Some(err)))
-    }
 }

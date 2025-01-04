@@ -1,7 +1,7 @@
 use crate::context::AgentContext;
 use crate::performers::Next;
 use crate::runtime::RunAgent;
-use anyhow::Result;
+use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{Context, InteractiveTask, ManagedContext};
 
@@ -34,6 +34,10 @@ pub trait Agent: Sized + Send + 'static {
         Ok(())
     }
 
+    fn failed(&mut self, err: &Error, _ctx: &mut Self::Context) {
+        log::error!("Agent failed: {err}");
+    }
+
     fn finalize(&mut self, _ctx: &mut Self::Context) -> Self::Output {
         self.end()
     }
@@ -54,6 +58,20 @@ pub trait Standalone: Agent {
     {
         RunAgent::new(self).spawn_connected()
     }
-
     // TODO: spawn_with_context()
+}
+
+#[async_trait]
+pub trait Runnable: Agent {
+    async fn run(self) -> Result<Self::Output>;
+}
+
+#[async_trait]
+impl<A: Agent> Runnable for A
+where
+    Self::Context: Default,
+{
+    async fn run(self) -> Result<Self::Output> {
+        RunAgent::new(self).perform_routine().await
+    }
 }

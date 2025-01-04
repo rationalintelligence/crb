@@ -30,7 +30,6 @@ pub trait DoAsync<S: Send + 'static = ()>: Agent {
     async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Result<Next<Self>> {
         while interruptor.is_active() {
             let result = self.repeat(&mut state).await;
-            println!("HERE");
             match result {
                 Ok(Some(state)) => {
                     return Ok(state);

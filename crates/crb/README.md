@@ -305,8 +305,8 @@ impl Agent for RunBoth {
 impl DoAsync for RunBoth {
     async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         join!(
-            RunAgent::new(ConcurrentTask).run(),
-            RunAgent::new(ParallelTask).run(),
+            ConcurrentTask.run(),
+            ParallelTask.run(),
         ).await;
         Ok(Next::done())
     }

@@ -7,7 +7,7 @@ pub mod performers;
 pub mod runtime;
 
 pub use address::{Address, MessageFor};
-pub use agent::{Agent, Standalone};
+pub use agent::{Agent, Runnable, Standalone};
 pub use context::{AgentContext, AgentSession};
 pub use message::event::OnEvent;
 pub use performers::async_performer::DoAsync;

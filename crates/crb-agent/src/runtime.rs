@@ -43,7 +43,7 @@ impl<A: Agent> InteractiveRuntime for RunAgent<A> {
 }
 
 impl<T: Agent> RunAgent<T> {
-    async fn perform_routine(&mut self) -> Result<(), Error> {
+    pub(crate) async fn perform_routine(&mut self) -> Result<T::Output, Error> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
@@ -51,8 +51,8 @@ impl<T: Agent> RunAgent<T> {
             let res = finalizer.finalize(output.clone());
             self.failures.put(res);
         }
-        self.context.session().joint.report(output)?;
-        Ok(())
+        self.context.session().joint.report(output.clone())?;
+        Ok(output)
     }
 
     async fn perform_task(&mut self) -> Result<T::Output, Error> {
@@ -77,6 +77,7 @@ impl<T: Agent> RunAgent<T> {
                                 pair = (agent, Some(next_state));
                             }
                             TransitionCommand::Next(Err(err)) => {
+                                agent.failed(&err, &mut self.context);
                                 let (agent, next_state) =
                                     next_state.transition.fallback(agent, err).await;
                                 pair = (agent, Some(next_state));
@@ -103,6 +104,9 @@ impl<T: Agent> RunAgent<T> {
                     }
                 } else {
                     let result = agent.event(&mut self.context).await;
+                    if let Err(err) = &result {
+                        agent.failed(err, &mut self.context);
+                    }
                     self.failures.put(result);
                     let next_state = self.context.session().next_state.take();
                     pair = (agent, next_state);
@@ -131,6 +135,6 @@ where
 
     async fn routine(&mut self) {
         let result = self.perform_routine().await;
-        self.failures.put(result);
+        self.failures.put(result.map(drop));
     }
 }

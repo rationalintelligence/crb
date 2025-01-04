@@ -1,5 +1,5 @@
 use crate::agent::Agent;
-use crate::performers::{Next, StatePerformer, Transition, TransitionCommand};
+use crate::performers::{Next, StatePerformer, StopReason, Transition, TransitionCommand};
 use anyhow::Error;
 use async_trait::async_trait;
 
@@ -8,38 +8,36 @@ where
     A: Agent,
 {
     pub fn done() -> Self {
-        Self::stop(TransitionCommand::Done)
+        Self::stop(StopReason::Done)
     }
 
     pub fn interrupt() -> Self {
-        Self::stop(TransitionCommand::Interrupted)
+        Self::stop(StopReason::Interrupted)
     }
 
     pub fn fail(err: Error) -> Self {
-        Self::stop(TransitionCommand::Failed(err))
+        Self::stop(StopReason::Failed(err))
     }
 
-    pub(crate) fn stop(command: TransitionCommand<A>) -> Self {
+    pub(crate) fn stop(reason: StopReason) -> Self {
         Self::new(StopPerformer {
-            command: Some(command),
+            reason: Some(reason),
         })
     }
 }
 
-pub struct StopPerformer<A: Agent> {
-    command: Option<TransitionCommand<A>>,
+pub struct StopPerformer {
+    reason: Option<StopReason>,
 }
 
 #[async_trait]
-impl<A> StatePerformer<A> for StopPerformer<A>
+impl<A> StatePerformer<A> for StopPerformer
 where
     A: Agent,
 {
     async fn perform(&mut self, agent: A, _session: &mut A::Context) -> Transition<A> {
-        let command = self
-            .command
-            .take()
-            .unwrap_or(TransitionCommand::Interrupted);
+        let reason = self.reason.take().unwrap_or(StopReason::Interrupted);
+        let command = TransitionCommand::Stop(reason);
         Transition::Continue { agent, command }
     }
 }

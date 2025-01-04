@@ -33,11 +33,7 @@ where
 
 pub enum TransitionCommand<T> {
     Next(Next<T>),
-    Failed(Error),
-
-    Interrupted,
-    Done,
-
+    Stop(StopReason),
     Process,
     InContext(Envelope<T>),
 }
@@ -46,13 +42,28 @@ impl<T> fmt::Debug for TransitionCommand<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
             Self::Next(_) => "Next(_)",
-            Self::Failed(_) => "Failed(_)",
-            Self::Interrupted => "Interrupted",
-            Self::Done => "Done",
+            Self::Stop(reason) => &format!("Stop({reason:?})"),
             Self::Process => "Process",
             Self::InContext(_) => "InContext(_)",
         };
         write!(f, "TransitionCommand::{}", value)
+    }
+}
+
+pub enum StopReason {
+    Failed(Error),
+    Interrupted,
+    Done,
+}
+
+impl fmt::Debug for StopReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::Failed(_) => "Failed(_)",
+            Self::Interrupted => "Interrupted",
+            Self::Done => "Done",
+        };
+        write!(f, "StopReason::{}", value)
     }
 }
 

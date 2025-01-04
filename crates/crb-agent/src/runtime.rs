@@ -1,7 +1,7 @@
 use crate::agent::Agent;
 use crate::context::AgentContext;
 use crate::finalizer::FinalizerFor;
-use crate::performers::{Transition, TransitionCommand};
+use crate::performers::{StopReason, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
@@ -79,22 +79,16 @@ impl<T: Agent> RunAgent<T> {
                             TransitionCommand::Process => {
                                 pair = (agent, None);
                             }
-
-                            // TODO: Join to `Stop(reason)` command
-                            TransitionCommand::Failed(err) => {
-                                agent.failed(&err, &mut self.context);
+                            TransitionCommand::Stop(reason) => {
+                                match reason {
+                                    StopReason::Failed(err) => {
+                                        agent.failed(&err, &mut self.context);
+                                    }
+                                    StopReason::Interrupted | StopReason::Done => {}
+                                }
                                 pair = (agent, None);
                                 break;
                             }
-                            TransitionCommand::Interrupted => {
-                                pair = (agent, None);
-                                break;
-                            }
-                            TransitionCommand::Done => {
-                                pair = (agent, None);
-                                break;
-                            }
-
                             TransitionCommand::InContext(envelope) => {
                                 envelope
                                     .handle(&mut agent, &mut self.context)

@@ -15,7 +15,7 @@ pub trait InteractiveTask<T>: Task<T> + InteractiveRuntime {
 }
 
 #[async_trait]
-pub trait Task<T>: Runtime + Sized {
+pub trait Task<T = ()>: Runtime + Sized {
     fn spawn(mut self) -> TaskHandle<T> {
         let interruptor = self.get_interruptor();
         let handle = crb_core::spawn(async move {

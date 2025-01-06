@@ -30,18 +30,6 @@ impl<A: Agent> RunAgent<A> {
     }
 }
 
-impl<A: Agent> Task<A> for RunAgent<A> {}
-impl<A: Agent> InteractiveTask<A> for RunAgent<A> {}
-
-#[async_trait]
-impl<A: Agent> InteractiveRuntime for RunAgent<A> {
-    type Context = A::Context;
-
-    fn address(&self) -> <Self::Context as Context>::Address {
-        self.context.address().clone()
-    }
-}
-
 impl<T: Agent> RunAgent<T> {
     pub(crate) async fn perform_routine(&mut self) -> Result<T::Output, Error> {
         let reg = self.context.session().controller.take_registration()?;
@@ -124,6 +112,9 @@ impl<T: Agent> RunAgent<T> {
     }
 }
 
+impl<A: Agent> Task<A> for RunAgent<A> {}
+impl<A: Agent> InteractiveTask<A> for RunAgent<A> {}
+
 #[async_trait]
 impl<T> Runtime for RunAgent<T>
 where
@@ -136,5 +127,14 @@ where
     async fn routine(&mut self) {
         let result = self.perform_routine().await;
         self.failures.put(result.map(drop));
+    }
+}
+
+#[async_trait]
+impl<A: Agent> InteractiveRuntime for RunAgent<A> {
+    type Context = A::Context;
+
+    fn address(&self) -> <Self::Context as Context>::Address {
+        self.context.address().clone()
     }
 }

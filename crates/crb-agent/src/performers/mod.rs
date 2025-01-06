@@ -72,6 +72,9 @@ pub enum Transition<T> {
         agent: T,
         command: TransitionCommand<T>,
     },
+    // TODO: Must contains `Option<Output>`
+    // optional - to consume for molting
+    Consumed,
     Crashed(Error),
 }
 
@@ -80,6 +83,9 @@ impl<T> fmt::Debug for Transition<T> {
         match self {
             Self::Continue { command, .. } => {
                 write!(f, "Transition::{command:?}")
+            }
+            Self::Consumed => {
+                write!(f, "Transition::Consumed")
             }
             Self::Crashed(_) => {
                 write!(f, "Transition::Crashed")

@@ -31,19 +31,23 @@ impl<A: Agent> RunAgent<A> {
 }
 
 impl<T: Agent> RunAgent<T> {
-    pub(crate) async fn perform_routine(&mut self) -> Result<T::Output, Error> {
+    pub(crate) async fn perform_routine(&mut self) -> Result<Option<T::Output>> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
-        for finalizer in &mut self.finalizers {
-            let res = finalizer.finalize(output.clone());
-            self.failures.put(res);
+        if let Some(output) = output {
+            for finalizer in &mut self.finalizers {
+                let res = finalizer.finalize(output.clone());
+                self.failures.put(res);
+            }
+            self.context.session().joint.report(output.clone())?;
+            Ok(Some(output))
+        } else {
+            Ok(None)
         }
-        self.context.session().joint.report(output.clone())?;
-        Ok(output)
     }
 
-    async fn perform_task(&mut self) -> Result<T::Output, Error> {
+    async fn perform_task(&mut self) -> Result<Option<T::Output>> {
         if let Some(mut agent) = self.agent.take() {
             // let session = self.context.session();
 
@@ -86,6 +90,9 @@ impl<T: Agent> RunAgent<T> {
                                 pair = (agent, next_state);
                             }
                         },
+                        Transition::Consumed => {
+                            return Ok(None);
+                        }
                         Transition::Crashed(err) => {
                             return Err(err);
                         }
@@ -105,7 +112,7 @@ impl<T: Agent> RunAgent<T> {
             let mut agent = pair.0;
             let output = agent.finalize(&mut self.context);
             self.agent = Some(agent);
-            Ok(output)
+            Ok(Some(output))
         } else {
             Err(Error::msg("Agent's agent has consumed already."))
         }

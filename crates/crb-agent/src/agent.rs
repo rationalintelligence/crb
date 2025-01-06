@@ -1,7 +1,7 @@
 use crate::context::AgentContext;
 use crate::performers::Next;
 use crate::runtime::RunAgent;
-use anyhow::{Error, Result};
+use anyhow::{anyhow as err, Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{Context, InteractiveTask, ManagedContext};
 
@@ -72,6 +72,7 @@ where
     Self::Context: Default,
 {
     async fn run(self) -> Result<Self::Output> {
-        RunAgent::new(self).perform_routine().await
+        let output = RunAgent::new(self).perform_routine().await?;
+        output.ok_or_else(|| err!("Attempt to get output from the consumed agent"))
     }
 }

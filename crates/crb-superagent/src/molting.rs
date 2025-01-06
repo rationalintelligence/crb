@@ -4,23 +4,30 @@ use crb_agent::{Address, Agent, AgentContext, AgentSession, RunAgent};
 use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runtime, Task};
 use std::marker::PhantomData;
 
-pub trait NextExt<T> {
-    fn molt_to() -> Self;
+pub trait NextExt<A> {
+    fn molt<T>() -> Self
+    where
+        A: MoltTo<T>,
+        T: Agent<Context = MoltingSession<T>>;
 }
 
-impl<A, T> NextExt<T> for Next<A>
+impl<A> NextExt<A> for Next<A>
 where
     A: Agent<Context = MoltingSession<A>>,
-    A: MoltTo<T>,
-    T: Agent<Context = MoltingSession<T>>,
 {
-    fn molt_to() -> Self {
+    fn molt<T>() -> Self
+    where
+        A: MoltTo<T>,
+        T: Agent<Context = MoltingSession<T>>,
+    {
         Self::new(MoltPerformer::<T> { _type: PhantomData })
     }
 }
 
-pub trait MoltTo<T> {
-    fn molt(self) -> T;
+pub trait MoltTo<T>: Sized {
+    fn molt(self) -> Option<T> {
+        None
+    }
 }
 
 pub struct MoltPerformer<T> {
@@ -36,8 +43,10 @@ where
 {
     async fn perform(&mut self, agent: A, session: &mut A::Context) -> Transition<A> {
         let next_agent = agent.molt();
-        let next_runtime = RunAgent::new(next_agent);
-        session.next_runtime = Some(Box::new(next_runtime));
+        if let Some(next_agent) = next_agent {
+            let next_runtime = RunAgent::new(next_agent);
+            session.next_runtime = Some(Box::new(next_runtime));
+        }
         Transition::Consumed
     }
 }

@@ -1,4 +1,5 @@
 pub mod async_performer;
+pub mod consume_performer;
 pub mod interrupt_performer;
 pub mod loopback;
 pub mod process_performer;

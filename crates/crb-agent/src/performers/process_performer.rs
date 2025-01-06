@@ -2,9 +2,9 @@ use crate::agent::Agent;
 use crate::performers::{Next, StatePerformer, Transition, TransitionCommand};
 use async_trait::async_trait;
 
-impl<T> Next<T>
+impl<A> Next<A>
 where
-    T: Agent,
+    A: Agent,
 {
     pub fn process() -> Self {
         Self::new(ProcessPerformer)
@@ -14,11 +14,11 @@ where
 pub struct ProcessPerformer;
 
 #[async_trait]
-impl<T> StatePerformer<T> for ProcessPerformer
+impl<A> StatePerformer<A> for ProcessPerformer
 where
-    T: Agent,
+    A: Agent,
 {
-    async fn perform(&mut self, agent: T, _session: &mut T::Context) -> Transition<T> {
+    async fn perform(&mut self, agent: A, _session: &mut A::Context) -> Transition<A> {
         let command = TransitionCommand::Process;
         Transition::Continue { agent, command }
     }

@@ -4,13 +4,13 @@ use crate::message::loopback::{InContext, LoopbackEvent};
 use crate::performers::{Next, StatePerformer, Transition, TransitionCommand};
 use async_trait::async_trait;
 
-impl<T> Next<T>
+impl<A> Next<A>
 where
-    T: Agent,
+    A: Agent,
 {
     pub fn in_context<E>(event: E) -> Self
     where
-        T: InContext<E>,
+        A: InContext<E>,
         E: Send + 'static,
     {
         let event = LoopbackEvent::new(event);
@@ -20,16 +20,16 @@ where
     }
 }
 
-pub struct Loopback<T> {
-    envelope: Option<Envelope<T>>,
+pub struct Loopback<A> {
+    envelope: Option<Envelope<A>>,
 }
 
 #[async_trait]
-impl<T> StatePerformer<T> for Loopback<T>
+impl<A> StatePerformer<A> for Loopback<A>
 where
-    T: Agent,
+    A: Agent,
 {
-    async fn perform(&mut self, agent: T, _session: &mut T::Context) -> Transition<T> {
+    async fn perform(&mut self, agent: A, _session: &mut A::Context) -> Transition<A> {
         let envelope = self
             .envelope
             .take()

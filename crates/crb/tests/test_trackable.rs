@@ -48,7 +48,7 @@ impl OnEvent<SendPrint> for Main {
         _event: SendPrint,
         ctx: &mut Self::Context,
     ) -> Result<(), Self::Error> {
-        let printer = ctx.spawn_actor(Printer, ());
+        let printer = ctx.spawn_agent(Printer, ());
         let print = Print("Hello, Trackable!".into());
         printer.event(print)?;
         Ok(())
@@ -63,6 +63,6 @@ impl Supervisor for Main {
 async fn test_trackable() -> Result<(), Error> {
     let mut addr = Main.spawn();
     addr.interrupt()?;
-    let res: () = addr.join().await?;
+    addr.join().await?;
     Ok(())
 }

@@ -69,7 +69,7 @@ impl<S: Supervisor> SupervisorContext<S> for SupervisorSession<S> {
 }
 
 impl<S: Supervisor> SupervisorSession<S> {
-    pub fn spawn_actor<A>(
+    pub fn spawn_agent<A>(
         &mut self,
         input: A,
         group: S::GroupBy,

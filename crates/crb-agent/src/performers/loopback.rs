@@ -8,7 +8,7 @@ impl<T> Next<T>
 where
     T: Agent,
 {
-    pub fn in_context<E>(&self, event: E) -> Self
+    pub fn in_context<E>(event: E) -> Self
     where
         T: InContext<E>,
         E: Send + 'static,

@@ -19,6 +19,11 @@ where
         Self::stop(StopReason::Failed(err))
     }
 
+    pub fn todo(reason: impl ToString) -> Self {
+        let err = Error::msg(reason.to_string());
+        Self::stop(StopReason::Failed(err))
+    }
+
     pub(crate) fn stop(reason: StopReason) -> Self {
         Self::new(StopPerformer {
             reason: Some(reason),

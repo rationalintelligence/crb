@@ -102,6 +102,12 @@ pub struct Tracker<S: Supervisor> {
     terminating: bool,
 }
 
+impl<S: Supervisor> Default for Tracker<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<S: Supervisor> Tracker<S> {
     pub fn new() -> Self {
         Self {
@@ -242,7 +248,7 @@ pub struct Relation<S: Supervisor> {
 impl<S: Supervisor> Clone for Relation<S> {
     fn clone(&self) -> Self {
         Self {
-            id: self.id.clone(),
+            id: self.id,
             group: self.group.clone(),
         }
     }

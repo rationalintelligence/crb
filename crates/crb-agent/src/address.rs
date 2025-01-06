@@ -102,6 +102,6 @@ impl<T: Agent> AgentStatus<T> {
 pub type Envelope<A> = Box<dyn MessageFor<A>>;
 
 #[async_trait]
-pub trait MessageFor<A: Agent + ?Sized>: Send + 'static {
+pub trait MessageFor<A: Agent>: Send + 'static {
     async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()>;
 }

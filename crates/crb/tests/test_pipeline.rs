@@ -15,7 +15,9 @@ impl Agent for FirstProcessor {
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         println!("FirstProcessor");
-        self.value.as_mut().map(|value| *value *= 2);
+        if let Some(value) = self.value.as_mut() {
+            *value *= 2;
+        }
         Next::done()
     }
 }
@@ -49,7 +51,9 @@ impl Agent for SecondProcessor {
 
     fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
         println!("SecondProcessor");
-        self.value.as_mut().map(|value| *value *= 2);
+        if let Some(value) = self.value.as_mut() {
+            *value *= 2;
+        }
         Next::done()
     }
 }

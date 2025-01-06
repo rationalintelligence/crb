@@ -34,7 +34,7 @@ impl MoltTo<ShellTwo> for ShellOne {
         let value_1 = self.value_1?;
         Some(ShellTwo {
             crab: self.crab,
-            value_1: value_1,
+            value_1,
             value_2: None,
         })
     }

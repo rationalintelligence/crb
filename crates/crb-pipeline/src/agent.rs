@@ -55,7 +55,7 @@ where
     type Stage = A;
 
     fn destination(&self) -> RoutePoint<A::Input, A::State> {
-        let generator = AgentStageRuntimeGenerator::<A>::new(self.config.clone());
+        let generator = AgentStageRuntimeGenerator::<A>::generator(self.config.clone());
         RoutePoint::new(generator)
     }
 }
@@ -97,7 +97,7 @@ impl<A> AgentStageRuntimeGenerator<A>
 where
     A: Agent + Stage,
 {
-    pub fn new(config: A::Config) -> impl RuntimeGenerator<Input = A::Input, State = A::State>
+    pub fn generator(config: A::Config) -> impl RuntimeGenerator<Input = A::Input, State = A::State>
     where
         A: Stage,
         A::Context: Default,

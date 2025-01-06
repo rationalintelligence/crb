@@ -38,6 +38,12 @@ pub struct InitialKey<M, State> {
     _state: PhantomData<State>,
 }
 
+impl<M, State> Default for InitialKey<M, State> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<M, State> InitialKey<M, State> {
     pub fn new() -> Self {
         Self {
@@ -76,6 +82,12 @@ pub struct StageKey<S> {
 }
 
 unsafe impl<S> Sync for StageKey<S> {}
+
+impl<S> Default for StageKey<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl<S> StageKey<S> {
     pub fn new() -> Self {

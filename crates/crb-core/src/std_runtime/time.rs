@@ -6,7 +6,7 @@ pub use tokio::time::error::Elapsed;
 
 /// Waits until duration has elapsed.
 pub async fn sleep(duration: Duration) {
-    tokio::time::sleep(duration.into()).await;
+    tokio::time::sleep(duration).await;
 }
 
 /// Requires a Future to complete before

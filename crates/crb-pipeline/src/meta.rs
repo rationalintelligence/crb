@@ -18,7 +18,7 @@ pub struct Sequencer {
 }
 
 impl Sequencer {
-    pub fn next(&mut self) -> Layer {
+    pub fn next_layer(&mut self) -> Layer {
         self.id += 1;
         Layer(self.id)
     }

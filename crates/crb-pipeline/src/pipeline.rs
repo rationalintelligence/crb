@@ -21,6 +21,15 @@ pub struct Pipeline<State: PipelineState = ()> {
     state: State,
 }
 
+impl<State: PipelineState> Default for Pipeline<State>
+where
+    State: Default,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<State: PipelineState> Pipeline<State> {
     pub fn new() -> Self
     where
@@ -159,7 +168,7 @@ where
         agent: &mut Pipeline<State>,
         ctx: &mut SupervisorSession<Pipeline<State>>,
     ) -> Result<()> {
-        let layer = agent.sequencer.next();
+        let layer = agent.sequencer.next_layer();
         let meta = Metadata::new(layer);
         let key = InitialKey::<M, State>::new();
         agent.spawn_workers(meta, key, self.message, ctx);

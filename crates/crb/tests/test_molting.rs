@@ -86,7 +86,7 @@ impl Agent for ShellThree {
 }
 
 #[tokio::test]
-async fn test_agent() -> Result<(), Error> {
+async fn test_molting() -> Result<(), Error> {
     let agent = ShellOne::new();
     MoltAgent::new(agent).run().await;
     Ok(())

@@ -24,7 +24,7 @@ impl<T> Next<T>
 where
     T: Agent,
 {
-    pub(crate) fn new(performer: impl StatePerformer<T>) -> Self {
+    pub fn new(performer: impl StatePerformer<T>) -> Self {
         Self {
             transition: Box::new(performer),
         }

@@ -24,7 +24,7 @@ where
         Self::stop(StopReason::Failed(err))
     }
 
-    pub(crate) fn stop(reason: StopReason) -> Self {
+    pub fn stop(reason: StopReason) -> Self {
         Self::new(StopPerformer {
             reason: Some(reason),
         })

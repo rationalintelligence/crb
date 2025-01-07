@@ -120,8 +120,8 @@ impl<T: Output> Agent for SyncFn<T> {
         Next::do_sync(CallFn)
     }
 
-    fn finalize(&mut self, _ctx: &mut Self::Context) -> Option<Self::Output> {
-        self.output.take()
+    fn finalize(self, _ctx: &mut Self::Context) -> Option<Self::Output> {
+        self.output
     }
 }
 

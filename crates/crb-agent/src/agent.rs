@@ -38,11 +38,11 @@ pub trait Agent: Sized + Send + 'static {
         log::error!("Agent failed: {err}");
     }
 
-    fn finalize(&mut self, _ctx: &mut Self::Context) -> Option<Self::Output> {
+    fn finalize(self, _ctx: &mut Self::Context) -> Option<Self::Output> {
         self.end()
     }
 
-    fn end(&mut self) -> Option<Self::Output> {
+    fn end(self) -> Option<Self::Output> {
         None
     }
 }

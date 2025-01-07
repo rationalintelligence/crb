@@ -112,8 +112,8 @@ impl<T: Output> Agent for AsyncFn<T> {
         Next::do_async(CallFn)
     }
 
-    fn finalize(&mut self, _ctx: &mut Self::Context) -> Option<Self::Output> {
-        self.output.take()
+    fn finalize(self, _ctx: &mut Self::Context) -> Option<Self::Output> {
+        self.output
     }
 }
 

@@ -1,6 +1,8 @@
 use crate::agent::{Agent, Output};
 use crate::context::{AgentContext, AgentSession};
-use crate::performers::{AgentState, Next, StatePerformer, Transition, TransitionCommand};
+use crate::performers::{
+    AgentState, ConsumptionReason, Next, StatePerformer, Transition, TransitionCommand,
+};
 use crate::runtime::RunAgent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
@@ -82,7 +84,11 @@ where
         });
         match handle.await {
             Ok(transition) => transition,
-            Err(err) => Transition::Crashed(err.into()),
+            Err(err) => {
+                let err = err.into();
+                let reason = ConsumptionReason::Crashed(err);
+                Transition::Consume { reason }
+            }
         }
     }
 }

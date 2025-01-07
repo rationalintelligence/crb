@@ -68,15 +68,31 @@ impl fmt::Debug for StopReason {
     }
 }
 
+pub enum ConsumptionReason {
+    // TODO: Must contains `Option<Output>`
+    // optional - to consume for molting
+    Transformed,
+    Crashed(Error),
+}
+
+impl fmt::Debug for ConsumptionReason {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let value = match self {
+            Self::Transformed => "Transformed",
+            Self::Crashed(_) => "Crashed(_)",
+        };
+        write!(f, "ConsumptionReason::{}", value)
+    }
+}
+
 pub enum Transition<T> {
     Continue {
         agent: T,
         command: TransitionCommand<T>,
     },
-    // TODO: Must contains `Option<Output>`
-    // optional - to consume for molting
-    Consumed,
-    Crashed(Error),
+    Consume {
+        reason: ConsumptionReason,
+    },
 }
 
 impl<T> fmt::Debug for Transition<T> {
@@ -85,11 +101,8 @@ impl<T> fmt::Debug for Transition<T> {
             Self::Continue { command, .. } => {
                 write!(f, "Transition::{command:?}")
             }
-            Self::Consumed => {
-                write!(f, "Transition::Consumed")
-            }
-            Self::Crashed(_) => {
-                write!(f, "Transition::Crashed")
+            Self::Consume { reason } => {
+                write!(f, "Transition::{reason:?}")
             }
         }
     }

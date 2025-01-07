@@ -1,7 +1,7 @@
 use crate::agent::Agent;
 use crate::context::AgentContext;
 use crate::finalizer::FinalizerFor;
-use crate::performers::{StopReason, Transition, TransitionCommand};
+use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
@@ -90,12 +90,14 @@ impl<T: Agent> RunAgent<T> {
                                 pair = (agent, next_state);
                             }
                         },
-                        Transition::Consumed => {
-                            return Ok(None);
-                        }
-                        Transition::Crashed(err) => {
-                            return Err(err);
-                        }
+                        Transition::Consume { reason } => match reason {
+                            ConsumptionReason::Transformed => {
+                                return Ok(None);
+                            }
+                            ConsumptionReason::Crashed(err) => {
+                                return Err(err);
+                            }
+                        },
                     }
                 } else {
                     let result = agent.event(&mut self.context).await;

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use crb_agent::performers::{Next, StatePerformer, Transition};
+use crb_agent::performers::{ConsumptionReason, Next, StatePerformer, Transition};
 use crb_agent::{Address, Agent, AgentContext, AgentSession, RunAgent};
 use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runtime, Task};
 use std::marker::PhantomData;
@@ -47,7 +47,8 @@ where
             let next_runtime = RunAgent::new(next_agent);
             session.next_runtime = Some(Box::new(next_runtime));
         }
-        Transition::Consumed
+        let reason = ConsumptionReason::Transformed;
+        Transition::Consume { reason }
     }
 }
 

@@ -37,7 +37,7 @@ impl<T: Agent> RunAgent<T> {
         let output = Abortable::new(fut, reg).await??;
         if let Some(output) = output.as_ref() {
             for finalizer in &mut self.finalizers {
-                let res = finalizer.finalize(output.clone());
+                let res = finalizer.finalize(output);
                 self.failures.put(res);
             }
         }

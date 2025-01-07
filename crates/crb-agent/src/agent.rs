@@ -47,6 +47,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 }
 
+// TODO: Don't require `Clone` and `Default`
 pub trait Output: Default + Clone + Sync + Send + 'static {}
 
 impl<T> Output for T where T: Default + Clone + Sync + Send + 'static {}

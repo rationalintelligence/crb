@@ -21,7 +21,8 @@ where
     S: Finished<A>,
     A: Agent,
 {
-    fn finalize(&mut self, output: A::Output) -> Result<()> {
+    fn finalize(&mut self, output: &A::Output) -> Result<()> {
+        let output = output.clone();
         let event = FinishedEvent { output };
         self.send(event)
     }

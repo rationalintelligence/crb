@@ -20,3 +20,4 @@ mod wasm_runtime;
 pub use wasm_runtime::*;
 
 pub mod types;
+pub use types::*;

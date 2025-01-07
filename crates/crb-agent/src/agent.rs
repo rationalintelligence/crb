@@ -47,10 +47,9 @@ pub trait Agent: Sized + Send + 'static {
     }
 }
 
-// TODO: Don't require `Clone`
-pub trait Output: Clone + Sync + Send + 'static {}
+pub trait Output: Sync + Send + 'static {}
 
-impl<T> Output for T where T: Clone + Sync + Send + 'static {}
+impl<T> Output for T where T: Sync + Send + 'static {}
 
 pub trait Standalone: Agent {
     fn spawn(self) -> <Self::Context as Context>::Address

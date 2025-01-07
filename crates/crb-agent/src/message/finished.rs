@@ -9,6 +9,7 @@ impl<A: Agent> RunAgent<A> {
     pub fn report_to<S>(&mut self, address: impl AsRef<Address<S>>)
     where
         S: Finished<A>,
+        A::Output: Clone,
     {
         let address = address.as_ref().clone();
         let finalizer = Box::new(address);
@@ -20,6 +21,7 @@ impl<S, A> FinalizerFor<A> for Address<S>
 where
     S: Finished<A>,
     A: Agent,
+    A::Output: Clone,
 {
     fn finalize(&mut self, output: &A::Output) -> Result<()> {
         let output = output.clone();

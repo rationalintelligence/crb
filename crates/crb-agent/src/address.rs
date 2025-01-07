@@ -22,8 +22,10 @@ impl<A: Agent> AddressJoint<A> {
         self.msg_rx.recv().await
     }
 
-    pub fn report(&mut self, output: A::Output) -> Result<()> {
-        let status = AgentStatus::Done(output);
+    pub fn report(&mut self, output: Option<A::Output>) -> Result<()> {
+        let status = output
+            .map(AgentStatus::Done)
+            .unwrap_or(AgentStatus::Interrupted);
         self.status_tx.send(status).map_err(Error::from)
     }
 
@@ -44,11 +46,9 @@ impl<A: Agent> Address<A> {
             .map_err(|_| Error::msg("Can't send the message to the actor"))
     }
 
-    pub async fn join(&mut self) -> Result<A::Output, Error> {
+    pub async fn join(&mut self) -> Result<Option<A::Output>> {
         let status = self.status_rx.wait_for(AgentStatus::is_done).await?;
-        status
-            .take()
-            .ok_or_else(|| Error::msg("Can't extract the output from the agent"))
+        Ok(status.take())
     }
 }
 
@@ -83,17 +83,19 @@ impl<A: Agent> Address<A> {
 #[derive(PartialEq, Eq)]
 pub enum AgentStatus<T: Agent> {
     Active,
+    Interrupted,
     Done(T::Output),
 }
 
 impl<T: Agent> AgentStatus<T> {
     pub fn is_done(&self) -> bool {
-        matches!(self, Self::Done(_))
+        matches!(self, Self::Interrupted | Self::Done(_))
     }
 
     pub fn take(&self) -> Option<T::Output> {
         match self {
             Self::Active => None,
+            Self::Interrupted => None,
             Self::Done(value) => Some(value.clone()),
         }
     }

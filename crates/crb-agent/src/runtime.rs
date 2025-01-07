@@ -35,16 +35,14 @@ impl<T: Agent> RunAgent<T> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
-        if let Some(output) = output {
+        if let Some(output) = output.as_ref() {
             for finalizer in &mut self.finalizers {
                 let res = finalizer.finalize(output.clone());
                 self.failures.put(res);
             }
-            self.context.session().joint.report(output.clone())?;
-            Ok(Some(output))
-        } else {
-            Ok(None)
         }
+        self.context.session().joint.report(output.clone())?;
+        Ok(output)
     }
 
     async fn perform_task(&mut self) -> Result<Option<T::Output>> {

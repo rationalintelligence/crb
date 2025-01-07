@@ -48,7 +48,7 @@ impl<A: Agent> Address<A> {
 
     pub async fn join(&mut self) -> Result<Option<A::Output>> {
         let status = self.status_rx.wait_for(AgentStatus::is_done).await?;
-        Ok(status.take())
+        Ok(status.output())
     }
 }
 
@@ -92,7 +92,10 @@ impl<T: Agent> AgentStatus<T> {
         matches!(self, Self::Interrupted | Self::Done(_))
     }
 
-    pub fn take(&self) -> Option<T::Output> {
+    pub fn output(&self) -> Option<T::Output>
+    where
+        T::Output: Clone,
+    {
         match self {
             Self::Active => None,
             Self::Interrupted => None,

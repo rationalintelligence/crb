@@ -1,7 +1,7 @@
 use crate::context::AgentContext;
 use crate::performers::Next;
 use crate::runtime::RunAgent;
-use anyhow::{anyhow as err, Error, Result};
+use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{Context, InteractiveTask, ManagedContext};
 
@@ -64,7 +64,7 @@ pub trait Standalone: Agent {
 
 #[async_trait]
 pub trait Runnable: Agent {
-    async fn run(self) -> Result<Self::Output>;
+    async fn run(self) -> Result<Option<Self::Output>>;
 }
 
 #[async_trait]
@@ -72,8 +72,9 @@ impl<A: Agent> Runnable for A
 where
     Self::Context: Default,
 {
-    async fn run(self) -> Result<Self::Output> {
-        let output = RunAgent::new(self).perform_routine().await?;
-        output.ok_or_else(|| err!("Attempt to get output from the consumed agent"))
+    async fn run(self) -> Result<Option<Self::Output>> {
+        let mut runtime = RunAgent::new(self);
+        runtime.perform_routine().await?;
+        runtime.context.address().clone().join().await
     }
 }

@@ -89,8 +89,8 @@ impl<T: Agent> RunAgent<T> {
                             }
                         },
                         Transition::Consume { reason } => match reason {
-                            ConsumptionReason::Transformed => {
-                                return Ok(None);
+                            ConsumptionReason::Transformed(output) => {
+                                return Ok(output);
                             }
                             ConsumptionReason::Crashed(err) => {
                                 return Err(err);

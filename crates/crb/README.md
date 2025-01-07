@@ -1,4 +1,4 @@
-<img src="./assets/crb-header.png" width="100%" />
+<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-header.png" width="100%" />
 
 # CRB | Composable Runtime Blocks
 
@@ -24,11 +24,11 @@ A hybrid workload is a concurrent task capable of switching roles - it can funct
 
 The implementation is designed as a **fully portable solution** that can run in a standard environment, a WASM virtual machine (e.g., in a browser), or a TEE enclave. This approach significantly reduces development costs by allowing you to reuse code across all parts of your application: backend, frontend, agents, and more.
 
-<img src="./assets/crb-arch.png" width="400px" align="center" />
+<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-arch.png" width="400px" align="center" />
 
 The key feature is its ability to combine the roles, enabling the implementation of algorithms with **complex branching** that would be impossible in the flat structure of a standard function. This makes it ideal for building the framework of large-scale applications or implementing complex workflows, such as AI pipelines.
 
-<img src="./assets/crb-hybryd.png" width="400px" align="center" />
+<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-hybryd.png" width="400px" align="center" />
 
 # Examples
 
@@ -567,7 +567,7 @@ The library provides built-in error handling features, such as managing failures
 
 The project was originally created by [@therustmonk](https://github.com/therustmonk) as a result of extensive experimental research into implementing a hybrid actor model in Rust.
 
-<a href="https://crateful.substack.com/" target="_blank"><img src="./assets/crateful-logo.png" width="100px" /></a>
+<a href="https://crateful.substack.com/" target="_blank"><img src="https://runtime-blocks.github.io/website/repo/crb/assets/crateful-logo.png" width="100px" /></a>
 
 To support the project, please subscribe to [Crateful](https://crateful.substack.com/), my newsletter about Rust crates, which gathers information using a cast of crab agents written in this framework.
 

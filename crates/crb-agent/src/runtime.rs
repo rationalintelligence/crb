@@ -114,7 +114,7 @@ impl<T: Agent> RunAgent<T> {
             let mut agent = pair.0;
             let output = agent.finalize(&mut self.context);
             self.agent = Some(agent);
-            Ok(Some(output))
+            Ok(output)
         } else {
             Err(Error::msg("Agent's agent has consumed already."))
         }

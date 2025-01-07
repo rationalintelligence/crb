@@ -1,9 +1,18 @@
-# CRB v0.0.23 - 2025-01-04
+# CRB v0.0.24 - 2025-01-07
+
+## Added
+
+- **Actor and task morphing** - Implemented morphing (molting) from one form (structure) to another; details in
+the [example](https://github.com/runtime-blocks/crb/blob/trunk/crates/crb/tests/test_molting.rs).
 
 ## Improvements
+- **Projects list** - Added a list of [projects](https://github.com/runtime-blocks/crb/tree/trunk?tab=readme-ov-file#projects)
+that are built using the framework.
+- **Consumption** - The actor structure can be completely consumed to produce `Output`.
+- **Relaxed requirements** - The return type no longer requires `Default` and `Clone` implementations for the type.
+- **Efficient finalizers** - Finalizers use references to `Output`.
 
-- **Hybryd actors** - Stabilized task transitions between state-machine states and actor states and vice versa.
-- **Hybryd runtimes** - Debugged the ability of the state-machine to execute synchronous `DoSync` and asynchronous `DoAsync` blocks in any sequence, or switching to actor mode.
+# CRB v0.0.23 - 2025-01-04
 
 ## Added
 
@@ -12,3 +21,8 @@
 - **Awaiting agents in-place** - Added a separate `Runnable` trait that allows any hybrid task (`Agent`) to be executed as a `Future` and to obtain the result.
 - **Repair handling** - Added a `repair()` method to the `DoAsync` and `DoSync` states, enabling task recovery in case of an error.
 - **Access to an address** - Added capability for `AgentSession` context to access its own `Address` through the implementation of the `Deref` trait.
+
+## Improvements
+
+- **Hybryd actors** - Stabilized task transitions between state-machine states and actor states and vice versa.
+- **Hybryd runtimes** - Debugged the ability of the state-machine to execute synchronous `DoSync` and asynchronous `DoAsync` blocks in any sequence, or switching to actor mode.

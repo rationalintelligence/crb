@@ -31,7 +31,7 @@ impl<A: Agent> RunAgent<A> {
 }
 
 impl<T: Agent> RunAgent<T> {
-    pub(crate) async fn perform_routine(&mut self) -> Result<Option<T::Output>> {
+    pub(crate) async fn perform_routine(&mut self) -> Result<()> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
@@ -41,8 +41,8 @@ impl<T: Agent> RunAgent<T> {
                 self.failures.put(res);
             }
         }
-        self.context.session().joint.report(output.clone())?;
-        Ok(output)
+        self.context.session().joint.report(output)?;
+        Ok(())
     }
 
     async fn perform_task(&mut self) -> Result<Option<T::Output>> {

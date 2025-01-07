@@ -71,10 +71,12 @@ pub trait Runnable: Agent {
 impl<A: Agent> Runnable for A
 where
     Self::Context: Default,
+    A::Output: Clone,
 {
     async fn run(self) -> Result<Option<Self::Output>> {
         let mut runtime = RunAgent::new(self);
         runtime.perform_routine().await?;
-        runtime.context.address().clone().join().await
+        let output = runtime.context.address().clone().join().await?.output();
+        Ok(output)
     }
 }

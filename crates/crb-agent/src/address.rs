@@ -46,9 +46,22 @@ impl<A: Agent> Address<A> {
             .map_err(|_| Error::msg("Can't send the message to the actor"))
     }
 
-    pub async fn join(&mut self) -> Result<Option<A::Output>> {
+    pub async fn join(&mut self) -> Result<AgentOutput<'_, A>> {
         let status = self.status_rx.wait_for(AgentStatus::is_done).await?;
-        Ok(status.output())
+        Ok(AgentOutput { status })
+    }
+}
+
+pub struct AgentOutput<'a, A: Agent> {
+    status: watch::Ref<'a, AgentStatus<A>>,
+}
+
+impl<'a, A: Agent> AgentOutput<'a, A> {
+    pub fn output(&mut self) -> Option<A::Output>
+    where
+        A::Output: Clone,
+    {
+        self.status.output().cloned()
     }
 }
 
@@ -92,14 +105,11 @@ impl<T: Agent> AgentStatus<T> {
         matches!(self, Self::Interrupted | Self::Done(_))
     }
 
-    pub fn output(&self) -> Option<T::Output>
-    where
-        T::Output: Clone,
-    {
+    pub fn output(&self) -> Option<&T::Output> {
         match self {
             Self::Active => None,
             Self::Interrupted => None,
-            Self::Done(value) => Some(value.clone()),
+            Self::Done(value) => Some(value),
         }
     }
 }

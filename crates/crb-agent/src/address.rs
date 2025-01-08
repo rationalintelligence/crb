@@ -46,6 +46,7 @@ impl<A: Agent> Address<A> {
             .map_err(|_| Error::msg("Can't send the message to the actor"))
     }
 
+    /// Important! `join` must use a reference to allow using it under `DerefMut` trait
     pub async fn join(&mut self) -> Result<AgentOutput<'_, A>> {
         let status = self.status_rx.wait_for(AgentStatus::is_done).await?;
         Ok(AgentOutput { status })

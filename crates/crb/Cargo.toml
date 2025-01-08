@@ -18,4 +18,5 @@ crb-superagent.workspace = true
 [dev-dependencies]
 anyhow.workspace = true
 async-trait.workspace = true
+derive_more.workspace = true
 tokio.workspace = true

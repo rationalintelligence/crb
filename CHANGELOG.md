@@ -1,3 +1,7 @@
+# Upcoming
+
+- **InContext** - `InContext` handle is more effective and doesn't wrap a command into an extra boxed event.
+
 # CRB v0.0.24 - 2025-01-07
 
 ## Added

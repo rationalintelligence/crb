@@ -9,8 +9,9 @@ pub mod runtime;
 pub use address::{Address, MessageFor};
 pub use agent::{Agent, Runnable, Standalone};
 pub use context::{AgentContext, AgentSession};
-pub use message::{event::OnEvent, loopback::InContext};
+pub use message::event::OnEvent;
 pub use performers::async_performer::DoAsync;
+pub use performers::in_context_performer::InContext;
 pub use performers::Next;
 pub use runtime::RunAgent;
 

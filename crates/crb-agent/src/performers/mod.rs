@@ -1,8 +1,8 @@
 pub mod async_performer;
 pub mod consume_performer;
+pub mod events_performer;
 pub mod in_context_performer;
 pub mod interrupt_performer;
-pub mod process_performer;
 
 #[cfg(feature = "sync")]
 pub mod sync_performer;
@@ -35,7 +35,7 @@ where
 pub enum TransitionCommand<T> {
     Next(Next<T>),
     Stop(StopReason),
-    Process,
+    ProcessEvents,
     InContext(Envelope<T>),
 }
 
@@ -44,7 +44,7 @@ impl<T> fmt::Debug for TransitionCommand<T> {
         let value = match self {
             Self::Next(_) => "Next(_)",
             Self::Stop(reason) => &format!("Stop({reason:?})"),
-            Self::Process => "Process",
+            Self::ProcessEvents => "ProcessEvents",
             Self::InContext(_) => "InContext(_)",
         };
         write!(f, "TransitionCommand::{}", value)

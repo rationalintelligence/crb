@@ -15,7 +15,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     fn begin(&mut self) -> Next<Self> {
-        Next::process()
+        Next::events()
     }
 
     fn interrupt(&mut self, ctx: &mut Self::Context) {

@@ -32,7 +32,7 @@ impl Agent for Main {
 
     fn initialize(&mut self, ctx: &mut Self::Context) -> Next<Self> {
         ctx.event(SendPrint)
-            .map(|_| Next::process())
+            .map(|_| Next::events())
             .unwrap_or_else(Next::fail)
     }
 }

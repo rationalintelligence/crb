@@ -66,7 +66,7 @@ impl<T: Agent> RunAgent<T> {
                             TransitionCommand::Next(next_state) => {
                                 pair = (agent, Some(next_state));
                             }
-                            TransitionCommand::Process => {
+                            TransitionCommand::ProcessEvents => {
                                 pair = (agent, None);
                             }
                             TransitionCommand::Stop(reason) => {

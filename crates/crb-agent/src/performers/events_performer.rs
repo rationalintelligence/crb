@@ -6,20 +6,20 @@ impl<A> Next<A>
 where
     A: Agent,
 {
-    pub fn process() -> Self {
-        Self::new(ProcessPerformer)
+    pub fn events() -> Self {
+        Self::new(EventsPerformer)
     }
 }
 
-pub struct ProcessPerformer;
+pub struct EventsPerformer;
 
 #[async_trait]
-impl<A> StatePerformer<A> for ProcessPerformer
+impl<A> StatePerformer<A> for EventsPerformer
 where
     A: Agent,
 {
     async fn perform(&mut self, agent: A, _session: &mut A::Context) -> Transition<A> {
-        let command = TransitionCommand::Process;
+        let command = TransitionCommand::ProcessEvents;
         Transition::Continue { agent, command }
     }
 }

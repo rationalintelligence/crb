@@ -398,7 +398,7 @@ impl DoAsync<Third> for Task {
 
 ## Actor Model
 
-Agents handle messages asynchronously. Actor behavior is enabled by default if no transition state is specified in the `begin()` method. Alternatively, you can switch to this mode from any state by calling `Next::process()`, which starts message processing.
+Agents handle messages asynchronously. Actor behavior is enabled by default if no transition state is specified in the `begin()` method. Alternatively, you can switch to this mode from any state by calling `Next::events()`, which starts message processing.
 
 In other words, the actor state is the default for the agent, so simply implementing the `Agent` trait is enough:
 
@@ -481,7 +481,7 @@ struct Configure;
 impl InContext<Configure> for Client {
     async fn once(&mut self, _: &mut Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
         self.server.request(GetId)?.forward_to(ctx)?;
-        Ok(Next::process())
+        Ok(Next::events())
     }
 }
 

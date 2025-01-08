@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb::agent::{Address, Agent, AgentSession, Equip, Equipment, OnEvent, Standalone};
-use derive_more::{Deref, DerefMut};
+use crb::agent::{Address, Agent, AgentSession, Equip, OnEvent, Standalone};
+use derive_more::{Deref, DerefMut, From};
 
 struct TestAgent;
 
@@ -23,17 +23,9 @@ impl OnEvent<Print> for TestAgent {
     }
 }
 
-#[derive(Deref, DerefMut)]
+#[derive(Deref, DerefMut, From)]
 struct Printer {
     address: Address<TestAgent>,
-}
-
-impl Equipment for Printer {
-    type Agent = TestAgent;
-
-    fn from(address: Address<Self::Agent>) -> Self {
-        Self { address }
-    }
 }
 
 impl Printer {

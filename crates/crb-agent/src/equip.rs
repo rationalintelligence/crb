@@ -1,21 +1,19 @@
 use crate::{Address, Agent};
 
-pub trait Equipment {
-    type Agent: Agent;
-
-    fn from(address: Address<Self::Agent>) -> Self;
+pub trait Equip<A: Agent> {
+    fn equip<E>(self) -> E
+    where
+        E: From<Address<A>>;
 }
 
-pub trait Equip<E> {
-    fn equip(self) -> E;
-}
-
-impl<E, A> Equip<E> for Address<A>
+impl<A> Equip<A> for Address<A>
 where
     A: Agent,
-    E: Equipment<Agent = A>,
 {
-    fn equip(self) -> E {
+    fn equip<E>(self) -> E
+    where
+        E: From<Address<A>>,
+    {
         E::from(self)
     }
 }

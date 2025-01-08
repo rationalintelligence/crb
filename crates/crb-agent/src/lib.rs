@@ -10,7 +10,7 @@ pub mod runtime;
 pub use address::{Address, MessageFor};
 pub use agent::{Agent, Runnable, Standalone};
 pub use context::{AgentContext, AgentSession};
-pub use equip::{Equip, Equipment};
+pub use equip::Equip;
 pub use message::event::OnEvent;
 pub use performers::async_performer::DoAsync;
 pub use performers::in_context_performer::InContext;

@@ -52,11 +52,11 @@ pub trait OnRequest<T: Request>: Agent {
 }
 
 #[must_use]
-pub struct Responder<T: Request> {
+pub struct Fetcher<T: Request> {
     rx: oneshot::Receiver<Result<T::Response>>,
 }
 
-impl<T: Request> Responder<T> {
+impl<T: Request> Fetcher<T> {
     pub fn forward_to<A>(self, address: impl AsRef<Address<A>>)
     where
         A: OnResponse<T>,
@@ -71,7 +71,7 @@ impl<T: Request> Responder<T> {
     }
 }
 
-impl<T: Request> Future for Responder<T> {
+impl<T: Request> Future for Fetcher<T> {
     type Output = Output<T::Response>;
     fn poll(mut self: Pin<&mut Self>, cx: &mut FutContext<'_>) -> Poll<Self::Output> {
         Pin::new(&mut self.rx).poll(cx).map(|result| {
@@ -83,7 +83,7 @@ impl<T: Request> Future for Responder<T> {
 }
 
 pub trait AddressExt<T: Request> {
-    fn interact(&self, request: T) -> Responder<T>;
+    fn interact(&self, request: T) -> Fetcher<T>;
 }
 
 impl<A, T> AddressExt<T> for Address<A>
@@ -91,7 +91,7 @@ where
     A: OnRequest<T>,
     T: Request,
 {
-    fn interact(&self, request: T) -> Responder<T> {
+    fn interact(&self, request: T) -> Fetcher<T> {
         let (tx, rx) = oneshot::channel();
         let interaction = Interaction { request, tx };
         if let Err(err) = self.send(interaction) {
@@ -101,9 +101,9 @@ where
             // Add an extra trait to restore a value from `MessageFor`,
             // but that could be more expensive
             tx.send(Err(err)).ok();
-            Responder { rx }
+            Fetcher { rx }
         } else {
-            Responder { rx }
+            Fetcher { rx }
         }
     }
 }

@@ -1,4 +1,4 @@
-use anyhow::{anyhow as err, Result};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use futures::{
@@ -21,16 +21,32 @@ pub trait Request: Send + 'static {
     type Response: Send + 'static;
 }
 
-pub struct Interaction<T: Request> {
-    request: T,
-    tx: oneshot::Sender<Result<T::Response>>,
+pub struct Responder<R: Request> {
+    tx: oneshot::Sender<Result<R::Response>>,
+}
+
+impl<R: Request> Responder<R> {
+    pub fn send(self, resp: R::Response) -> Result<()> {
+        self.send_result(Ok(resp))
+    }
+
+    pub fn send_result(self, resp: Result<R::Response>) -> Result<()> {
+        self.tx
+            .send(resp)
+            .map_err(|_| anyhow!("Can't send the response."))
+    }
+}
+
+pub struct Interaction<R: Request> {
+    pub request: R,
+    pub responder: Responder<R>,
 }
 
 #[async_trait]
-impl<A, T> MessageFor<A> for Interaction<T>
+impl<A, R> MessageFor<A> for Interaction<R>
 where
-    A: OnRequest<T>,
-    T: Request,
+    A: OnRequest<R>,
+    R: Request,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
         agent.handle(*self, ctx).await
@@ -38,16 +54,14 @@ where
 }
 
 #[async_trait]
-pub trait OnRequest<T: Request>: Agent {
-    async fn handle(&mut self, msg: Interaction<T>, ctx: &mut Self::Context) -> Result<()> {
+pub trait OnRequest<R: Request>: Agent {
+    async fn handle(&mut self, msg: Interaction<R>, ctx: &mut Self::Context) -> Result<()> {
         let resp = self.on_request(msg.request, ctx).await;
-        msg.tx
-            .send(resp)
-            .map_err(|_| err!("Can't send the response."))
+        msg.responder.send_result(resp)
     }
 
-    async fn on_request(&mut self, _request: T, _ctx: &mut Self::Context) -> Result<T::Response> {
-        Err(err!("The on_request method in not implemented."))
+    async fn on_request(&mut self, _request: R, _ctx: &mut Self::Context) -> Result<R::Response> {
+        Err(anyhow!("The on_request method in not implemented."))
     }
 }
 
@@ -57,11 +71,10 @@ pub struct Fetcher<T: Request> {
 }
 
 impl<T: Request> Fetcher<T> {
-    pub fn forward_to<A>(self, address: impl AsRef<Address<A>>)
+    pub fn forward_to<A>(self, address: Address<A>)
     where
         A: OnResponse<T>,
     {
-        let address = address.as_ref().clone();
         crb_core::spawn(async move {
             let response = self.await;
             if let Err(err) = address.send(Response { response }) {
@@ -93,7 +106,8 @@ where
 {
     fn interact(&self, request: T) -> Fetcher<T> {
         let (tx, rx) = oneshot::channel();
-        let interaction = Interaction { request, tx };
+        let responder = Responder { tx };
+        let interaction = Interaction { request, responder };
         if let Err(err) = self.send(interaction) {
             // Report about sending error in the responder itseld
             let (tx, rx) = oneshot::channel();

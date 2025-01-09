@@ -1,3 +1,9 @@
+# CRB v0.0.26
+
+## Added
+
+- Fetcher and Responder
+
 # CRB v0.0.25 - 2025-01-09
 
 ## Added

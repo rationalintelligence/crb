@@ -2,6 +2,7 @@
 
 ## Added
 
+- **Intervals** are implemented.
 - Fetcher and Responder
 - Tagging responses
 

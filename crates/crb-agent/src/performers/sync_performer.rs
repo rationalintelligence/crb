@@ -107,7 +107,7 @@ pub trait AnySyncFn<T>: FnOnce() -> T + Send + 'static {}
 
 impl<F, T> AnySyncFn<T> for F where F: FnOnce() -> T + Send + 'static {}
 
-struct SyncFn<T> {
+pub struct SyncFn<T> {
     func: Option<Box<dyn AnySyncFn<T>>>,
     output: Option<T>,
 }

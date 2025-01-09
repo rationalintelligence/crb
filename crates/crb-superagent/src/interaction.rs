@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
+use crb_core::Tag;
 use futures::{
     channel::oneshot::{self, Canceled},
     task::{Context as FutContext, Poll},
@@ -151,7 +152,3 @@ where
         agent.on_response(self.response, self.tag, ctx).await
     }
 }
-
-pub trait Tag: Send + 'static {}
-
-impl<T: Send + 'static> Tag for T {}

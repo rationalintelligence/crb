@@ -3,7 +3,6 @@ use crate::stage::{InitialKey, Stage, StageDestination, StageKey, StageSource};
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor, Standalone};
-use crb_core::types::Clony;
 use crb_runtime::{Context, Runtime};
 use crb_superagent::{Supervisor, SupervisorSession};
 use derive_more::Deref;
@@ -160,7 +159,7 @@ impl<M> InitialMessage<M> {
 #[async_trait]
 impl<M, State> MessageFor<Pipeline<State>> for InitialMessage<M>
 where
-    M: Clony,
+    M: Clone + Sync + Send + 'static,
     State: PipelineState,
 {
     async fn handle(

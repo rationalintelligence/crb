@@ -12,6 +12,7 @@ async-trait.workspace = true
 crb-agent.workspace = true
 crb-core.workspace = true
 crb-runtime.workspace = true
+crb-send.workspace = true
 derive_more.workspace = true
 futures.workspace = true
 log.workspace = true

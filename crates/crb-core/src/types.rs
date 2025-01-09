@@ -3,6 +3,7 @@
 
 use anyhow::{Error, Result};
 
+/*
 /// A type that implement `'static`
 pub trait Staty: 'static {}
 
@@ -22,6 +23,17 @@ impl<T> Syncy for T where T: Sync + Send + 'static {}
 pub trait Clony: Clone + Sync + Send + 'static {}
 
 impl<T> Clony for T where T: Clone + Sync + Send + 'static {}
+*/
+
+/// A tag that can be sent between threads.
+pub trait Tag: Send + 'static {}
+
+impl<T: Send + 'static> Tag for T {}
+
+/// A tag that can be sent between threads.
+pub trait SyncTag: Sync + Send + 'static {}
+
+impl<T: Sync + Send + 'static> SyncTag for T {}
 
 /// An `Option` that returns `Error` if is not filled.
 pub struct Slot<T> {

@@ -99,7 +99,7 @@ pub trait AnyAsyncFut<T>: Future<Output = T> + Send + 'static {}
 
 impl<F, T> AnyAsyncFut<T> for F where F: Future<Output = T> + Send + 'static {}
 
-struct AsyncFn<T> {
+pub struct AsyncFn<T> {
     fut: Option<Box<dyn AnyAsyncFut<T>>>,
     output: Option<T>,
 }

@@ -83,7 +83,7 @@ impl<T: Request> Future for Responder<T> {
 }
 
 pub trait AddressExt<T: Request> {
-    fn interact(&self, request: T) -> Result<Responder<T>>;
+    fn interact(&self, request: T) -> Responder<T>;
 }
 
 impl<A, T> AddressExt<T> for Address<A>
@@ -91,11 +91,20 @@ where
     A: OnRequest<T>,
     T: Request,
 {
-    fn interact(&self, request: T) -> Result<Responder<T>> {
+    fn interact(&self, request: T) -> Responder<T> {
         let (tx, rx) = oneshot::channel();
         let interaction = Interaction { request, tx };
-        self.send(interaction)?;
-        Ok(Responder { rx })
+        if let Err(err) = self.send(interaction) {
+            // Report about sending error in the responder itseld
+            let (tx, rx) = oneshot::channel();
+            // TODO: Consider alternative implementation to reuse the same channel
+            // Add an extra trait to restore a value from `MessageFor`,
+            // but that could be more expensive
+            tx.send(Err(err)).ok();
+            Responder { rx }
+        } else {
+            Responder { rx }
+        }
     }
 }
 

@@ -8,7 +8,7 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.0.24"
+version = "0.0.25"
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/runtime-blocks/crb"
@@ -16,12 +16,12 @@ repository = "https://github.com/runtime-blocks/crb"
 [workspace.dependencies]
 anyhow = "1.0.94"
 async-trait = "0.1.83"
-crb-agent = { version = "0.0.24", path = "crates/crb-agent" }
-crb-superagent = { version = "0.0.24", path = "crates/crb-superagent" }
-crb-core = { version = "0.0.24", path = "crates/crb-core" }
-crb-pipeline = { version = "0.0.24", path = "crates/crb-pipeline" }
-crb-runtime = { version = "0.0.24", path = "crates/crb-runtime" }
-crb-send = { version = "0.0.24", path = "crates/crb-send" }
+crb-agent = { version = "0.0.25", path = "crates/crb-agent" }
+crb-superagent = { version = "0.0.25", path = "crates/crb-superagent" }
+crb-core = { version = "0.0.25", path = "crates/crb-core" }
+crb-pipeline = { version = "0.0.25", path = "crates/crb-pipeline" }
+crb-runtime = { version = "0.0.25", path = "crates/crb-runtime" }
+crb-send = { version = "0.0.25", path = "crates/crb-send" }
 derive_more = { version = "1.0.0", features = ["full"] }
 futures = "0.3.31"
 log = "0.4.22"

@@ -66,26 +66,27 @@ pub trait OnRequest<R: Request>: Agent {
 }
 
 #[must_use]
-pub struct Fetcher<T: Request> {
-    rx: oneshot::Receiver<Result<T::Response>>,
+pub struct Fetcher<R: Request> {
+    rx: oneshot::Receiver<Result<R::Response>>,
 }
 
-impl<T: Request> Fetcher<T> {
-    pub fn forward_to<A>(self, address: Address<A>)
+impl<R: Request> Fetcher<R> {
+    pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
     where
-        A: OnResponse<T>,
+        A: OnResponse<R, T>,
+        T: Tag,
     {
         crb_core::spawn(async move {
             let response = self.await;
-            if let Err(err) = address.send(Response { response }) {
+            if let Err(err) = address.send(Response { response, tag }) {
                 log::error!("Can't send a reponse: {err}");
             }
         });
     }
 }
 
-impl<T: Request> Future for Fetcher<T> {
-    type Output = Output<T::Response>;
+impl<R: Request> Future for Fetcher<R> {
+    type Output = Output<R::Response>;
     fn poll(mut self: Pin<&mut Self>, cx: &mut FutContext<'_>) -> Poll<Self::Output> {
         Pin::new(&mut self.rx).poll(cx).map(|result| {
             result
@@ -95,16 +96,16 @@ impl<T: Request> Future for Fetcher<T> {
     }
 }
 
-pub trait AddressExt<T: Request> {
-    fn interact(&self, request: T) -> Fetcher<T>;
+pub trait AddressExt<R: Request> {
+    fn interact(&self, request: R) -> Fetcher<R>;
 }
 
-impl<A, T> AddressExt<T> for Address<A>
+impl<A, R> AddressExt<R> for Address<A>
 where
-    A: OnRequest<T>,
-    T: Request,
+    A: OnRequest<R>,
+    R: Request,
 {
-    fn interact(&self, request: T) -> Fetcher<T> {
+    fn interact(&self, request: R) -> Fetcher<R> {
         let (tx, rx) = oneshot::channel();
         let responder = Responder { tx };
         let interaction = Interaction { request, responder };
@@ -123,27 +124,34 @@ where
 }
 
 #[async_trait]
-pub trait OnResponse<T: Request>: Agent {
+pub trait OnResponse<R: Request, T = ()>: Agent {
     async fn on_response(
         &mut self,
-        response: Output<T::Response>,
+        response: Output<R::Response>,
+        tag: T,
         ctx: &mut Self::Context,
     ) -> Result<()>;
 }
 
-type Output<T> = Result<T, ResponseError>;
+type Output<R> = Result<R, ResponseError>;
 
-struct Response<T: Request> {
-    response: Output<T::Response>,
+struct Response<R: Request, T = ()> {
+    response: Output<R::Response>,
+    tag: T,
 }
 
 #[async_trait]
-impl<A, T> MessageFor<A> for Response<T>
+impl<A, R, T> MessageFor<A> for Response<R, T>
 where
-    A: OnResponse<T>,
-    T: Request,
+    A: OnResponse<R, T>,
+    R: Request,
+    T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
-        agent.on_response(self.response, ctx).await
+        agent.on_response(self.response, self.tag, ctx).await
     }
 }
+
+pub trait Tag: Send + 'static {}
+
+impl<T: Send + 'static> Tag for T {}

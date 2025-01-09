@@ -3,6 +3,7 @@
 ## Added
 
 - Fetcher and Responder
+- Tagging responses
 
 # CRB v0.0.25 - 2025-01-09
 

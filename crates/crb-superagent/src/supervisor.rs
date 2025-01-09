@@ -46,6 +46,12 @@ impl<S: Supervisor> Context for SupervisorSession<S> {
     }
 }
 
+impl<S: Supervisor> AsRef<Address<S>> for SupervisorSession<S> {
+    fn as_ref(&self) -> &Address<S> {
+        self.address()
+    }
+}
+
 impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
     fn controller(&mut self) -> &mut Controller {
         self.session.controller()

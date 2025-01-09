@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_send::{EventSender, Sender};
 
-pub struct AddressJoint<A: Agent> {
+pub struct AddressJoint<A: Agent + ?Sized> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
     status_tx: watch::Sender<AgentStatus<A>>,
 }
@@ -34,7 +34,7 @@ impl<A: Agent> AddressJoint<A> {
     }
 }
 
-pub struct Address<A: Agent> {
+pub struct Address<A: Agent + ?Sized> {
     msg_tx: mpsc::UnboundedSender<Envelope<A>>,
     status_rx: watch::Receiver<AgentStatus<A>>,
 }
@@ -95,7 +95,7 @@ impl<A: Agent> Address<A> {
 }
 
 #[derive(PartialEq, Eq)]
-pub enum AgentStatus<T: Agent> {
+pub enum AgentStatus<T: Agent + ?Sized> {
     Active,
     Interrupted,
     Done(T::Output),

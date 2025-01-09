@@ -4,12 +4,12 @@ use crate::performers::Next;
 use crb_runtime::{Context, Controller, ManagedContext};
 use derive_more::{Deref, DerefMut};
 
-pub trait AgentContext<A: Agent>: Context<Address = Address<A>> {
+pub trait AgentContext<A: Agent + ?Sized>: Context<Address = Address<A>> {
     fn session(&mut self) -> &mut AgentSession<A>;
 }
 
 #[derive(Deref, DerefMut)]
-pub struct AgentSession<A: Agent> {
+pub struct AgentSession<A: Agent + ?Sized> {
     pub controller: Controller,
     pub next_state: Option<Next<A>>,
     pub joint: AddressJoint<A>,

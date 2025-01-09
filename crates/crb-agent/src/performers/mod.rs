@@ -23,7 +23,7 @@ pub struct Next<T: ?Sized> {
 
 impl<T> Next<T>
 where
-    T: Agent,
+    T: Agent + ?Sized,
 {
     pub fn new(performer: impl StatePerformer<T>) -> Self {
         Self {
@@ -85,7 +85,7 @@ impl<O> fmt::Debug for ConsumptionReason<O> {
     }
 }
 
-pub enum Transition<T: Agent> {
+pub enum Transition<T: Agent + ?Sized> {
     Continue {
         agent: T,
         command: TransitionCommand<T>,
@@ -109,6 +109,6 @@ impl<T: Agent> fmt::Debug for Transition<T> {
 }
 
 #[async_trait]
-pub trait StatePerformer<T: Agent>: Send + 'static {
+pub trait StatePerformer<T: Agent + ?Sized>: Send + 'static {
     async fn perform(&mut self, agent: T, session: &mut T::Context) -> Transition<T>;
 }

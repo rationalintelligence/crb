@@ -133,7 +133,7 @@ pub trait OnResponse<R: Request, T = ()>: Agent {
     ) -> Result<()>;
 }
 
-type Output<R> = Result<R, ResponseError>;
+pub type Output<R> = Result<R, ResponseError>;
 
 struct Response<R: Request, T = ()> {
     response: Output<R::Response>,

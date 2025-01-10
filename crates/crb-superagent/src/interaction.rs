@@ -72,6 +72,13 @@ pub struct Fetcher<OUT> {
 }
 
 impl<OUT> Fetcher<OUT> {
+    pub fn reform<T, F>(self, _func: F) -> Fetcher<T>
+    where
+        F: Fn(OUT) -> Result<T>,
+    {
+        todo!()
+    }
+
     pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
     where
         A: OnResponse<OUT, T>,

@@ -14,7 +14,6 @@ struct Print(pub String);
 
 #[async_trait]
 impl OnEvent<Print> for Printer {
-    type Error = Error;
     async fn handle(&mut self, event: Print, _ctx: &mut Self::Context) -> Result<()> {
         println!("{}", event.0);
         Ok(())
@@ -41,13 +40,7 @@ struct SendPrint;
 
 #[async_trait]
 impl OnEvent<SendPrint> for Main {
-    type Error = Error;
-
-    async fn handle(
-        &mut self,
-        _event: SendPrint,
-        ctx: &mut Self::Context,
-    ) -> Result<(), Self::Error> {
+    async fn handle(&mut self, _event: SendPrint, ctx: &mut Self::Context) -> Result<()> {
         let printer = ctx.spawn_agent(Printer, ());
         let print = Print("Hello, Trackable!".into());
         printer.event(print)?;

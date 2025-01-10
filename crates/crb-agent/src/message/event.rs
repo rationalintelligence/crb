@@ -24,11 +24,13 @@ impl<A: Agent> Address<A> {
 
 #[async_trait]
 pub trait OnEvent<E>: Agent {
-    type Error: Into<Error> + Send + 'static;
-    async fn handle(&mut self, event: E, ctx: &mut Self::Context) -> Result<(), Self::Error>;
+    // TODO: Add when RFC 192 will be implemented (associated types defaults)
+    // type Error: Into<Error> + Send + 'static;
 
-    async fn fallback(&mut self, err: Self::Error, _ctx: &mut Self::Context) -> Result<()> {
-        Err(err.into())
+    async fn handle(&mut self, event: E, ctx: &mut Self::Context) -> Result<()>;
+
+    async fn fallback(&mut self, err: Error, _ctx: &mut Self::Context) -> Result<()> {
+        Err(err)
     }
 }
 

@@ -1,4 +1,4 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
     Agent, AgentSession, Context, InContext, ManagedContext, Next, OnEvent, Standalone,
@@ -67,7 +67,6 @@ impl InContext<Loop> for TestTime {
 
 #[async_trait]
 impl OnEvent<Loop> for TestTime {
-    type Error = Error;
     async fn handle(&mut self, _: Loop, ctx: &mut Self::Context) -> Result<()> {
         if self.is_done() {
             self.report_and_reset("actor");

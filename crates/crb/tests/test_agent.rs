@@ -1,4 +1,4 @@
-use anyhow::{Error, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{Address, Agent, AgentSession, Equip, OnEvent, Standalone};
 use derive_more::{Deref, DerefMut, From};
@@ -16,7 +16,6 @@ struct Print(pub String);
 
 #[async_trait]
 impl OnEvent<Print> for TestAgent {
-    type Error = Error;
     async fn handle(&mut self, event: Print, _ctx: &mut Self::Context) -> Result<()> {
         println!("{}", event.0);
         Ok(())

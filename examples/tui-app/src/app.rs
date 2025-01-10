@@ -1,6 +1,6 @@
 use crate::events::EventsDrainer;
 use crate::state::AppState;
-use anyhow::{Error, Result};
+use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
     Agent, Context, DoAsync, DoSync, InContext, Next, OnEvent, Supervisor, SupervisorSession,
@@ -52,8 +52,6 @@ impl InContext<Configure> for TuiApp {
 
 #[async_trait]
 impl OnEvent<Event> for TuiApp {
-    type Error = Error;
-
     async fn handle(&mut self, event: Event, ctx: &mut Self::Context) -> Result<()> {
         let next_state = match event {
             Event::Key(event) => {

@@ -67,14 +67,15 @@ pub trait OnRequest<R: Request>: Agent {
 }
 
 #[must_use]
-pub struct Fetcher<R: Request> {
-    rx: oneshot::Receiver<Result<R::Response>>,
+pub struct Fetcher<OUT> {
+    rx: oneshot::Receiver<Result<OUT>>,
 }
 
-impl<R: Request> Fetcher<R> {
+impl<OUT> Fetcher<OUT> {
     pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
     where
-        A: OnResponse<R, T>,
+        A: OnResponse<OUT, T>,
+        OUT: Send + 'static,
         T: Tag,
     {
         crb_core::spawn(async move {
@@ -86,8 +87,8 @@ impl<R: Request> Fetcher<R> {
     }
 }
 
-impl<R: Request> Future for Fetcher<R> {
-    type Output = Output<R::Response>;
+impl<OUT> Future for Fetcher<OUT> {
+    type Output = Output<OUT>;
     fn poll(mut self: Pin<&mut Self>, cx: &mut FutContext<'_>) -> Poll<Self::Output> {
         Pin::new(&mut self.rx).poll(cx).map(|result| {
             result
@@ -98,7 +99,7 @@ impl<R: Request> Future for Fetcher<R> {
 }
 
 pub trait AddressExt<R: Request> {
-    fn interact(&self, request: R) -> Fetcher<R>;
+    fn interact(&self, request: R) -> Fetcher<R::Response>;
 }
 
 impl<A, R> AddressExt<R> for Address<A>
@@ -106,7 +107,7 @@ where
     A: OnRequest<R>,
     R: Request,
 {
-    fn interact(&self, request: R) -> Fetcher<R> {
+    fn interact(&self, request: R) -> Fetcher<R::Response> {
         let (tx, rx) = oneshot::channel();
         let responder = Responder { tx };
         let interaction = Interaction { request, responder };
@@ -125,10 +126,10 @@ where
 }
 
 #[async_trait]
-pub trait OnResponse<R: Request, T = ()>: Agent {
+pub trait OnResponse<OUT, T = ()>: Agent {
     async fn on_response(
         &mut self,
-        response: Output<R::Response>,
+        response: Output<OUT>,
         tag: T,
         ctx: &mut Self::Context,
     ) -> Result<()>;
@@ -136,16 +137,16 @@ pub trait OnResponse<R: Request, T = ()>: Agent {
 
 pub type Output<R> = Result<R, ResponseError>;
 
-struct Response<R: Request, T = ()> {
-    response: Output<R::Response>,
+struct Response<OUT, T = ()> {
+    response: Output<OUT>,
     tag: T,
 }
 
 #[async_trait]
-impl<A, R, T> MessageFor<A> for Response<R, T>
+impl<A, OUT, T> MessageFor<A> for Response<OUT, T>
 where
-    A: OnResponse<R, T>,
-    R: Request,
+    A: OnResponse<OUT, T>,
+    OUT: Send + 'static,
     T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {

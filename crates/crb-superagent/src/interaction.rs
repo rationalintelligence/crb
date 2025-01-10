@@ -22,16 +22,16 @@ pub trait Request: Send + 'static {
     type Response: Send + 'static;
 }
 
-pub struct Responder<R: Request> {
-    tx: oneshot::Sender<Result<R::Response>>,
+pub struct Responder<OUT> {
+    tx: oneshot::Sender<Result<OUT>>,
 }
 
-impl<R: Request> Responder<R> {
-    pub fn send(self, resp: R::Response) -> Result<()> {
+impl<OUT> Responder<OUT> {
+    pub fn send(self, resp: OUT) -> Result<()> {
         self.send_result(Ok(resp))
     }
 
-    pub fn send_result(self, resp: Result<R::Response>) -> Result<()> {
+    pub fn send_result(self, resp: Result<OUT>) -> Result<()> {
         self.tx
             .send(resp)
             .map_err(|_| anyhow!("Can't send the response."))
@@ -40,7 +40,7 @@ impl<R: Request> Responder<R> {
 
 pub struct Interaction<R: Request> {
     pub request: R,
-    pub responder: Responder<R>,
+    pub responder: Responder<R::Response>,
 }
 
 #[async_trait]

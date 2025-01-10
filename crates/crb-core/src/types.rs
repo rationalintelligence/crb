@@ -1,29 +1,7 @@
 //! Generic traits to easily represent different requirements
 //! for types of messages.
 
-use anyhow::{Error, Result};
-
-/*
-/// A type that implement `'static`
-pub trait Staty: 'static {}
-
-impl<T> Staty for T where T: 'static {}
-
-/// A type that implement `Send + 'static`
-pub trait Sendy: Send + 'static {}
-
-impl<T> Sendy for T where T: Send + 'static {}
-
-/// A type that implement `Sync + Send + 'static`
-pub trait Syncy: Sync + Send + 'static {}
-
-impl<T> Syncy for T where T: Sync + Send + 'static {}
-
-/// A type that implement `Clone + Sync + Send + 'static`
-pub trait Clony: Clone + Sync + Send + 'static {}
-
-impl<T> Clony for T where T: Clone + Sync + Send + 'static {}
-*/
+use thiserror::Error;
 
 /// A tag that can be sent between threads.
 pub trait Tag: Send + 'static {}
@@ -34,6 +12,17 @@ impl<T: Send + 'static> Tag for T {}
 pub trait SyncTag: Sync + Send + 'static {}
 
 impl<T: Sync + Send + 'static> SyncTag for T {}
+
+/// Errors with a slot. (Missing option's error).
+#[derive(Error, Debug)]
+pub enum SlotError {
+    /// The slot is empty
+    #[error("Slot is empty")]
+    Empty,
+    /// The slot is occupied
+    #[error("Slot is occupied")]
+    Occupied,
+}
 
 /// An `Option` that returns `Error` if is not filled.
 pub struct Slot<T> {
@@ -47,19 +36,30 @@ impl<T> Slot<T> {
     }
 
     /// Set value to the slot.
-    pub fn fill(&mut self, value: T) -> Result<()> {
+    pub fn fill(&mut self, value: T) -> Result<(), SlotError> {
         if self.value.is_some() {
-            Err(Error::msg("Slot is already filled"))
+            Err(SlotError::Occupied)
         } else {
             self.value = Some(value);
             Ok(())
         }
     }
 
+    /// Clone and take the value.
+    pub fn cloned(&self) -> Result<T, SlotError>
+    where
+        T: Clone,
+    {
+        self.value.clone().ok_or(SlotError::Empty)
+    }
+
+    /// Get a reference to a value.
+    pub fn get(&mut self) -> Result<&T, SlotError> {
+        self.value.as_ref().ok_or(SlotError::Empty)
+    }
+
     /// Get a mutable reference to a value.
-    pub fn get_mut(&mut self) -> Result<&mut T> {
-        self.value
-            .as_mut()
-            .ok_or_else(|| Error::msg("Slot is not filled"))
+    pub fn get_mut(&mut self) -> Result<&mut T, SlotError> {
+        self.value.as_mut().ok_or(SlotError::Empty)
     }
 }

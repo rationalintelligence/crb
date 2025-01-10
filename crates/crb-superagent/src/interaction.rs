@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use crb_core::Tag;
@@ -72,6 +72,12 @@ pub struct Fetcher<OUT> {
 }
 
 impl<OUT> Fetcher<OUT> {
+    pub fn spoiled(err: Error) -> Fetcher<OUT> {
+        let (tx, rx) = oneshot::channel();
+        tx.send(Err(err)).ok();
+        Fetcher { rx }
+    }
+
     pub fn reform<T, F>(self, _func: F) -> Fetcher<T>
     where
         F: Fn(OUT) -> Result<T>,
@@ -119,13 +125,7 @@ where
         let responder = Responder { tx };
         let interaction = Interaction { request, responder };
         if let Err(err) = self.send(interaction) {
-            // Report about sending error in the responder itseld
-            let (tx, rx) = oneshot::channel();
-            // TODO: Consider alternative implementation to reuse the same channel
-            // Add an extra trait to restore a value from `MessageFor`,
-            // but that could be more expensive
-            tx.send(Err(err)).ok();
-            Fetcher { rx }
+            Fetcher::spoiled(err)
         } else {
             Fetcher { rx }
         }

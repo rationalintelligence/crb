@@ -4,7 +4,12 @@ use crate::performers::Next;
 use crb_runtime::{Context, Controller, ManagedContext};
 use derive_more::{Deref, DerefMut};
 
-pub trait AgentContext<A: Agent + ?Sized>: Context<Address = Address<A>> {
+pub trait AgentContext<A: Agent + ?Sized>
+where
+    Self: Context<Address = Address<A>>,
+    Self: ManagedContext,
+{
+    // TODO: Replace with explicit methods
     fn session(&mut self) -> &mut AgentSession<A>;
 }
 

@@ -19,8 +19,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     fn interrupt(&mut self, ctx: &mut Self::Context) {
-        // Closes the channel
-        ctx.session().shutdown();
+        ctx.shutdown();
     }
 
     async fn event(&mut self, ctx: &mut Self::Context) -> Result<()> {
@@ -29,7 +28,7 @@ pub trait Agent: Sized + Send + 'static {
             envelope.handle(self, ctx).await?;
         } else {
             // Terminates the runtime when the channel has drained
-            ctx.session().stop();
+            ctx.stop();
         }
         Ok(())
     }

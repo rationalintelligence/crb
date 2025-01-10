@@ -54,7 +54,7 @@ impl<S: Supervisor> AsRef<Address<S>> for SupervisorSession<S> {
 
 impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
     fn is_alive(&self) -> bool {
-        self.session.is_alive() || self.tracker.has_tasks()
+        self.session.is_alive()
     }
 
     fn shutdown(&mut self) {
@@ -127,8 +127,8 @@ impl<S: Supervisor> Tracker<S> {
         }
     }
 
-    pub fn has_tasks(&self) -> bool {
-        !self.groups.is_empty() || !self.activities.is_empty()
+    pub fn is_terminated(&self) -> bool {
+        self.terminating && self.groups.is_empty() && self.activities.is_empty()
     }
 
     pub fn terminate_group(&mut self, group: S::GroupBy) {
@@ -165,6 +165,9 @@ impl<S: Supervisor> Tracker<S> {
             // TODO: check rel.group == activity.group ?
             if let Some(group) = self.groups.get_mut(&activity.group) {
                 group.ids.remove(&rel.id);
+                if group.ids.is_empty() {
+                    self.groups.remove(&activity.group);
+                }
             }
         }
         if self.terminating {
@@ -277,6 +280,9 @@ where
     async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
         let session = SupervisorContext::session(ctx);
         session.tracker.unregister_activity(&self.rel);
+        if session.tracker.is_terminated() {
+            session.session.shutdown();
+        }
         agent.finished(&self.rel, ctx);
         Ok(())
     }

@@ -5,7 +5,8 @@ use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCom
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
-    Context, Failures, InteractiveRuntime, InteractiveTask, Interruptor, Runtime, Task,
+    Context, Failures, InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, Runtime,
+    Task,
 };
 use futures::stream::Abortable;
 
@@ -54,7 +55,7 @@ impl<T: Agent> RunAgent<T> {
             let mut pair = (agent, Some(initial_state));
 
             // Events or States
-            while self.context.session().controller.is_active() {
+            while self.context.session().is_alive() {
                 let (mut agent, next_state) = pair;
                 if let Some(mut next_state) = next_state {
                     let res = next_state

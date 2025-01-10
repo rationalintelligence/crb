@@ -78,6 +78,7 @@ impl Stage for SecondProcessor {
 
 #[tokio::test]
 async fn test_pipeline() -> Result<(), Error> {
+    // console_subscriber::init();
     let mut pipeline = Pipeline::new();
 
     // Routing
@@ -91,7 +92,7 @@ async fn test_pipeline() -> Result<(), Error> {
 
     let mut addr = pipeline.spawn();
     addr.ingest(8u8)?;
-    sleep(Duration::from_millis(10)).await;
+    sleep(Duration::from_secs(1)).await;
     addr.interrupt()?;
     addr.join().await?;
     Ok(())

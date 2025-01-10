@@ -59,6 +59,9 @@ impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
 
     fn shutdown(&mut self) {
         self.tracker.terminate_all();
+        if self.tracker.is_terminated() {
+            self.session.shutdown();
+        }
     }
 
     fn stop(&mut self) {
@@ -127,8 +130,12 @@ impl<S: Supervisor> Tracker<S> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.groups.is_empty() && self.activities.is_empty()
+    }
+
     pub fn is_terminated(&self) -> bool {
-        self.terminating && self.groups.is_empty() && self.activities.is_empty()
+        self.terminating && self.is_empty()
     }
 
     pub fn terminate_group(&mut self, group: S::GroupBy) {

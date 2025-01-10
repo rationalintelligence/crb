@@ -74,13 +74,20 @@ impl<A: Agent> Context for MoltingSession<A> {
     }
 }
 
-impl<A: Agent> ManagedContext for MoltingSession<A> {
-    fn controller(&mut self) -> &mut Controller {
-        self.session.controller()
+impl<A> ManagedContext for MoltingSession<A>
+where
+    A: Agent,
+{
+    fn is_alive(&self) -> bool {
+        self.session.is_alive()
     }
 
     fn shutdown(&mut self) {
         self.session.shutdown();
+    }
+
+    fn stop(&mut self) {
+        self.session.stop();
     }
 }
 

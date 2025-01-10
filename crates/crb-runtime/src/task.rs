@@ -69,7 +69,7 @@ impl JobHandle {
     }
 
     pub fn interrupt(&mut self) {
-        self.interruptor.stop(true).ok();
+        self.interruptor.stop(true);
     }
 }
 

@@ -56,12 +56,16 @@ impl<A: Agent> AsRef<Address<A>> for AgentSession<A> {
 }
 
 impl<A: Agent> ManagedContext for AgentSession<A> {
-    fn controller(&mut self) -> &mut Controller {
-        &mut self.controller
+    fn is_alive(&self) -> bool {
+        self.controller.is_active()
     }
 
     fn shutdown(&mut self) {
         self.joint.close();
+    }
+
+    fn stop(&mut self) {
+        self.controller.stop(false);
     }
 }
 

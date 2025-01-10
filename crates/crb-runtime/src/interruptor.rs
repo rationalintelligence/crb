@@ -1,4 +1,3 @@
-use anyhow::Error;
 use derive_more::Deref;
 use futures::stream::{AbortHandle, AbortRegistration};
 use std::sync::{
@@ -46,12 +45,11 @@ pub struct Interruptor {
 }
 
 impl Interruptor {
-    pub fn stop(&self, force: bool) -> Result<(), Error> {
+    pub fn stop(&self, force: bool) {
         self.active.flag.store(false, Ordering::Relaxed);
         if force {
             self.handle.abort();
         }
-        Ok(())
     }
 }
 

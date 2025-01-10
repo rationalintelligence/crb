@@ -29,7 +29,7 @@ pub trait Agent: Sized + Send + 'static {
             envelope.handle(self, ctx).await?;
         } else {
             // Terminates the runtime when the channel has drained
-            ctx.session().controller().stop(false)?;
+            ctx.session().stop();
         }
         Ok(())
     }

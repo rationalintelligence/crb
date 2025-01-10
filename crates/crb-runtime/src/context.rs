@@ -1,7 +1,5 @@
 //! A context for composable blocks.
 
-use crate::interruptor::Controller;
-
 /// A commont methods of all contexts and spans for tracing and logging.
 ///
 /// The have provide a reference to a label.
@@ -20,7 +18,10 @@ pub trait Context: Send {
 ///
 /// It could be interrupted and contains a method to check a life status of a composable block.
 pub trait ManagedContext: Send {
-    fn controller(&mut self) -> &mut Controller;
+    fn is_alive(&self) -> bool;
+
     /// Marks a context as interrupted.
     fn shutdown(&mut self);
+
+    fn stop(&mut self);
 }

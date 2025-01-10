@@ -1,7 +1,7 @@
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, MessageFor, RunAgent};
-use crb_runtime::{Context, Controller, InteractiveRuntime, Interruptor, ManagedContext, Runtime};
+use crb_runtime::{Context, InteractiveRuntime, Interruptor, ManagedContext, Runtime};
 use derive_more::{Deref, DerefMut, From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
@@ -53,12 +53,16 @@ impl<S: Supervisor> AsRef<Address<S>> for SupervisorSession<S> {
 }
 
 impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
-    fn controller(&mut self) -> &mut Controller {
-        self.session.controller()
+    fn is_alive(&self) -> bool {
+        self.session.is_alive() || self.tracker.has_tasks()
     }
 
     fn shutdown(&mut self) {
-        self.session.shutdown();
+        self.tracker.terminate_all();
+    }
+
+    fn stop(&mut self) {
+        self.session.stop();
     }
 }
 
@@ -123,13 +127,15 @@ impl<S: Supervisor> Tracker<S> {
         }
     }
 
+    pub fn has_tasks(&self) -> bool {
+        !self.groups.is_empty() || !self.activities.is_empty()
+    }
+
     pub fn terminate_group(&mut self, group: S::GroupBy) {
         if let Some(group) = self.groups.get(&group) {
             for id in group.ids.iter() {
                 if let Some(activity) = self.activities.get_mut(*id) {
-                    if let Err(err) = activity.interrupt() {
-                        log::error!("Can't interrupt an activity in a group: {err}");
-                    }
+                    activity.interrupt();
                 }
             }
         }
@@ -179,9 +185,7 @@ impl<S: Supervisor> Tracker<S> {
                     // Send an interruption signal to all active members of the group.
                     for id in group.ids.iter() {
                         if let Some(activity) = self.activities.get_mut(*id) {
-                            if let Err(err) = activity.interrupt() {
-                                log::error!("Can't interrupt the next activity: {err}");
-                            }
+                            activity.interrupt();
                         }
                     }
                 }
@@ -241,8 +245,8 @@ struct Activity<S: Supervisor> {
 }
 
 impl<S: Supervisor> Activity<S> {
-    fn interrupt(&mut self) -> Result<(), Error> {
-        self.interruptor.stop(false)
+    fn interrupt(&mut self) {
+        self.interruptor.stop(false);
     }
 }
 
@@ -271,9 +275,8 @@ where
     S::Context: SupervisorContext<S>,
 {
     async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
-        SupervisorContext::session(ctx)
-            .tracker
-            .unregister_activity(&self.rel);
+        let session = SupervisorContext::session(ctx);
+        session.tracker.unregister_activity(&self.rel);
         agent.finished(&self.rel, ctx);
         Ok(())
     }

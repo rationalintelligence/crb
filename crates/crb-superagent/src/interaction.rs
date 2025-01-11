@@ -82,6 +82,13 @@ pub struct Fetcher<OUT> {
 }
 
 impl<OUT> Fetcher<OUT> {
+    pub fn grasp(self, result: Result<()>) -> Self {
+        match result {
+            Ok(_) => self,
+            Err(err) => Self::spoiled(err),
+        }
+    }
+
     pub fn spoiled(err: Error) -> Fetcher<OUT> {
         let (tx, rx) = oneshot::channel();
         tx.send(Err(err)).ok();
@@ -125,11 +132,8 @@ where
 {
     fn interact(&self, request: R) -> Fetcher<R::Response> {
         let (msg, fetcher) = Interaction::new_pair(request);
-        if let Err(err) = self.send(msg) {
-            Fetcher::spoiled(err)
-        } else {
-            fetcher
-        }
+        let res = self.send(msg);
+        fetcher.grasp(res)
     }
 }
 

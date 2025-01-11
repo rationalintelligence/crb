@@ -5,6 +5,8 @@
 - **Intervals** are implemented.
 - Fetcher and Responder
 - Tagging responses
+- Example with a supervisor that respawn a child actor
+- **Equip** is implemented for tuples with an address
 
 # CRB v0.0.25 - 2025-01-09
 

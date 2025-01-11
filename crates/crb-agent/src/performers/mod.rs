@@ -1,7 +1,7 @@
 pub mod async_performer;
 pub mod consume_performer;
+pub mod duty_performer;
 pub mod events_performer;
-pub mod in_context_performer;
 pub mod interrupt_performer;
 
 #[cfg(feature = "sync")]

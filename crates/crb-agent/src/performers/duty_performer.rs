@@ -4,7 +4,7 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait InContext<E>: Agent {
+pub trait Duty<E>: Agent {
     async fn handle(&mut self, event: E, ctx: &mut Self::Context) -> Result<Next<Self>>;
 
     async fn fallback(&mut self, err: Error, _ctx: &mut Self::Context) -> Next<Self> {
@@ -16,23 +16,23 @@ impl<A> Next<A>
 where
     A: Agent,
 {
-    pub fn in_context<E>(event: E) -> Self
+    pub fn duty<E>(event: E) -> Self
     where
-        A: InContext<E>,
+        A: Duty<E>,
         E: Send + 'static,
     {
-        Self::new(InContextPerformer { event: Some(event) })
+        Self::new(DutyPerformer { event: Some(event) })
     }
 }
 
-pub struct InContextPerformer<E> {
+pub struct DutyPerformer<E> {
     event: Option<E>,
 }
 
 #[async_trait]
-impl<A, E> StatePerformer<A> for InContextPerformer<E>
+impl<A, E> StatePerformer<A> for DutyPerformer<E>
 where
-    A: InContext<E>,
+    A: Duty<E>,
     E: Send + 'static,
 {
     async fn perform(&mut self, mut agent: A, ctx: &mut A::Context) -> Transition<A> {

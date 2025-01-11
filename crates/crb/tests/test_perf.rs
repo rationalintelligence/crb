@@ -1,8 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{
-    Agent, AgentSession, Context, InContext, ManagedContext, Next, OnEvent, Standalone,
-};
+use crb::agent::{Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone};
 use std::time::{Duration, Instant};
 
 struct TestTime {
@@ -45,35 +43,35 @@ impl Agent for TestTime {
 
     fn begin(&mut self) -> Next<Self> {
         self.reset();
-        Next::in_context(Loop)
+        Next::duty(SelfCall)
     }
 }
 
-struct Loop;
+struct SelfCall;
 
 #[async_trait]
-impl InContext<Loop> for TestTime {
-    async fn handle(&mut self, _: Loop, ctx: &mut Self::Context) -> Result<Next<Self>> {
+impl Duty<SelfCall> for TestTime {
+    async fn handle(&mut self, _: SelfCall, ctx: &mut Self::Context) -> Result<Next<Self>> {
         if self.is_done() {
             self.report_and_reset("fsm");
-            ctx.address().event(Loop)?;
+            ctx.address().event(SelfCall)?;
             Ok(Next::events())
         } else {
             self.inc();
-            Ok(Next::in_context(Loop))
+            Ok(Next::duty(SelfCall))
         }
     }
 }
 
 #[async_trait]
-impl OnEvent<Loop> for TestTime {
-    async fn handle(&mut self, _: Loop, ctx: &mut Self::Context) -> Result<()> {
+impl OnEvent<SelfCall> for TestTime {
+    async fn handle(&mut self, _: SelfCall, ctx: &mut Self::Context) -> Result<()> {
         if self.is_done() {
             self.report_and_reset("actor");
             ctx.shutdown();
         } else {
             self.inc();
-            ctx.address().event(Loop)?;
+            ctx.address().event(SelfCall)?;
         }
         Ok(())
     }

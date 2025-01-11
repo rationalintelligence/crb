@@ -13,7 +13,7 @@ pub use context::{AgentContext, AgentSession};
 pub use equip::Equip;
 pub use message::event::OnEvent;
 pub use performers::async_performer::DoAsync;
-pub use performers::in_context_performer::InContext;
+pub use performers::duty_performer::Duty;
 pub use performers::Next;
 pub use runtime::RunAgent;
 

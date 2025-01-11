@@ -472,13 +472,13 @@ struct Client {
 
 impl Agent for Client {
     fn begin(&mut self) -> Next<Self> {
-        Next::in_context(Configure)
+        Next::duty(Configure)
     }
 }
 
 struct Configure;
 
-impl InContext<Configure> for Client {
+impl Duty<Configure> for Client {
     async fn once(&mut self, _: &mut Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
         self.server.request(GetId)?.forward_to(ctx)?;
         Ok(Next::events())

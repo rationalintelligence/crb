@@ -1,3 +1,9 @@
+# CRB v0.0.27 - upcoming...
+
+## Improved
+
+- **InContext remaning** - The `InContext` trait has been renamed to `Duty` to reflect its responsibility for maintaining an agent itself.
+
 # CRB v0.0.26 - 2025-01-11
 
 ## Added

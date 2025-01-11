@@ -1,12 +1,16 @@
-# CRB v0.0.26
+# CRB v0.0.26 - 2025-01-11
 
 ## Added
 
-- **Intervals** are implemented.
-- Fetcher and Responder
-- Tagging responses
-- Example with a supervisor that respawn a child actor
-- **Equip** is implemented for tuples with an address
+- **TUI example** - Actor-driven TUI app that renders the UI in a separated synchronous state.
+- **Intervals** - Enables actors to receive notifications at regular intervals.
+- **Tagging responses** - Interaction responses can now be tagged, allowing actors to handle responses in various ways.
+- **Supervisor example** - Example of a supervisor that respawns a child actor or self-terminates after a child agent fails for the second time.
+
+## Improved
+
+- **Fetcher and Responder** - Introduced more intuitive names for interaction components.
+- **Equip for tuples** - The `Equip` trait is now implemented for tuples with an address, simplifying links for spawned agents.
 
 # CRB v0.0.25 - 2025-01-09
 

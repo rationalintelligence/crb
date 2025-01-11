@@ -4,7 +4,9 @@ tag := "v{{version}}"
 bump:
     cargo set-version --workspace --bump patch
 
-release:
+tag:
     git tag {{tag}}
     git push {{tag}}
+
+release:
     cargo workspaces publish --allow-branch trunk --all --publish-as-is

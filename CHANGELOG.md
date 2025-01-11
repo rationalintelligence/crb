@@ -2,7 +2,7 @@
 
 ## Added
 
-- **TUI example** - Actor-driven TUI app that renders the UI in a separated synchronous state.
+- **TUI example** - Actor-driven TUI [app](https://github.com/runtime-blocks/crb/blob/trunk/examples/tui-app/src/app.rs) that renders the UI in a separated synchronous state.
 - **Intervals** - Enables actors to receive notifications at regular intervals.
 - **Tagging responses** - Interaction responses can now be tagged, allowing actors to handle responses in various ways.
 - **Supervisor example** - Example of a supervisor that respawns a child actor or self-terminates after a child agent fails for the second time.

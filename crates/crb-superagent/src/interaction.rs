@@ -43,6 +43,16 @@ pub struct Interaction<R: Request> {
     pub responder: Responder<R::Response>,
 }
 
+impl<R: Request> Interaction<R> {
+    pub fn new_pair(request: R) -> (Self, Fetcher<R::Response>) {
+        let (tx, rx) = oneshot::channel();
+        let responder = Responder { tx };
+        let interaction = Interaction { request, responder };
+        let fetcher = Fetcher { rx };
+        (interaction, fetcher)
+    }
+}
+
 #[async_trait]
 impl<A, R> MessageFor<A> for Interaction<R>
 where
@@ -76,13 +86,6 @@ impl<OUT> Fetcher<OUT> {
         let (tx, rx) = oneshot::channel();
         tx.send(Err(err)).ok();
         Fetcher { rx }
-    }
-
-    pub fn reform<T, F>(self, _func: F) -> Fetcher<T>
-    where
-        F: Fn(OUT) -> Result<T>,
-    {
-        todo!()
     }
 
     pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
@@ -121,13 +124,11 @@ where
     R: Request,
 {
     fn interact(&self, request: R) -> Fetcher<R::Response> {
-        let (tx, rx) = oneshot::channel();
-        let responder = Responder { tx };
-        let interaction = Interaction { request, responder };
-        if let Err(err) = self.send(interaction) {
+        let (msg, fetcher) = Interaction::new_pair(request);
+        if let Err(err) = self.send(msg) {
             Fetcher::spoiled(err)
         } else {
-            Fetcher { rx }
+            fetcher
         }
     }
 }

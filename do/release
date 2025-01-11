@@ -1,3 +1,9 @@
 #!/usr/bin/env bash
+set -e
+
+VERSION=`toml get Cargo.toml workspace.package.version --raw`
+TAG="v$VERSION"
+git tag $TAG
+git push $TAG
 
 cargo workspaces publish --allow-branch trunk --all --publish-as-is

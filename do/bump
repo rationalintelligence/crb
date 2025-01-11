@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
+set -e
 
 cargo set-version --workspace --bump patch

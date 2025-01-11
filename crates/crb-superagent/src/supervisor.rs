@@ -25,8 +25,8 @@ pub trait SupervisorContext<S: Supervisor> {
 pub struct SupervisorSession<S: Supervisor> {
     #[deref]
     #[deref_mut]
-    session: AgentSession<S>,
-    tracker: Tracker<S>,
+    pub session: AgentSession<S>,
+    pub tracker: Tracker<S>,
 }
 
 impl<S: Supervisor> Default for SupervisorSession<S> {
@@ -78,22 +78,6 @@ impl<S: Supervisor> AgentContext<S> for SupervisorSession<S> {
 impl<S: Supervisor> SupervisorContext<S> for SupervisorSession<S> {
     fn session(&mut self) -> &mut SupervisorSession<S> {
         self
-    }
-}
-
-impl<S: Supervisor> SupervisorSession<S> {
-    pub fn spawn_agent<A>(
-        &mut self,
-        input: A,
-        group: S::GroupBy,
-    ) -> <A::Context as Context>::Address
-    where
-        A: Agent,
-        A::Context: Default,
-        S: Supervisor<Context = SupervisorSession<S>>,
-    {
-        let runtime = RunAgent::<A>::new(input);
-        self.spawn_runtime(runtime, group)
     }
 }
 
@@ -212,17 +196,30 @@ where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
+    pub fn spawn_agent<A>(
+        &mut self,
+        input: A,
+        group: S::GroupBy,
+    ) -> (<A::Context as Context>::Address, Relation<S>)
+    where
+        A: Agent,
+        A::Context: Default,
+    {
+        let runtime = RunAgent::<A>::new(input);
+        self.spawn_runtime(runtime, group)
+    }
+
     pub fn spawn_runtime<B>(
         &mut self,
         trackable: B,
         group: S::GroupBy,
-    ) -> <B::Context as Context>::Address
+    ) -> (<B::Context as Context>::Address, Relation<S>)
     where
         B: InteractiveRuntime,
     {
         let addr = trackable.address();
-        self.spawn_trackable(trackable, group);
-        addr
+        let rel = self.spawn_trackable(trackable, group);
+        (addr, rel)
     }
 
     pub fn spawn_trackable<B>(&mut self, mut trackable: B, group: S::GroupBy) -> Relation<S>

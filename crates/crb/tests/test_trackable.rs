@@ -41,7 +41,7 @@ struct SendPrint;
 #[async_trait]
 impl OnEvent<SendPrint> for Main {
     async fn handle(&mut self, _event: SendPrint, ctx: &mut Self::Context) -> Result<()> {
-        let printer = ctx.spawn_agent(Printer, ());
+        let (printer, _) = ctx.spawn_agent(Printer, ());
         let print = Print("Hello, Trackable!".into());
         printer.event(print)?;
         Ok(())

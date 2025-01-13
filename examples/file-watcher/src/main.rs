@@ -34,8 +34,8 @@ impl FileWatcher {
     pub fn new() -> Self {
         Self {
             path: DEFAULT_PATH.into(),
-            watcher: Slot::empty(),
-            debouncer: Slot::empty(),
+            watcher: Slot::empty("file watcher"),
+            debouncer: Slot::empty("events debouncer"),
             counter: 0,
         }
     }

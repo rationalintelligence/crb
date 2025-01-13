@@ -26,7 +26,7 @@ impl Timeout {
     {
         let task = TimeoutTask {
             duration,
-            tag: Slot::filled(tag),
+            tag: Slot::filled("timeout task tag", tag),
             sender: address.sender(),
         };
         let mut job = RunAgent::new(task).spawn().job();

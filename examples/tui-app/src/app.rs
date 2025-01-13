@@ -17,7 +17,7 @@ pub struct TuiApp {
 impl TuiApp {
     pub fn new() -> Self {
         Self {
-            terminal: Slot::empty(),
+            terminal: Slot::empty("terminal handle"),
             state: AppState::new(),
         }
     }

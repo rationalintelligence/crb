@@ -1,6 +1,7 @@
 //! Generic traits to easily represent different requirements
 //! for types of messages.
 
+use derive_more::Display;
 use thiserror::Error;
 
 /// A tag that can be sent between threads.
@@ -13,31 +14,59 @@ pub trait SyncTag: Sync + Send + 'static {}
 
 impl<T: Sync + Send + 'static> SyncTag for T {}
 
-/// Errors with a slot. (Missing option's error).
-#[derive(Error, Debug)]
-pub enum SlotError {
+/// A reason of slot interaction fail.
+#[derive(Display, Debug)]
+pub enum SlotErrorKind {
     /// The slot is empty
-    #[error("Slot is empty")]
+    #[display("is empty")]
     Empty,
     /// The slot is occupied
-    #[error("Slot is occupied")]
+    #[display("is occupied")]
     Occupied,
+}
+
+/// Errors with a slot. (Missing option's error).
+#[derive(Error, Debug)]
+#[error("Slot [{title}] {kind}")]
+pub struct SlotError {
+    title: &'static str,
+    kind: SlotErrorKind,
+}
+
+impl SlotError {
+    fn empty(title: &'static str) -> Self {
+        Self {
+            title,
+            kind: SlotErrorKind::Empty,
+        }
+    }
+
+    fn occupied(title: &'static str) -> Self {
+        Self {
+            title,
+            kind: SlotErrorKind::Occupied,
+        }
+    }
 }
 
 /// An `Option` that returns `Error` if is not filled.
 pub struct Slot<T> {
+    title: &'static str,
     value: Option<T>,
 }
 
 impl<T> Slot<T> {
     /// Create a new instance.
-    pub fn empty() -> Self {
-        Self { value: None }
+    pub fn empty(title: &'static str) -> Self {
+        Self { title, value: None }
     }
 
     /// Create a new instance filled with a value.
-    pub fn filled(value: T) -> Self {
-        Self { value: Some(value) }
+    pub fn filled(title: &'static str, value: T) -> Self {
+        Self {
+            title,
+            value: Some(value),
+        }
     }
 
     /// Checks if the slot is empty.
@@ -53,7 +82,7 @@ impl<T> Slot<T> {
     /// Set value to the slot.
     pub fn fill(&mut self, value: T) -> Result<(), SlotError> {
         if self.value.is_some() {
-            Err(SlotError::Occupied)
+            Err(SlotError::occupied(&self.title))
         } else {
             self.value = Some(value);
             Ok(())
@@ -62,7 +91,9 @@ impl<T> Slot<T> {
 
     /// Take a value out.
     pub fn take(&mut self) -> Result<T, SlotError> {
-        self.value.take().ok_or(SlotError::Empty)
+        self.value
+            .take()
+            .ok_or_else(|| SlotError::empty(&self.title))
     }
 
     /// Clone and take the value.
@@ -70,16 +101,22 @@ impl<T> Slot<T> {
     where
         T: Clone,
     {
-        self.value.clone().ok_or(SlotError::Empty)
+        self.value
+            .clone()
+            .ok_or_else(|| SlotError::empty(&self.title))
     }
 
     /// Get a reference to a value.
     pub fn get(&mut self) -> Result<&T, SlotError> {
-        self.value.as_ref().ok_or(SlotError::Empty)
+        self.value
+            .as_ref()
+            .ok_or_else(|| SlotError::empty(&self.title))
     }
 
     /// Get a mutable reference to a value.
     pub fn get_mut(&mut self) -> Result<&mut T, SlotError> {
-        self.value.as_mut().ok_or(SlotError::Empty)
+        self.value
+            .as_mut()
+            .ok_or_else(|| SlotError::empty(&self.title))
     }
 }

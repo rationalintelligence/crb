@@ -2,7 +2,7 @@ use crate::address::{Address, MessageFor};
 use crate::agent::Agent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_send::MessageSender;
+use crb_send::Recipient;
 
 impl<A: Agent> Address<A> {
     pub fn event<E>(&self, event: E) -> Result<()>
@@ -13,12 +13,12 @@ impl<A: Agent> Address<A> {
         self.send(Event::new(event))
     }
 
-    pub fn event_sender<E>(&self) -> MessageSender<E>
+    pub fn recipient<E>(&self) -> Recipient<E>
     where
         A: OnEvent<E>,
         E: Send + 'static,
     {
-        MessageSender::new(self.clone()).reform(Event::new)
+        Recipient::new(self.clone()).reform(Event::new)
     }
 }
 

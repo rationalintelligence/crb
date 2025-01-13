@@ -3,12 +3,15 @@ use async_trait::async_trait;
 use crb::agent::{
     Address, Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone,
 };
-use crb::core::Slot;
+use crb::core::{time::Duration, Slot};
+use crb::superagent::{OnTimeout, Timeout};
 use derive_more::From;
 use notify::{
     recommended_watcher, Event, EventHandler, RecommendedWatcher, RecursiveMode, Watcher,
 };
 use std::path::PathBuf;
+
+const DEBOUNCE_MS: u64 = 100;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,7 +26,8 @@ const DEFAULT_PATH: &str = "Cargo.toml";
 pub struct FileWatcher {
     path: PathBuf,
     watcher: Slot<RecommendedWatcher>,
-    debouncer: Option<()>,
+    debouncer: Slot<Timeout>,
+    counter: usize,
 }
 
 impl FileWatcher {
@@ -31,7 +35,8 @@ impl FileWatcher {
         Self {
             path: DEFAULT_PATH.into(),
             watcher: Slot::empty(),
-            debouncer: None,
+            debouncer: Slot::empty(),
+            counter: 0,
         }
     }
 }
@@ -48,6 +53,7 @@ impl Agent for FileWatcher {
 
     fn interrupt(&mut self, ctx: &mut Self::Context) {
         self.watcher.take().ok();
+        self.debouncer.take().ok();
         ctx.shutdown();
     }
 }
@@ -80,10 +86,29 @@ type EventResult = Result<Event, notify::Error>;
 
 #[async_trait]
 impl OnEvent<EventResult> for FileWatcher {
-    async fn handle(&mut self, result: EventResult, _ctx: &mut Self::Context) -> Result<()> {
-        let event = result?;
-        println!("{} file changed: {:?}", self.path.display(), event);
-        if self.debouncer.is_none() {}
+    async fn handle(&mut self, result: EventResult, ctx: &mut Self::Context) -> Result<()> {
+        let _event = result?;
+        self.counter += 1;
+        if self.debouncer.not_assigned() {
+            let address = ctx.address().clone();
+            let duration = Duration::from_millis(DEBOUNCE_MS);
+            let timeout = Timeout::new(address, duration, ());
+            self.debouncer.fill(timeout)?;
+        }
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl OnTimeout for FileWatcher {
+    async fn on_timeout(&mut self, _: (), _ctx: &mut Self::Context) -> Result<()> {
+        self.debouncer.take()?;
+        println!(
+            "{} file changed. Debounced events: {}",
+            self.path.display(),
+            self.counter
+        );
+        self.counter = 0;
         Ok(())
     }
 }

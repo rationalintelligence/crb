@@ -40,6 +40,11 @@ impl<T> Slot<T> {
         Self { value: Some(value) }
     }
 
+    /// Checks if the slot is empty.
+    pub fn not_assigned(&self) -> bool {
+        self.value.is_none()
+    }
+
     /// Set value to the slot.
     pub fn fill(&mut self, value: T) -> Result<(), SlotError> {
         if self.value.is_some() {

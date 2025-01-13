@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, DoAsync, MessageFor, Next, RunAgent};
 use crb_core::{
     time::{sleep, Duration},
-    SyncTag, Slot,
+    Slot, SyncTag,
 };
 use crb_runtime::{JobHandle, Task};
 use crb_send::{MessageSender, Sender};
@@ -59,11 +59,11 @@ where
     T: SyncTag,
 {
     async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
+        sleep(self.duration).await;
         let tick = Completed {
             tag: self.tag.take()?,
         };
         self.sender.send(tick)?;
-        sleep(self.duration).await;
         Ok(Next::done())
     }
 }

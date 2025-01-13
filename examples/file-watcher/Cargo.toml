@@ -1,0 +1,13 @@
+[package]
+public = false
+name = "file-watcher"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+async-trait = "0.1.83"
+crb.path = "../../crates/crb"
+derive_more = "1.0.0"
+notify = "8.0.0"
+tokio = { version = "1.42.0", features = ["full"] }

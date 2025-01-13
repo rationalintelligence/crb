@@ -45,6 +45,11 @@ impl<T> Slot<T> {
         }
     }
 
+    /// Take a value out.
+    pub fn take(&mut self) -> Result<T, SlotError> {
+        self.value.take().ok_or(SlotError::Empty)
+    }
+
     /// Clone and take the value.
     pub fn cloned(&self) -> Result<T, SlotError>
     where

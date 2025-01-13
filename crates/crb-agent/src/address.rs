@@ -2,7 +2,7 @@ use crate::agent::Agent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
-use crb_send::{EventSender, Sender};
+use crb_send::{MessageSender, Sender};
 
 pub struct AddressJoint<A: Agent + ?Sized> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
@@ -86,11 +86,11 @@ where
 }
 
 impl<A: Agent> Address<A> {
-    pub fn sender<M>(&self) -> EventSender<M>
+    pub fn sender<M>(&self) -> MessageSender<M>
     where
         M: MessageFor<A>,
     {
-        EventSender::new(self.clone())
+        MessageSender::new(self.clone())
     }
 }
 

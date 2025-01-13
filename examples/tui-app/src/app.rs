@@ -3,7 +3,7 @@ use crate::state::AppState;
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Agent, Context, DoAsync, DoSync, InContext, Next, OnEvent, Supervisor, SupervisorSession,
+    Agent, Context, DoAsync, DoSync, Duty, Next, OnEvent, Supervisor, SupervisorSession,
 };
 use crb::core::Slot;
 use crossterm::event::{Event, KeyCode};
@@ -32,14 +32,14 @@ impl Agent for TuiApp {
     type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
-        Next::in_context(Configure)
+        Next::duty(Configure)
     }
 }
 
 struct Configure;
 
 #[async_trait]
-impl InContext<Configure> for TuiApp {
+impl Duty<Configure> for TuiApp {
     async fn handle(&mut self, _: Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
         let terminal = ratatui::try_init()?;
         self.terminal.fill(terminal)?;
@@ -54,15 +54,11 @@ impl InContext<Configure> for TuiApp {
 impl OnEvent<Event> for TuiApp {
     async fn handle(&mut self, event: Event, ctx: &mut Self::Context) -> Result<()> {
         let next_state = match event {
-            Event::Key(event) => {
-                match event.code {
-                    KeyCode::Char('q') => {
-                        Next::do_async(Terminate)
-                    }
-                    _ => {
-                        self.state.plus_one();
-                        Next::do_sync(Render)
-                    }
+            Event::Key(event) => match event.code {
+                KeyCode::Char('q') => Next::do_async(Terminate),
+                _ => {
+                    self.state.plus_one();
+                    Next::do_sync(Render)
                 }
             },
             _ => Next::do_sync(Render),

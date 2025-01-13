@@ -6,7 +6,7 @@ use crb_core::{
     SyncTag,
 };
 use crb_runtime::{JobHandle, Task};
-use crb_send::{EventSender, Sender};
+use crb_send::{MessageSender, Sender};
 use std::sync::Arc;
 
 #[async_trait]
@@ -39,7 +39,7 @@ impl Interval {
 struct IntervalTask<T> {
     duration: Duration,
     tag: Arc<T>,
-    sender: EventSender<Tick<T>>,
+    sender: MessageSender<Tick<T>>,
 }
 
 impl<T> Agent for IntervalTask<T>

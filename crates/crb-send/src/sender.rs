@@ -46,11 +46,11 @@ where
 }
 
 /// A universal cloneable wrapper for `Sender`.
-pub struct EventSender<M> {
+pub struct MessageSender<M> {
     recipient: Arc<dyn Sender<M>>,
 }
 
-impl<M> Clone for EventSender<M> {
+impl<M> Clone for MessageSender<M> {
     fn clone(&self) -> Self {
         Self {
             recipient: self.recipient.clone(),
@@ -58,19 +58,19 @@ impl<M> Clone for EventSender<M> {
     }
 }
 
-impl<M> Sender<M> for EventSender<M> {
+impl<M> Sender<M> for MessageSender<M> {
     fn send(&self, msg: M) -> Result<()> {
         self.recipient.send(msg)
     }
 }
 
-impl<M> fmt::Debug for EventSender<M> {
+impl<M> fmt::Debug for MessageSender<M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "EventSender")
+        write!(f, "MessageSender")
     }
 }
 
-impl<M> EventSender<M> {
+impl<M> MessageSender<M> {
     /// Wraps a sender with a reference counter.
     pub fn new<E>(sender: E) -> Self
     where
@@ -81,8 +81,8 @@ impl<M> EventSender<M> {
         }
     }
 
-    /// Changes `EventSender` to another input type.
-    pub fn reform<F, IN>(&self, func: F) -> EventSender<IN>
+    /// Changes `MessageSender` to another input type.
+    pub fn reform<F, IN>(&self, func: F) -> MessageSender<IN>
     where
         F: Fn(IN) -> M,
         F: Send + Sync + 'static,
@@ -93,6 +93,6 @@ impl<M> EventSender<M> {
             let output = func(input);
             recipient.send(output)
         });
-        EventSender::new(func_sender)
+        MessageSender::new(func_sender)
     }
 }

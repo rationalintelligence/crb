@@ -3,6 +3,7 @@
 ## Improved
 
 - **InContext remaning** - The `InContext` trait has been renamed to `Duty` to reflect its responsibility for maintaining an agent itself.
+- **EventSender renaming** - The `EventSender` struct has been renamed to `MessageSender` to avoid confusion with agents' events.
 
 # CRB v0.0.26 - 2025-01-11
 

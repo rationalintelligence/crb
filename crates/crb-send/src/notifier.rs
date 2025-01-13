@@ -1,6 +1,6 @@
 //! A module with notifiers.
 
-use crate::sender::{EventSender, Sender};
+use crate::sender::{MessageSender, Sender};
 use anyhow::{anyhow as err, Result};
 use std::sync::{Arc, Mutex};
 
@@ -42,7 +42,7 @@ impl Drop for DropNotifier {
 
 pub struct TypedNotifier<M> {
     message: M,
-    sender: EventSender<M>,
+    sender: MessageSender<M>,
 }
 
 impl<M> TypedNotifier<M> {
@@ -51,7 +51,7 @@ impl<M> TypedNotifier<M> {
     where
         S: Sender<M> + 'static,
     {
-        let sender = EventSender::new(sender);
+        let sender = MessageSender::new(sender);
         Self { message, sender }
     }
 

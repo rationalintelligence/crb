@@ -89,7 +89,7 @@ impl OnEvent<EventResult> for FileWatcher {
     async fn handle(&mut self, result: EventResult, ctx: &mut Self::Context) -> Result<()> {
         let _event = result?;
         self.counter += 1;
-        if self.debouncer.not_assigned() {
+        if self.debouncer.is_empty() {
             let address = ctx.address().clone();
             let duration = Duration::from_millis(DEBOUNCE_MS);
             let timeout = Timeout::new(address, duration, ());

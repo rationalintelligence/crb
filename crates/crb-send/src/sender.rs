@@ -45,6 +45,8 @@ where
     }
 }
 
+pub type Recipient<M> = MessageSender<M>;
+
 /// A universal cloneable wrapper for `Sender`.
 pub struct MessageSender<M> {
     recipient: Arc<dyn Sender<M>>,

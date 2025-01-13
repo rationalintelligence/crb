@@ -1,5 +1,9 @@
 # CRB v0.0.27 - upcoming...
 
+## Added
+
+- **Timeout** - Timeouts that send an event only once.
+
 ## Improved
 
 - **InContext remaning** - The `InContext` trait has been renamed to `Duty` to reflect its responsibility for maintaining an agent itself.

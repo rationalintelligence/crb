@@ -35,6 +35,11 @@ impl<T> Slot<T> {
         Self { value: None }
     }
 
+    /// Create a new instance filled with a value.
+    pub fn filled(value: T) -> Self {
+        Self { value: Some(value) }
+    }
+
     /// Set value to the slot.
     pub fn fill(&mut self, value: T) -> Result<(), SlotError> {
         if self.value.is_some() {

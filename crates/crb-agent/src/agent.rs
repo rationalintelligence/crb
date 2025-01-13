@@ -4,6 +4,7 @@ use crate::runtime::RunAgent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{Context, InteractiveTask, ManagedContext};
+use std::any::type_name;
 
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
@@ -34,7 +35,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     fn failed(&mut self, err: &Error, _ctx: &mut Self::Context) {
-        log::error!("Agent failed: {err}");
+        log::error!("Agent [{}] failed: {err}", type_name::<Self>());
     }
 
     fn finalize(self, _ctx: &mut Self::Context) -> Option<Self::Output> {

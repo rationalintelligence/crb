@@ -41,8 +41,13 @@ impl<T> Slot<T> {
     }
 
     /// Checks if the slot is empty.
-    pub fn not_assigned(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.value.is_none()
+    }
+
+    /// Checks if the slot is filled.
+    pub fn is_filled(&self) -> bool {
+        self.value.is_some()
     }
 
     /// Set value to the slot.

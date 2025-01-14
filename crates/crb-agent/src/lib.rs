@@ -7,7 +7,7 @@ pub mod message;
 pub mod performers;
 pub mod runtime;
 
-pub use address::{Address, MessageFor};
+pub use address::{Address, AddressFor, MessageFor};
 pub use agent::{Agent, Runnable, Standalone};
 pub use context::{AgentContext, AgentSession, Context};
 pub use equip::Equip;

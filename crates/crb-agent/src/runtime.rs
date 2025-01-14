@@ -1,5 +1,5 @@
 use crate::agent::Agent;
-use crate::context::AgentContext;
+use crate::context::{AgentContext, Context};
 use crate::finalizer::FinalizerFor;
 use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCommand};
 use anyhow::{Error, Result};
@@ -12,7 +12,7 @@ use futures::stream::Abortable;
 
 pub struct RunAgent<A: Agent> {
     pub agent: Option<A>,
-    pub context: A::Context,
+    pub context: Context<A>,
     pub failures: Failures,
     pub finalizers: Vec<Box<dyn FinalizerFor<A>>>,
 }
@@ -24,7 +24,7 @@ impl<A: Agent> RunAgent<A> {
     {
         Self {
             agent: Some(agent),
-            context: A::Context::default(),
+            context: Context::wrap(A::Context::default()),
             failures: Failures::default(),
             finalizers: Vec::new(),
         }

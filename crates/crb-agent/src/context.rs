@@ -4,6 +4,26 @@ use crate::performers::Next;
 use crb_runtime::{Controller, ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
 
+#[derive(Deref, DerefMut)]
+pub struct Context<A: Agent> {
+    context: A::Context,
+}
+
+impl<A: Agent> Context<A> {
+    pub fn wrap(context: A::Context) -> Self {
+        Self { context }
+    }
+}
+
+impl<A: Agent> Context<A>
+where
+    A::Context: ReachableContext,
+{
+    pub fn address(&self) -> &<A::Context as ReachableContext>::Address {
+        ReachableContext::address(&self.context)
+    }
+}
+
 pub trait AgentContext<A: Agent + ?Sized>
 where
     Self: ReachableContext<Address = Address<A>>,

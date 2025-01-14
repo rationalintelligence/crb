@@ -38,16 +38,21 @@ impl<OUT> Responder<OUT> {
     }
 }
 
+pub struct Interplay<IN, OUT> {
+    pub request: IN,
+    pub responder: Responder<OUT>,
+}
+
 pub struct Interaction<R: Request> {
-    pub request: R,
-    pub responder: Responder<R::Response>,
+    pub interplay: Interplay<R, R::Response>,
 }
 
 impl<R: Request> Interaction<R> {
     pub fn new_pair(request: R) -> (Self, Fetcher<R::Response>) {
         let (tx, rx) = oneshot::channel();
         let responder = Responder { tx };
-        let interaction = Interaction { request, responder };
+        let interplay = Interplay { request, responder };
+        let interaction = Interaction { interplay };
         let fetcher = Fetcher { rx };
         (interaction, fetcher)
     }
@@ -67,8 +72,8 @@ where
 #[async_trait]
 pub trait OnRequest<R: Request>: Agent {
     async fn handle(&mut self, msg: Interaction<R>, ctx: &mut Self::Context) -> Result<()> {
-        let resp = self.on_request(msg.request, ctx).await;
-        msg.responder.send_result(resp)
+        let resp = self.on_request(msg.interplay.request, ctx).await;
+        msg.interplay.responder.send_result(resp)
     }
 
     async fn on_request(&mut self, _request: R, _ctx: &mut Self::Context) -> Result<R::Response> {

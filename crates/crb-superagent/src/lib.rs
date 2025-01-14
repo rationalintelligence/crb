@@ -2,6 +2,7 @@ pub mod interaction;
 pub mod interval;
 pub mod molting;
 pub mod subagent;
+pub mod subscribe;
 pub mod supervisor;
 pub mod timeout;
 

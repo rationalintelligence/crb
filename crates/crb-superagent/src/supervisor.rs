@@ -1,6 +1,6 @@
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentContext, AgentSession, MessageFor, RunAgent};
+use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
 use crb_runtime::{InteractiveRuntime, Interruptor, ManagedContext, ReachableContext, Runtime};
 use derive_more::{Deref, DerefMut, From, Into};
 use std::collections::{BTreeMap, HashSet};
@@ -281,8 +281,8 @@ where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
-    async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut S::Context) -> Result<(), Error> {
-        let session = SupervisorContext::session(ctx);
+    async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut Context<S>) -> Result<(), Error> {
+        let session = SupervisorContext::session(ctx.deref_mut());
         session.tracker.unregister_activity(&self.rel);
         if session.tracker.is_terminated() {
             session.session.shutdown();

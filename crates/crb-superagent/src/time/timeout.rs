@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentSession, DoAsync, MessageFor, Next, RunAgent};
+use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
 use crb_core::{
     time::{sleep, Duration},
     Slot, SyncTag,
@@ -78,7 +78,7 @@ where
     A: OnTimeout<T>,
     T: SyncTag,
 {
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         agent.on_timeout(self.tag, ctx).await
     }
 }

@@ -1,7 +1,7 @@
 use super::{Fetcher, Interplay, Output};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, MessageFor};
+use crb_agent::{Address, Agent, Context, MessageFor};
 use crb_core::Tag;
 use derive_more::{Deref, DerefMut, From, Into};
 use std::future::IntoFuture;
@@ -40,7 +40,7 @@ where
     A: OnRequest<R>,
     R: Request,
 {
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         agent.handle(*self, ctx).await
     }
 }
@@ -109,7 +109,7 @@ where
     OUT: Send + 'static,
     T: Tag,
 {
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         agent.on_response(self.response, self.tag, ctx).await
     }
 }

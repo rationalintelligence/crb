@@ -1,5 +1,6 @@
 use crate::address::{Address, MessageFor};
 use crate::agent::Agent;
+use crate::context::Context;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_send::Recipient;
@@ -50,7 +51,7 @@ where
     A: OnEvent<E>,
     E: Send + 'static,
 {
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         if let Err(err) = agent.handle(self.event, ctx).await {
             agent.fallback(err, ctx).await
         } else {

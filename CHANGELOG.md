@@ -4,6 +4,7 @@
 
 - **Timeout** - Timeouts that send an event only once.
 - **Subscriptions** - The new pattern.
+- *Context** - A context wrapper that could be extended as an `Address`.
 
 ## Improved
 

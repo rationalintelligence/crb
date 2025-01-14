@@ -1,5 +1,6 @@
 use crate::address::{Address, MessageFor};
 use crate::agent::Agent;
+use crate::context::Context;
 use crate::finalizer::FinalizerFor;
 use crate::runtime::RunAgent;
 use anyhow::Result;
@@ -45,7 +46,7 @@ where
     S: Finished<A>,
     A: Agent,
 {
-    async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut S::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut Context<S>) -> Result<()> {
         agent.handle(self.output, ctx).await
     }
 }

@@ -1,4 +1,4 @@
-use crate::context::AgentContext;
+use crate::context::{AgentContext, Context};
 use crate::performers::Next;
 use crate::runtime::RunAgent;
 use anyhow::{Error, Result};
@@ -23,7 +23,7 @@ pub trait Agent: Sized + Send + 'static {
         ctx.shutdown();
     }
 
-    async fn event(&mut self, ctx: &mut Self::Context) -> Result<()> {
+    async fn event(&mut self, ctx: &mut Context<Self>) -> Result<()> {
         let envelope = ctx.session().joint().next_envelope();
         if let Some(envelope) = envelope.await {
             envelope.handle(self, ctx).await?;

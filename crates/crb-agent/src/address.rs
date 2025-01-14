@@ -1,4 +1,5 @@
 use crate::agent::Agent;
+use crate::context::Context;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
@@ -119,5 +120,5 @@ pub type Envelope<A> = Box<dyn MessageFor<A>>;
 
 #[async_trait]
 pub trait MessageFor<A: Agent>: Send + 'static {
-    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut A::Context) -> Result<()>;
+    async fn handle(self: Box<Self>, actor: &mut A, ctx: &mut Context<A>) -> Result<()>;
 }

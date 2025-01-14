@@ -1,7 +1,7 @@
 use super::{Fetcher, Interplay};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, MessageFor};
+use crb_agent::{Address, Agent, Context, MessageFor};
 use crb_core::UniqueId;
 use crb_runtime::ReachableContext;
 use crb_send::{Recipient, Sender};
@@ -92,7 +92,7 @@ where
     A: ManageSubscription<S>,
     S: Subscription,
 {
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         agent.handle(*self, ctx).await
     }
 }
@@ -107,7 +107,7 @@ where
     A: ManageSubscription<S>,
     S: Subscription,
 {
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut A::Context) -> Result<()> {
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         agent.unsubscribe(self.sub_id, ctx).await
     }
 }

@@ -2,7 +2,7 @@ use crate::meta::{Metadata, Sequencer};
 use crate::stage::{InitialKey, Stage, StageDestination, StageKey, StageSource};
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, MessageFor, Standalone};
+use crb_agent::{Address, Agent, Context, MessageFor, Standalone};
 use crb_runtime::{ReachableContext, Runtime};
 use crb_superagent::{Supervisor, SupervisorSession};
 use derive_more::Deref;
@@ -165,7 +165,7 @@ where
     async fn handle(
         self: Box<Self>,
         agent: &mut Pipeline<State>,
-        ctx: &mut SupervisorSession<Pipeline<State>>,
+        ctx: &mut Context<Pipeline<State>>,
     ) -> Result<()> {
         let layer = agent.sequencer.next_layer();
         let meta = Metadata::new(layer);
@@ -194,7 +194,7 @@ where
     async fn handle(
         self: Box<Self>,
         agent: &mut Pipeline<A::State>,
-        ctx: &mut SupervisorSession<Pipeline<A::State>>,
+        ctx: &mut Context<Pipeline<A::State>>,
     ) -> Result<()> {
         let key = StageKey::<A>::new();
         agent.spawn_workers(self.meta, key, self.message, ctx);

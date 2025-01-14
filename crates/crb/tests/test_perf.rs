@@ -1,6 +1,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone};
+use crb::agent::{
+    Agent, AgentSession, Duty, ManagedContext, Next, OnEvent, ReachableContext, Standalone,
+};
 use std::time::{Duration, Instant};
 
 struct TestTime {

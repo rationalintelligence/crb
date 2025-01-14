@@ -1,6 +1,6 @@
 //! A runtime for composable blocks.
 
-use crate::context::Context;
+use crate::context::ReachableContext;
 use crate::interruptor::Interruptor;
 use async_trait::async_trait;
 use std::ops::DerefMut;
@@ -17,9 +17,9 @@ pub trait Runtime: Send + 'static {
 
 pub trait InteractiveRuntime: Runtime {
     /// Type of the composable block's contenxt.
-    type Context: Context;
+    type Context: ReachableContext;
 
-    fn address(&self) -> <Self::Context as Context>::Address;
+    fn address(&self) -> <Self::Context as ReachableContext>::Address;
 }
 
 #[async_trait]

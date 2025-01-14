@@ -1,7 +1,7 @@
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, MessageFor, RunAgent};
-use crb_runtime::{Context, InteractiveRuntime, Interruptor, ManagedContext, Runtime};
+use crb_runtime::{InteractiveRuntime, Interruptor, ManagedContext, ReachableContext, Runtime};
 use derive_more::{Deref, DerefMut, From, Into};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
@@ -38,7 +38,7 @@ impl<S: Supervisor> Default for SupervisorSession<S> {
     }
 }
 
-impl<S: Supervisor> Context for SupervisorSession<S> {
+impl<S: Supervisor> ReachableContext for SupervisorSession<S> {
     type Address = Address<S>;
 
     fn address(&self) -> &Self::Address {
@@ -200,7 +200,7 @@ where
         &mut self,
         input: A,
         group: S::GroupBy,
-    ) -> (<A::Context as Context>::Address, Relation<S>)
+    ) -> (<A::Context as ReachableContext>::Address, Relation<S>)
     where
         A: Agent,
         A::Context: Default,
@@ -213,7 +213,7 @@ where
         &mut self,
         trackable: B,
         group: S::GroupBy,
-    ) -> (<B::Context as Context>::Address, Relation<S>)
+    ) -> (<B::Context as ReachableContext>::Address, Relation<S>)
     where
         B: InteractiveRuntime,
     {
@@ -294,7 +294,7 @@ where
 
 pub struct DetacherFor<S: Supervisor> {
     rel: Relation<S>,
-    supervisor: <S::Context as Context>::Address,
+    supervisor: <S::Context as ReachableContext>::Address,
 }
 
 impl<S> DetacherFor<S>

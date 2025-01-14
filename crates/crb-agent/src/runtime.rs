@@ -5,8 +5,8 @@ use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCom
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
-    Context, Failures, InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, Runtime,
-    Task,
+    Failures, InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, ReachableContext,
+    Runtime, Task,
 };
 use futures::stream::Abortable;
 
@@ -141,7 +141,7 @@ where
 impl<A: Agent> InteractiveRuntime for RunAgent<A> {
     type Context = A::Context;
 
-    fn address(&self) -> <Self::Context as Context>::Address {
+    fn address(&self) -> <Self::Context as ReachableContext>::Address {
         self.context.address().clone()
     }
 }

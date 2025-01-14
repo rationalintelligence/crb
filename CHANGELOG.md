@@ -3,11 +3,12 @@
 ## Added
 
 - **Timeout** - Timeouts that send an event only once.
+- **Subscriptions** - The new pattern.
 
 ## Improved
 
 - **Naming for slots**
-
+- **Context renaming** - The `Context` trait has been reanmed to `ReachableContext`.
 - **InContext remaning** - The `InContext` trait has been renamed to `Duty` to reflect its responsibility for maintaining an agent itself.
 - **EventSender renaming** - The `EventSender` struct has been renamed to `MessageSender` to avoid confusion with agents' events.
 

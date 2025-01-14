@@ -3,7 +3,7 @@ use crate::stage::{InitialKey, Stage, StageDestination, StageKey, StageSource};
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor, Standalone};
-use crb_runtime::{Context, Runtime};
+use crb_runtime::{ReachableContext, Runtime};
 use crb_superagent::{Supervisor, SupervisorSession};
 use derive_more::Deref;
 use std::any::type_name;

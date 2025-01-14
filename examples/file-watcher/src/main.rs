@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Address, Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone,
+    Address, Agent, AgentSession, ReachableContext, Duty, ManagedContext, Next, OnEvent, Standalone,
 };
 use crb::core::{time::Duration, Slot};
 use crb::superagent::{OnTimeout, Timeout};

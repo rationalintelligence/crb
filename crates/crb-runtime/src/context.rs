@@ -3,7 +3,7 @@
 /// A commont methods of all contexts and spans for tracing and logging.
 ///
 /// The have provide a reference to a label.
-pub trait Context: Send {
+pub trait ReachableContext: Send {
     /// An address to interact with the context.
     type Address: Send + Clone;
 

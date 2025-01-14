@@ -1,12 +1,12 @@
 use crate::address::{Address, AddressJoint};
 use crate::agent::Agent;
 use crate::performers::Next;
-use crb_runtime::{Context, Controller, ManagedContext};
+use crb_runtime::{Controller, ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
 
 pub trait AgentContext<A: Agent + ?Sized>
 where
-    Self: Context<Address = Address<A>>,
+    Self: ReachableContext<Address = Address<A>>,
     Self: ManagedContext,
 {
     // TODO: Replace with explicit methods
@@ -46,7 +46,7 @@ impl<A: Agent> Default for AgentSession<A> {
     }
 }
 
-impl<A: Agent> Context for AgentSession<A> {
+impl<A: Agent> ReachableContext for AgentSession<A> {
     type Address = Address<A>;
 
     fn address(&self) -> &Self::Address {

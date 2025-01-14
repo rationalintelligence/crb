@@ -1,4 +1,4 @@
-use crate::context::Context;
+use crate::context::ReachableContext;
 use crate::interruptor::Interruptor;
 use crate::runtime::{InteractiveRuntime, Runtime};
 use async_trait::async_trait;
@@ -7,7 +7,7 @@ use derive_more::{Deref, DerefMut};
 use std::marker::PhantomData;
 
 pub trait InteractiveTask<T>: Task<T> + InteractiveRuntime {
-    fn spawn_connected(self) -> <Self::Context as Context>::Address {
+    fn spawn_connected(self) -> <Self::Context as ReachableContext>::Address {
         let address = self.address();
         self.spawn();
         address

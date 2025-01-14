@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use crb_agent::performers::{ConsumptionReason, Next, StatePerformer, Transition};
 use crb_agent::{Address, Agent, AgentContext, AgentSession, RunAgent};
-use crb_runtime::{Context, Controller, Interruptor, ManagedContext, Runtime, Task};
+use crb_runtime::{Controller, Interruptor, ManagedContext, ReachableContext, Runtime, Task};
 use std::marker::PhantomData;
 
 pub trait NextExt<A> {
@@ -66,7 +66,7 @@ impl<A: Agent> Default for MoltingSession<A> {
     }
 }
 
-impl<A: Agent> Context for MoltingSession<A> {
+impl<A: Agent> ReachableContext for MoltingSession<A> {
     type Address = Address<A>;
 
     fn address(&self) -> &Self::Address {

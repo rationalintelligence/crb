@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use crb_core::UniqueId;
-use crb_runtime::Context;
+use crb_runtime::ReachableContext;
 use crb_send::{Recipient, Sender};
 
 pub trait SubscribeExt<S: Subscription> {

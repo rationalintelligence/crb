@@ -24,6 +24,8 @@ where
     }
 }
 
+// TODO: Add the `Ctx` wrapper and implement for that as well
+
 pub trait Request: Send + 'static {
     type Response: Send + 'static;
 }

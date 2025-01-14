@@ -1,6 +1,6 @@
 pub mod agent {
     pub use crb_agent::*;
-    pub use crb_runtime::{Context, InteractiveTask, ManagedContext, Task};
+    pub use crb_runtime::{InteractiveTask, ManagedContext, ReachableContext, Task};
 }
 
 pub mod core {

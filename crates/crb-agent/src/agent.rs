@@ -3,7 +3,7 @@ use crate::performers::Next;
 use crate::runtime::RunAgent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::{Context, InteractiveTask, ManagedContext};
+use crb_runtime::{InteractiveTask, ManagedContext, ReachableContext};
 use std::any::type_name;
 
 #[async_trait]
@@ -52,7 +52,7 @@ pub trait Output: Sync + Send + 'static {}
 impl<T> Output for T where T: Sync + Send + 'static {}
 
 pub trait Standalone: Agent {
-    fn spawn(self) -> <Self::Context as Context>::Address
+    fn spawn(self) -> <Self::Context as ReachableContext>::Address
     where
         Self::Context: Default,
     {

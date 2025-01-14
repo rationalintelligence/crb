@@ -1,10 +1,29 @@
-use super::Interplay;
+use super::{Fetcher, Interplay};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use crb_agent::{Agent, MessageFor};
+use crb_agent::{Address, Agent, MessageFor};
 use crb_core::UniqueId;
 use crb_runtime::Context;
 use crb_send::{Recipient, Sender};
+
+pub trait SubscribeExt<S: Subscription> {
+    fn subscribe(&self, request: S) -> Fetcher<StateEntry<S>>;
+}
+
+impl<A, S> SubscribeExt<S> for Address<A>
+where
+    A: ManageSubscription<S>,
+    S: Subscription,
+{
+    fn subscribe(&self, subscription: S) -> Fetcher<StateEntry<S>> {
+        let sub_id = UniqueId::new(subscription);
+        let (interplay, fetcher) = Interplay::new_pair(sub_id);
+        let msg = Subscribe { interplay };
+        let res = self.send(msg);
+        let fetcher = fetcher.grasp(res);
+        fetcher
+    }
+}
 
 pub struct StateEntry<S: Subscription> {
     pub state: S::State,

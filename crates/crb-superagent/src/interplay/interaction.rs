@@ -6,6 +6,24 @@ use crb_core::Tag;
 use derive_more::{Deref, DerefMut, From, Into};
 use std::future::IntoFuture;
 
+pub trait InteractExt<R: Request> {
+    fn interact(&self, request: R) -> Fetcher<R::Response>;
+}
+
+impl<A, R> InteractExt<R> for Address<A>
+where
+    A: OnRequest<R>,
+    R: Request,
+{
+    fn interact(&self, request: R) -> Fetcher<R::Response> {
+        let (interplay, fetcher) = Interplay::new_pair(request);
+        let msg = Interaction { interplay };
+        let res = self.send(msg);
+        let fetcher = fetcher.grasp(res);
+        fetcher
+    }
+}
+
 pub trait Request: Send + 'static {
     type Response: Send + 'static;
 }
@@ -64,24 +82,6 @@ impl<OUT> IntoFuture for ForwardableFetcher<OUT> {
 
     fn into_future(self) -> Self::IntoFuture {
         self.fetcher
-    }
-}
-
-pub trait AddressExt<R: Request> {
-    fn interact(&self, request: R) -> ForwardableFetcher<R::Response>;
-}
-
-impl<A, R> AddressExt<R> for Address<A>
-where
-    A: OnRequest<R>,
-    R: Request,
-{
-    fn interact(&self, request: R) -> ForwardableFetcher<R::Response> {
-        let (interplay, fetcher) = Interplay::new_pair(request);
-        let msg = Interaction { interplay };
-        let res = self.send(msg);
-        let fetcher = fetcher.grasp(res);
-        fetcher.into()
     }
 }
 

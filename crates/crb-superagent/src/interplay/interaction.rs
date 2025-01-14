@@ -1,46 +1,12 @@
-use anyhow::{anyhow, Error, Result};
+use super::{Output, Interplay, Responder, Fetcher};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use crb_core::Tag;
-use futures::{
-    channel::oneshot::{self, Canceled},
-    task::{Context as FutContext, Poll},
-    Future,
-};
-use std::pin::Pin;
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum ResponseError {
-    #[error("Request failed: {0}")]
-    Failed(#[from] anyhow::Error),
-    #[error("Request canceled: {0}")]
-    Canceled(#[from] Canceled),
-}
+use futures::channel::oneshot;
 
 pub trait Request: Send + 'static {
     type Response: Send + 'static;
-}
-
-pub struct Responder<OUT> {
-    tx: oneshot::Sender<Result<OUT>>,
-}
-
-impl<OUT> Responder<OUT> {
-    pub fn send(self, resp: OUT) -> Result<()> {
-        self.send_result(Ok(resp))
-    }
-
-    pub fn send_result(self, resp: Result<OUT>) -> Result<()> {
-        self.tx
-            .send(resp)
-            .map_err(|_| anyhow!("Can't send the response."))
-    }
-}
-
-pub struct Interplay<IN, OUT> {
-    pub request: IN,
-    pub responder: Responder<OUT>,
 }
 
 pub struct Interaction<R: Request> {
@@ -81,25 +47,8 @@ pub trait OnRequest<R: Request>: Agent {
     }
 }
 
-#[must_use]
-pub struct Fetcher<OUT> {
-    rx: oneshot::Receiver<Result<OUT>>,
-}
-
+// TODO: Implement that for a wrapper
 impl<OUT> Fetcher<OUT> {
-    pub fn grasp(self, result: Result<()>) -> Self {
-        match result {
-            Ok(_) => self,
-            Err(err) => Self::spoiled(err),
-        }
-    }
-
-    pub fn spoiled(err: Error) -> Fetcher<OUT> {
-        let (tx, rx) = oneshot::channel();
-        tx.send(Err(err)).ok();
-        Fetcher { rx }
-    }
-
     pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
     where
         A: OnResponse<OUT, T>,
@@ -112,17 +61,6 @@ impl<OUT> Fetcher<OUT> {
                 log::error!("Can't send a reponse: {err}");
             }
         });
-    }
-}
-
-impl<OUT> Future for Fetcher<OUT> {
-    type Output = Output<OUT>;
-    fn poll(mut self: Pin<&mut Self>, cx: &mut FutContext<'_>) -> Poll<Self::Output> {
-        Pin::new(&mut self.rx).poll(cx).map(|result| {
-            result
-                .map_err(ResponseError::from)
-                .and_then(|res| res.map_err(ResponseError::from))
-        })
     }
 }
 
@@ -151,8 +89,6 @@ pub trait OnResponse<OUT, T = ()>: Agent {
         ctx: &mut Self::Context,
     ) -> Result<()>;
 }
-
-pub type Output<R> = Result<R, ResponseError>;
 
 struct Response<OUT, T = ()> {
     response: Output<OUT>,

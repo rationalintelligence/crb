@@ -1,4 +1,4 @@
-use crate::interaction::Interplay;
+use super::Interplay;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::Agent;

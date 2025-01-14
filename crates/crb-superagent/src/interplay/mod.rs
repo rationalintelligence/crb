@@ -4,15 +4,15 @@ pub mod subscription;
 pub use interaction::*;
 pub use subscription::*;
 
-
 use anyhow::{anyhow, Error, Result};
-use futures::{ // TODO: Use crb_core?
+use futures::{
+    // TODO: Use crb_core?
     channel::oneshot::{self, Canceled},
     task::{Context as FutContext, Poll},
     Future,
 };
-use thiserror::Error;
 use std::pin::Pin;
+use thiserror::Error;
 
 pub struct Interplay<IN, OUT> {
     pub request: IN,

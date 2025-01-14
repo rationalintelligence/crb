@@ -1,8 +1,10 @@
-use super::{Output, Interplay, Fetcher};
+use super::{Fetcher, Interplay, Output};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use crb_core::Tag;
+use derive_more::{Deref, DerefMut};
+use std::future::IntoFuture;
 
 pub trait Request: Send + 'static {
     type Response: Send + 'static;
@@ -35,6 +37,7 @@ pub trait OnRequest<R: Request>: Agent {
     }
 }
 
+#[derive(Deref, DerefMut)]
 pub struct ResponseFetcher<OUT> {
     pub fetcher: Fetcher<OUT>,
 }
@@ -52,6 +55,15 @@ impl<OUT> ResponseFetcher<OUT> {
                 log::error!("Can't send a reponse: {err}");
             }
         });
+    }
+}
+
+impl<OUT> IntoFuture for ResponseFetcher<OUT> {
+    type Output = Output<OUT>;
+    type IntoFuture = Fetcher<OUT>;
+
+    fn into_future(self) -> Self::IntoFuture {
+        self.fetcher
     }
 }
 

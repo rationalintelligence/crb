@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 #[async_trait]
 pub trait OnTick<T = ()>: Agent {
-    async fn on_tick(&mut self, tag: &T, ctx: &mut Self::Context) -> Result<()>;
+    async fn on_tick(&mut self, tag: &T, ctx: &mut Context<Self>) -> Result<()>;
 }
 
 pub struct Interval {

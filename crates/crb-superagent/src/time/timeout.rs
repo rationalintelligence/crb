@@ -10,7 +10,7 @@ use crb_send::{MessageSender, Sender};
 
 #[async_trait]
 pub trait OnTimeout<T = ()>: Agent {
-    async fn on_timeout(&mut self, tag: T, ctx: &mut Self::Context) -> Result<()>;
+    async fn on_timeout(&mut self, tag: T, ctx: &mut Context<Self>) -> Result<()>;
 }
 
 pub struct Timeout {

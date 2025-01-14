@@ -33,7 +33,7 @@ where
 
 #[async_trait]
 pub trait Finished<A: Agent>: Agent {
-    async fn handle(&mut self, output: A::Output, ctx: &mut Self::Context) -> Result<()>;
+    async fn handle(&mut self, output: A::Output, ctx: &mut Context<Self>) -> Result<()>;
 }
 
 struct FinishedEvent<A: Agent> {

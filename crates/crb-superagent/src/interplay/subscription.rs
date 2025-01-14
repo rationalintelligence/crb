@@ -3,7 +3,6 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, Context, MessageFor};
 use crb_core::UniqueId;
-use crb_runtime::ReachableContext;
 use crb_send::{Recipient, Sender};
 
 pub trait SubscribeExt<S: Subscription> {
@@ -50,7 +49,7 @@ pub trait Subscription: Sync + Send + 'static {
 
 #[async_trait]
 pub trait ManageSubscription<S: Subscription>: Agent {
-    async fn handle(&mut self, msg: Subscribe<S>, ctx: &mut Self::Context) -> Result<()> {
+    async fn handle(&mut self, msg: Subscribe<S>, ctx: &mut Context<Self>) -> Result<()> {
         let sub_id = msg.interplay.request;
         let res = self.subscribe(sub_id.clone(), ctx).await;
         let state_entry = match res {
@@ -68,14 +67,14 @@ pub trait ManageSubscription<S: Subscription>: Agent {
     async fn subscribe(
         &mut self,
         sub_id: UniqueId<S>,
-        _ctx: &mut Self::Context,
+        _ctx: &mut Context<Self>,
     ) -> Result<S::State> {
         Err(anyhow!(
             "The on_subscribe method in not implemented to handle {sub_id}."
         ))
     }
 
-    async fn unsubscribe(&mut self, sub_id: UniqueId<S>, _ctx: &mut Self::Context) -> Result<()> {
+    async fn unsubscribe(&mut self, sub_id: UniqueId<S>, _ctx: &mut Context<Self>) -> Result<()> {
         Err(anyhow!(
             "The on_unsubscribe method in not implemented to handle {sub_id}"
         ))

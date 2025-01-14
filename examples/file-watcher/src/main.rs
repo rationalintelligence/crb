@@ -101,7 +101,7 @@ impl OnEvent<EventResult> for FileWatcher {
 
 #[async_trait]
 impl OnTimeout for FileWatcher {
-    async fn on_timeout(&mut self, _: (), _ctx: &mut Self::Context) -> Result<()> {
+    async fn on_timeout(&mut self, _: (), _ctx: &mut Context<Self>) -> Result<()> {
         self.debouncer.take()?;
         println!(
             "{} file changed. Debounced events: {}",

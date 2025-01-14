@@ -47,12 +47,12 @@ where
 
 #[async_trait]
 pub trait OnRequest<R: Request>: Agent {
-    async fn handle(&mut self, msg: Interaction<R>, ctx: &mut Self::Context) -> Result<()> {
+    async fn handle(&mut self, msg: Interaction<R>, ctx: &mut Context<Self>) -> Result<()> {
         let resp = self.on_request(msg.interplay.request, ctx).await;
         msg.interplay.responder.send_result(resp)
     }
 
-    async fn on_request(&mut self, _request: R, _ctx: &mut Self::Context) -> Result<R::Response> {
+    async fn on_request(&mut self, _request: R, _ctx: &mut Context<Self>) -> Result<R::Response> {
         Err(anyhow!("The on_request method in not implemented."))
     }
 }
@@ -93,7 +93,7 @@ pub trait OnResponse<OUT, T = ()>: Agent {
         &mut self,
         response: Output<OUT>,
         tag: T,
-        ctx: &mut Self::Context,
+        ctx: &mut Context<Self>,
     ) -> Result<()>;
 }
 

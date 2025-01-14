@@ -414,7 +414,7 @@ An actor can accept any data type as a message, as long as it implements the `On
 struct AddUrl { url: Url }
 
 impl OnEvent<AddUrl> for Actor {
-    async handle(&mut self, event: AddUrl, ctx: &mut Self::Context) -> Result<()> {
+    async handle(&mut self, event: AddUrl, ctx: &mut Context<Self>) -> Result<()> {
         todo!()
     }
 }
@@ -426,7 +426,7 @@ Actors can implement handlers for any number of messages, allowing you to add as
 struct DeleteUrl { url: Url }
 
 impl OnEvent<DeleteUrl> for Actor {
-    async handle(&mut self, event: DeleteUrl, ctx: &mut Self::Context) -> Result<()> {
+    async handle(&mut self, event: DeleteUrl, ctx: &mut Context<Self>) -> Result<()> {
         todo!()
     }
 }
@@ -454,7 +454,7 @@ impl Request for GetId {
 }
 
 impl OnRequest<GetId> for Server {
-    async on_request(&mut self, _: GetId, ctx: &mut Self::Context) -> Result<usize> {
+    async on_request(&mut self, _: GetId, ctx: &mut Context<Self>) -> Result<usize> {
         let record = Record { ... };
         Ok(self.slab.insert(record))
     }
@@ -479,14 +479,14 @@ impl Agent for Client {
 struct Configure;
 
 impl Duty<Configure> for Client {
-    async fn once(&mut self, _: &mut Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
+    async fn once(&mut self, _: &mut Configure, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         self.server.request(GetId)?.forward_to(ctx)?;
         Ok(Next::events())
     }
 }
 
 impl OnResponse<GetId> for Client {
-    async on_response(&mut self, id: usize, ctx: &mut Self::Context) -> Result<()> {
+    async on_response(&mut self, id: usize, ctx: &mut Context<Self>) -> Result<()> {
         println!("Reserved id: {id}");
         Ok(())
     }

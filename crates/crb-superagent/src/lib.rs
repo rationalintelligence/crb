@@ -1,13 +1,10 @@
 pub mod interaction;
-pub mod interval;
 pub mod molting;
 pub mod subagent;
 pub mod subscribe;
 pub mod supervisor;
-pub mod timeout;
+pub mod time;
 
 pub use interaction::*;
-pub use interval::*;
 pub use molting::*;
 pub use supervisor::*;
-pub use timeout::*;

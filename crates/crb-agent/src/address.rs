@@ -5,22 +5,6 @@ use async_trait::async_trait;
 use crb_core::{mpsc, watch};
 use crb_send::{MessageSender, Sender};
 
-pub trait AddressFor<A: Agent> {
-    fn address(&self) -> Address<A>;
-}
-
-impl<A: Agent> AddressFor<A> for Address<A> {
-    fn address(&self) -> Address<A> {
-        self.clone()
-    }
-}
-
-impl<A: Agent> AddressFor<A> for Context<A> {
-    fn address(&self) -> Address<A> {
-        Context::address(self).clone()
-    }
-}
-
 pub struct AddressJoint<A: Agent + ?Sized> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
     status_tx: watch::Sender<AgentStatus<A>>,

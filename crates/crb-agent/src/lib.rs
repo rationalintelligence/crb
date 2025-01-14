@@ -1,4 +1,5 @@
 pub mod address;
+pub mod address_ext;
 pub mod agent;
 pub mod context;
 pub mod equip;
@@ -7,7 +8,8 @@ pub mod message;
 pub mod performers;
 pub mod runtime;
 
-pub use address::{Address, AddressFor, MessageFor};
+pub use address::{Address, MessageFor};
+pub use address_ext::AddressFor;
 pub use agent::{Agent, Runnable, Standalone};
 pub use context::{AgentContext, AgentSession, Context};
 pub use equip::Equip;

@@ -1,6 +1,6 @@
 use anyhow::Result;
-use crb::agent::{Agent, AgentSession, ManagedContext, Next, Standalone, SupervisorSession};
-use crb::superagent::{Relation, Supervisor};
+use crb::agent::{Agent, AgentSession, ManagedContext, Next, Standalone};
+use crb::superagent::{Relation, Supervisor, SupervisorSession};
 
 #[derive(Default)]
 struct TestSupervisor {

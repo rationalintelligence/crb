@@ -3,8 +3,9 @@ use crate::state::AppState;
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Agent, Context, DoAsync, DoSync, Duty, Next, OnEvent, Supervisor, SupervisorSession,
+    Agent, Context, DoAsync, DoSync, Duty, Next, OnEvent,
 };
+use crb::superagent::{Supervisor, SupervisorSession};
 use crb::core::Slot;
 use crossterm::event::{Event, KeyCode};
 use ratatui::DefaultTerminal;

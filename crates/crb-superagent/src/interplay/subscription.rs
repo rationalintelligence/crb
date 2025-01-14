@@ -2,9 +2,14 @@ use super::Interplay;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::Agent;
+use std::marker::PhantomData;
+
+pub struct Entry<S> {
+    _type: PhantomData<S>,
+}
 
 pub trait Subscription: Send + 'static {
-    type Entry: Send + 'static;
+    type State: Send + 'static;
 }
 
 #[async_trait]
@@ -14,7 +19,7 @@ pub trait SubscribeTo<S: Subscription>: Agent {
         msg.interplay.responder.send_result(resp)
     }
 
-    async fn on_subscribe(&mut self, _sub: S, _ctx: &mut Self::Context) -> Result<S::Entry> {
+    async fn on_subscribe(&mut self, _sub: S, _ctx: &mut Self::Context) -> Result<S::State> {
         Err(anyhow!("The on_subscribe method in not implemented."))
     }
 }
@@ -22,5 +27,9 @@ pub trait SubscribeTo<S: Subscription>: Agent {
 pub trait UnsubscribeFrom<S>: Agent {}
 
 pub struct Subscribe<S: Subscription> {
-    pub interplay: Interplay<S, S::Entry>,
+    pub interplay: Interplay<S, S::State>,
+}
+
+pub struct Unsubscribe<S: Subscription> {
+    pub entry: Entry<S>,
 }

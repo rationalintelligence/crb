@@ -24,7 +24,15 @@ where
     }
 }
 
-// TODO: Add the `Ctx` wrapper and implement for that as well
+impl<A, R> InteractExt<R> for Context<A>
+where
+    A: OnRequest<R>,
+    R: Request,
+{
+    fn interact(&self, request: R) -> Fetcher<R::Response> {
+        self.address().interact(request)
+    }
+}
 
 pub trait Request: Send + 'static {
     type Response: Send + 'static;

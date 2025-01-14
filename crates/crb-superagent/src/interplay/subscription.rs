@@ -24,6 +24,16 @@ where
     }
 }
 
+impl<A, S> SubscribeExt<S> for Context<A>
+where
+    A: ManageSubscription<S>,
+    S: Subscription,
+{
+    fn subscribe(&self, subscription: S) -> Fetcher<StateEntry<S>> {
+        self.address().subscribe(subscription)
+    }
+}
+
 pub struct StateEntry<S: Subscription> {
     pub state: S::State,
     pub entry: Entry<S>,

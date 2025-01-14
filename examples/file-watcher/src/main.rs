@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Address, Agent, AgentSession, ReachableContext, Duty, ManagedContext, Next, OnEvent, Standalone,
+    Context, Address, Agent, AgentSession, Duty, ManagedContext, Next, OnEvent, Standalone,
 };
 use crb::core::{time::Duration, Slot};
 use crb::superagent::{OnTimeout, Timeout};
@@ -51,7 +51,7 @@ impl Agent for FileWatcher {
         Next::duty(Configure)
     }
 
-    fn interrupt(&mut self, ctx: &mut Self::Context) {
+    fn interrupt(&mut self, ctx: &mut Context<Self>) {
         self.watcher.take().ok();
         self.debouncer.take().ok();
         ctx.shutdown();
@@ -62,7 +62,7 @@ struct Configure;
 
 #[async_trait]
 impl Duty<Configure> for FileWatcher {
-    async fn handle(&mut self, _: Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
+    async fn handle(&mut self, _: Configure, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         let forwarder = EventsForwarder::from(ctx.address().clone());
         let mut watcher = recommended_watcher(forwarder)?;
         watcher.watch(&self.path, RecursiveMode::NonRecursive)?;
@@ -86,7 +86,7 @@ type EventResult = Result<Event, notify::Error>;
 
 #[async_trait]
 impl OnEvent<EventResult> for FileWatcher {
-    async fn handle(&mut self, result: EventResult, ctx: &mut Self::Context) -> Result<()> {
+    async fn handle(&mut self, result: EventResult, ctx: &mut Context<Self>) -> Result<()> {
         let _event = result?;
         self.counter += 1;
         if self.debouncer.is_empty() {

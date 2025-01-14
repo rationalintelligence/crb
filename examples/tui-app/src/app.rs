@@ -2,11 +2,9 @@ use crate::events::EventsDrainer;
 use crate::state::AppState;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{
-    Agent, ReachableContext, DoAsync, DoSync, Duty, Next, OnEvent,
-};
-use crb::superagent::{Supervisor, SupervisorSession};
+use crb::agent::{Agent, Context, DoAsync, DoSync, Duty, Next, OnEvent};
 use crb::core::Slot;
+use crb::superagent::{Supervisor, SupervisorSession};
 use crossterm::event::{Event, KeyCode};
 use ratatui::DefaultTerminal;
 
@@ -41,7 +39,7 @@ struct Configure;
 
 #[async_trait]
 impl Duty<Configure> for TuiApp {
-    async fn handle(&mut self, _: Configure, ctx: &mut Self::Context) -> Result<Next<Self>> {
+    async fn handle(&mut self, _: Configure, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         let terminal = ratatui::try_init()?;
         self.terminal.fill(terminal)?;
         let address = ctx.address().clone();
@@ -53,7 +51,7 @@ impl Duty<Configure> for TuiApp {
 
 #[async_trait]
 impl OnEvent<Event> for TuiApp {
-    async fn handle(&mut self, event: Event, ctx: &mut Self::Context) -> Result<()> {
+    async fn handle(&mut self, event: Event, ctx: &mut Context<Self>) -> Result<()> {
         let next_state = match event {
             Event::Key(event) => match event.code {
                 KeyCode::Char('q') => Next::do_async(Terminate),

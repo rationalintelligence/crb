@@ -74,7 +74,7 @@ where
     T: DoSync<S>,
     S: AgentState,
 {
-    async fn perform(&mut self, mut agent: T, ctx: &mut T::Context) -> Transition<T> {
+    async fn perform(&mut self, mut agent: T, ctx: &mut Context<T>) -> Transition<T> {
         let interruptor = ctx.session().controller.interruptor.clone();
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use crb_agent::performers::{ConsumptionReason, Next, StatePerformer, Transition};
-use crb_agent::{Address, Agent, AgentContext, AgentSession, RunAgent};
+use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, RunAgent};
 use crb_runtime::{Controller, Interruptor, ManagedContext, ReachableContext, Runtime, Task};
 use std::marker::PhantomData;
 
@@ -41,7 +41,7 @@ where
     A: MoltTo<T>,
     T: Agent<Context = MoltingSession<T>>,
 {
-    async fn perform(&mut self, agent: A, session: &mut A::Context) -> Transition<A> {
+    async fn perform(&mut self, agent: A, session: &mut Context<A>) -> Transition<A> {
         let next_agent = agent.molt();
         if let Some(next_agent) = next_agent {
             let next_runtime = RunAgent::new(next_agent);

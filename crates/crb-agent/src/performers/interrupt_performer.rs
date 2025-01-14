@@ -1,4 +1,5 @@
 use crate::agent::Agent;
+use crate::context::Context;
 use crate::performers::{Next, StatePerformer, StopReason, Transition, TransitionCommand};
 use anyhow::Error;
 use async_trait::async_trait;
@@ -40,7 +41,7 @@ impl<A> StatePerformer<A> for StopPerformer
 where
     A: Agent,
 {
-    async fn perform(&mut self, agent: A, _session: &mut A::Context) -> Transition<A> {
+    async fn perform(&mut self, agent: A, _session: &mut Context<A>) -> Transition<A> {
         let reason = self.reason.take().unwrap_or(StopReason::Interrupted);
         let command = TransitionCommand::Stop(reason);
         Transition::Continue { agent, command }

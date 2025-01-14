@@ -9,6 +9,7 @@ pub mod sync_performer;
 
 use crate::address::Envelope;
 use crate::agent::Agent;
+use crate::context::Context;
 use anyhow::Error;
 use async_trait::async_trait;
 use std::fmt;
@@ -110,5 +111,5 @@ impl<T: Agent> fmt::Debug for Transition<T> {
 
 #[async_trait]
 pub trait StatePerformer<T: Agent + ?Sized>: Send + 'static {
-    async fn perform(&mut self, agent: T, session: &mut T::Context) -> Transition<T>;
+    async fn perform(&mut self, agent: T, session: &mut Context<T>) -> Transition<T>;
 }

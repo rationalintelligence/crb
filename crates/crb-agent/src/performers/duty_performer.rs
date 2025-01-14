@@ -1,13 +1,14 @@
 use crate::agent::Agent;
+use crate::context::Context;
 use crate::performers::{Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 
 #[async_trait]
 pub trait Duty<E>: Agent {
-    async fn handle(&mut self, event: E, ctx: &mut Self::Context) -> Result<Next<Self>>;
+    async fn handle(&mut self, event: E, ctx: &mut Context<Self>) -> Result<Next<Self>>;
 
-    async fn fallback(&mut self, err: Error, _ctx: &mut Self::Context) -> Next<Self> {
+    async fn fallback(&mut self, err: Error, _ctx: &mut Context<Self>) -> Next<Self> {
         Next::fail(err)
     }
 }
@@ -35,7 +36,7 @@ where
     A: Duty<E>,
     E: Send + 'static,
 {
-    async fn perform(&mut self, mut agent: A, ctx: &mut A::Context) -> Transition<A> {
+    async fn perform(&mut self, mut agent: A, ctx: &mut Context<A>) -> Transition<A> {
         let event = self.event.take().unwrap();
         let next_state = match agent.handle(event, ctx).await {
             Ok(next) => next,

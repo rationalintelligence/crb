@@ -19,7 +19,7 @@ pub trait Agent: Sized + Send + 'static {
         Next::events()
     }
 
-    fn interrupt(&mut self, ctx: &mut Self::Context) {
+    fn interrupt(&mut self, ctx: &mut Context<Self>) {
         ctx.shutdown();
     }
 

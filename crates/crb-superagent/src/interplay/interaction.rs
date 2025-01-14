@@ -3,7 +3,7 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use crb_core::Tag;
-use derive_more::{Deref, DerefMut};
+use derive_more::{Deref, DerefMut, From, Into};
 use std::future::IntoFuture;
 
 pub trait Request: Send + 'static {
@@ -37,12 +37,12 @@ pub trait OnRequest<R: Request>: Agent {
     }
 }
 
-#[derive(Deref, DerefMut)]
-pub struct ResponseFetcher<OUT> {
+#[derive(Deref, DerefMut, From, Into)]
+pub struct ForwardableFetcher<OUT> {
     pub fetcher: Fetcher<OUT>,
 }
 
-impl<OUT> ResponseFetcher<OUT> {
+impl<OUT> ForwardableFetcher<OUT> {
     pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
     where
         A: OnResponse<OUT, T>,
@@ -58,7 +58,7 @@ impl<OUT> ResponseFetcher<OUT> {
     }
 }
 
-impl<OUT> IntoFuture for ResponseFetcher<OUT> {
+impl<OUT> IntoFuture for ForwardableFetcher<OUT> {
     type Output = Output<OUT>;
     type IntoFuture = Fetcher<OUT>;
 
@@ -68,7 +68,7 @@ impl<OUT> IntoFuture for ResponseFetcher<OUT> {
 }
 
 pub trait AddressExt<R: Request> {
-    fn interact(&self, request: R) -> ResponseFetcher<R::Response>;
+    fn interact(&self, request: R) -> ForwardableFetcher<R::Response>;
 }
 
 impl<A, R> AddressExt<R> for Address<A>
@@ -76,12 +76,12 @@ where
     A: OnRequest<R>,
     R: Request,
 {
-    fn interact(&self, request: R) -> ResponseFetcher<R::Response> {
+    fn interact(&self, request: R) -> ForwardableFetcher<R::Response> {
         let (interplay, fetcher) = Interplay::new_pair(request);
         let msg = Interaction { interplay };
         let res = self.send(msg);
         let fetcher = fetcher.grasp(res);
-        ResponseFetcher { fetcher }
+        fetcher.into()
     }
 }
 

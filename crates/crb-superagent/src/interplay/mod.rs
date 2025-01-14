@@ -53,6 +53,10 @@ impl<OUT> Fetcher<OUT> {
         tx.send(Err(err)).ok();
         Fetcher { rx }
     }
+
+    pub fn forwardable(self) -> ForwardableFetcher<OUT> {
+        self.into()
+    }
 }
 
 #[derive(Error, Debug)]

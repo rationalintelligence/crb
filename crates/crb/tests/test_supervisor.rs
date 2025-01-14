@@ -12,7 +12,7 @@ impl Standalone for TestSupervisor {}
 impl Supervisor for TestSupervisor {
     type GroupBy = ();
 
-    fn finished(&mut self, _rel: &Relation<Self>, ctx: &mut Self::Context) {
+    fn finished(&mut self, _rel: &Relation<Self>, ctx: &mut Context<Self>) {
         if !self.respawned_once {
             self.respawned_once = true;
             ctx.spawn_agent(Child, ());

@@ -14,7 +14,7 @@ pub struct ActivityId(usize);
 pub trait Supervisor: Agent {
     type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;
 
-    fn finished(&mut self, _rel: &Relation<Self>, _ctx: &mut Self::Context) {}
+    fn finished(&mut self, _rel: &Relation<Self>, _ctx: &mut Context<Self>) {}
 }
 
 pub trait SupervisorContext<S: Supervisor> {

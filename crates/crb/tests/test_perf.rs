@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Agent, AgentSession, Duty, ManagedContext, Next, OnEvent, ReachableContext, Standalone,
+    Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, ReachableContext, Standalone,
 };
 use std::time::{Duration, Instant};
 
@@ -67,7 +67,7 @@ impl Duty<SelfCall> for TestTime {
 
 #[async_trait]
 impl OnEvent<SelfCall> for TestTime {
-    async fn handle(&mut self, _: SelfCall, ctx: &mut Self::Context) -> Result<()> {
+    async fn handle(&mut self, _: SelfCall, ctx: &mut Context<Self>) -> Result<()> {
         if self.is_done() {
             self.report_and_reset("actor");
             ctx.shutdown();

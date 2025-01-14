@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{Address, Agent, AgentSession, Equip, OnEvent, Standalone};
+use crb::agent::{Address, Agent, AgentSession, Context, Equip, OnEvent, Standalone};
 use derive_more::{Deref, DerefMut, From};
 
 struct TestAgent;
@@ -16,7 +16,7 @@ struct Print(pub String);
 
 #[async_trait]
 impl OnEvent<Print> for TestAgent {
-    async fn handle(&mut self, event: Print, _ctx: &mut Self::Context) -> Result<()> {
+    async fn handle(&mut self, event: Print, _ctx: &mut Context<Self>) -> Result<()> {
         println!("{}", event.0);
         Ok(())
     }

@@ -28,9 +28,9 @@ pub trait OnEvent<E>: Agent {
     // TODO: Add when RFC 192 will be implemented (associated types defaults)
     // type Error: Into<Error> + Send + 'static;
 
-    async fn handle(&mut self, event: E, ctx: &mut Self::Context) -> Result<()>;
+    async fn handle(&mut self, event: E, ctx: &mut Context<Self>) -> Result<()>;
 
-    async fn fallback(&mut self, err: Error, _ctx: &mut Self::Context) -> Result<()> {
+    async fn fallback(&mut self, err: Error, _ctx: &mut Context<Self>) -> Result<()> {
         Err(err)
     }
 }

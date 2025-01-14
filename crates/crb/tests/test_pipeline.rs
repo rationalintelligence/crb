@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb::agent::{Agent, AgentSession, Next, Standalone};
+use crb::agent::{Agent, AgentSession, Context, Next, Standalone};
 use crb_pipeline::Stage;
 use tokio::time::{sleep, Duration};
 
@@ -13,7 +13,7 @@ impl Agent for FirstProcessor {
     type Context = AgentSession<Self>;
     type Output = ();
 
-    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         println!("FirstProcessor");
         if let Some(value) = self.value.as_mut() {
             *value *= 2;
@@ -49,7 +49,7 @@ impl Agent for SecondProcessor {
     type Context = AgentSession<Self>;
     type Output = ();
 
-    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         println!("SecondProcessor");
         if let Some(value) = self.value.as_mut() {
             *value *= 2;

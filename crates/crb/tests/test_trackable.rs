@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb::agent::{Agent, AgentSession, Next, OnEvent, Standalone};
+use crb::agent::{Agent, AgentSession, Context, Next, OnEvent, Standalone};
 use crb::superagent::{Supervisor, SupervisorSession};
 
 struct Printer;
@@ -29,7 +29,7 @@ impl Agent for Main {
     type Context = SupervisorSession<Self>;
     type Output = ();
 
-    fn initialize(&mut self, ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, ctx: &mut Context<Self>) -> Next<Self> {
         ctx.event(SendPrint)
             .map(|_| Next::events())
             .unwrap_or_else(Next::fail)

@@ -11,7 +11,7 @@ pub trait Agent: Sized + Send + 'static {
     type Context: AgentContext<Self>;
     type Output: Output;
 
-    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         self.begin()
     }
 
@@ -34,11 +34,11 @@ pub trait Agent: Sized + Send + 'static {
         Ok(())
     }
 
-    fn failed(&mut self, err: &Error, _ctx: &mut Self::Context) {
+    fn failed(&mut self, err: &Error, _ctx: &mut Context<Self>) {
         log::error!("Agent [{}] failed: {err}", type_name::<Self>());
     }
 
-    fn finalize(self, _ctx: &mut Self::Context) -> Option<Self::Output> {
+    fn finalize(self, _ctx: &mut Context<Self>) -> Option<Self::Output> {
         self.end()
     }
 

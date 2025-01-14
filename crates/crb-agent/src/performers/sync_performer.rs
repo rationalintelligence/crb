@@ -1,5 +1,5 @@
 use crate::agent::{Agent, Output};
-use crate::context::{AgentContext, AgentSession};
+use crate::context::{AgentContext, AgentSession, Context};
 use crate::performers::{
     AgentState, ConsumptionReason, Next, StatePerformer, Transition, TransitionCommand,
 };
@@ -116,11 +116,11 @@ impl<T: Output> Agent for SyncFn<T> {
     type Context = AgentSession<Self>;
     type Output = T;
 
-    fn initialize(&mut self, _ctx: &mut Self::Context) -> Next<Self> {
+    fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         Next::do_sync(CallFn)
     }
 
-    fn finalize(self, _ctx: &mut Self::Context) -> Option<Self::Output> {
+    fn finalize(self, _ctx: &mut Context<Self>) -> Option<Self::Output> {
         self.output
     }
 }

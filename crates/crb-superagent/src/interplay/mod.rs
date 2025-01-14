@@ -75,3 +75,13 @@ impl<OUT> Future for Fetcher<OUT> {
         })
     }
 }
+
+impl<IN, OUT> Interplay<IN, OUT> {
+    pub fn new_pair(request: IN) -> (Self, Fetcher<OUT>) {
+        let (tx, rx) = oneshot::channel();
+        let responder = Responder { tx };
+        let interplay = Interplay { request, responder };
+        let fetcher = Fetcher { rx };
+        (interplay, fetcher)
+    }
+}

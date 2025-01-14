@@ -1,9 +1,8 @@
-use super::{Output, Interplay, Responder, Fetcher};
+use super::{Output, Interplay, Fetcher};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, MessageFor};
 use crb_core::Tag;
-use futures::channel::oneshot;
 
 pub trait Request: Send + 'static {
     type Response: Send + 'static;
@@ -11,17 +10,6 @@ pub trait Request: Send + 'static {
 
 pub struct Interaction<R: Request> {
     pub interplay: Interplay<R, R::Response>,
-}
-
-impl<R: Request> Interaction<R> {
-    pub fn new_pair(request: R) -> (Self, Fetcher<R::Response>) {
-        let (tx, rx) = oneshot::channel();
-        let responder = Responder { tx };
-        let interplay = Interplay { request, responder };
-        let interaction = Interaction { interplay };
-        let fetcher = Fetcher { rx };
-        (interaction, fetcher)
-    }
 }
 
 #[async_trait]
@@ -47,8 +35,11 @@ pub trait OnRequest<R: Request>: Agent {
     }
 }
 
-// TODO: Implement that for a wrapper
-impl<OUT> Fetcher<OUT> {
+pub struct ResponseFetcher<OUT> {
+    pub fetcher: Fetcher<OUT>,
+}
+
+impl<OUT> ResponseFetcher<OUT> {
     pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
     where
         A: OnResponse<OUT, T>,
@@ -56,7 +47,7 @@ impl<OUT> Fetcher<OUT> {
         T: Tag,
     {
         crb_core::spawn(async move {
-            let response = self.await;
+            let response = self.fetcher.await;
             if let Err(err) = address.send(Response { response, tag }) {
                 log::error!("Can't send a reponse: {err}");
             }
@@ -65,7 +56,7 @@ impl<OUT> Fetcher<OUT> {
 }
 
 pub trait AddressExt<R: Request> {
-    fn interact(&self, request: R) -> Fetcher<R::Response>;
+    fn interact(&self, request: R) -> ResponseFetcher<R::Response>;
 }
 
 impl<A, R> AddressExt<R> for Address<A>
@@ -73,10 +64,12 @@ where
     A: OnRequest<R>,
     R: Request,
 {
-    fn interact(&self, request: R) -> Fetcher<R::Response> {
-        let (msg, fetcher) = Interaction::new_pair(request);
+    fn interact(&self, request: R) -> ResponseFetcher<R::Response> {
+        let (interplay, fetcher) = Interplay::new_pair(request);
+        let msg = Interaction { interplay };
         let res = self.send(msg);
-        fetcher.grasp(res)
+        let fetcher = fetcher.grasp(res);
+        ResponseFetcher { fetcher }
     }
 }
 

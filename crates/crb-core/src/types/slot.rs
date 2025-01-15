@@ -89,6 +89,11 @@ impl<T> Slot<T> {
             .ok_or_else(|| SlotError::empty(&self.title))
     }
 
+    /// Replace an entry a value out.
+    pub fn refill(&mut self, value: T) -> Option<T> {
+        self.value.replace(value)
+    }
+
     /// Clone and take the value.
     pub fn cloned(&self) -> Result<T, SlotError>
     where

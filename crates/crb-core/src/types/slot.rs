@@ -1,8 +1,8 @@
 //! A wrapper that makes `Option` compatible with `Result`.
 
 use derive_more::Display;
-use thiserror::Error;
 use std::any::type_name;
+use thiserror::Error;
 
 /// A reason of slot interaction fail.
 #[derive(Display, Debug)]

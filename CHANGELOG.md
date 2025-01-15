@@ -5,7 +5,7 @@
 - **Timeout** - Timeouts that send an event only once.
 - **Subscriptions** - The new pattern.
 - **Context** - A context wrapper that could be extended as an `Address`.
-- **AddressFor** - A trait to get a cloned address from `Address` or `Context` references.
+- **ToAddress** - A trait to get a cloned address from `Address` or `Context` references.
 
 ## Improved
 

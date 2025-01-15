@@ -1,7 +1,7 @@
 use super::{Fetcher, Interplay, Output};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, Context, MessageFor};
+use crb_agent::{Address, Agent, Context, MessageFor, ToAddress};
 use crb_core::Tag;
 use derive_more::{Deref, DerefMut, From, Into};
 use std::future::IntoFuture;
@@ -71,12 +71,13 @@ pub struct ForwardableFetcher<OUT> {
 }
 
 impl<OUT> ForwardableFetcher<OUT> {
-    pub fn forward_to<A, T>(self, address: Address<A>, tag: T)
+    pub fn forward_to<A, T>(self, recipient: impl ToAddress<A>, tag: T)
     where
         A: OnResponse<OUT, T>,
         OUT: Send + 'static,
         T: Tag,
     {
+        let address = recipient.to_address();
         crb_core::spawn(async move {
             let response = self.fetcher.await;
             if let Err(err) = address.send(Response { response, tag }) {

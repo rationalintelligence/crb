@@ -23,6 +23,24 @@ impl<A: Agent> Address<A> {
     }
 }
 
+impl<A: Agent> Context<A> {
+    pub fn event<E>(&self, event: E) -> Result<()>
+    where
+        A: OnEvent<E>,
+        E: Send + 'static,
+    {
+        self.address().event(event)
+    }
+
+    pub fn recipient<E>(&self) -> Recipient<E>
+    where
+        A: OnEvent<E>,
+        E: Send + 'static,
+    {
+        self.address().recipient()
+    }
+}
+
 #[async_trait]
 pub trait OnEvent<E>: Agent {
     // TODO: Add when RFC 192 will be implemented (associated types defaults)

@@ -74,8 +74,6 @@ where
 {
     async fn run(self) -> Result<Option<Self::Output>> {
         let mut runtime = RunAgent::new(self);
-        runtime.perform_routine().await?;
-        let output = runtime.context.address().clone().join().await?.output();
-        Ok(output)
+        runtime.perform_and_return().await
     }
 }

@@ -32,7 +32,13 @@ impl<A: Agent> RunAgent<A> {
 }
 
 impl<T: Agent> RunAgent<T> {
-    pub(crate) async fn perform_routine(&mut self) -> Result<()> {
+    pub async fn perform_and_report(&mut self) -> Result<()> {
+        let output = self.perform_and_return().await?;
+        self.context.session().joint.report(output)?;
+        Ok(())
+    }
+
+    pub async fn perform_and_return(&mut self) -> Result<Option<T::Output>> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
@@ -42,8 +48,7 @@ impl<T: Agent> RunAgent<T> {
                 self.failures.put(res);
             }
         }
-        self.context.session().joint.report(output)?;
-        Ok(())
+        Ok(output)
     }
 
     async fn perform_task(&mut self) -> Result<Option<T::Output>> {
@@ -132,7 +137,7 @@ where
     }
 
     async fn routine(&mut self) {
-        let result = self.perform_routine().await;
+        let result = self.perform_and_report().await;
         self.failures.put(result.map(drop));
     }
 }

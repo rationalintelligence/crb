@@ -1,0 +1,14 @@
+[package]
+public = false
+name = "crb-example-axum-handler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+async-trait = "0.1.83"
+axum = "0.8.1"
+crb.path = "../../crates/crb"
+futures = "0.3.31"
+http = "1.2.0"
+tokio = { version = "1.42.0", features = ["full"] }

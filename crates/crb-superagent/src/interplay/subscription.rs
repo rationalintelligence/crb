@@ -34,12 +34,12 @@ where
     }
 }
 
+#[must_use]
 pub struct StateEntry<S: Subscription> {
     pub state: S::State,
     pub entry: Entry<S>,
 }
 
-#[must_use]
 pub struct Entry<S: Subscription> {
     sub_id: UniqueId<S>,
     recipient: Recipient<Unsubscribe<S>>,

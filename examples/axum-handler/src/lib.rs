@@ -5,26 +5,43 @@ use futures::{Future, FutureExt};
 use http::StatusCode;
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::sync::Mutex;
 
-pub trait RequestAgent: Agent<Context: Default, Output = Response> {
+pub trait RequestAgent: Agent<Context: Default, Output = Mutex<Response>> {
     fn from_request(request: Request) -> Self;
 }
 
-pub struct AgentHandler<A> {
-    _type: PhantomData<A>,
+pub struct AgentHandler<A, T, S> {
+    _a: PhantomData<A>,
+    _t: PhantomData<T>,
+    _s: PhantomData<S>,
 }
 
-unsafe impl<A> Sync for AgentHandler<A> {}
-
-impl<A> Clone for AgentHandler<A> {
-    fn clone(&self) -> Self {
-        Self { _type: PhantomData }
+impl<A, T, S> AgentHandler<A, T, S> {
+    pub fn new() -> Self {
+        Self {
+            _a: PhantomData,
+            _t: PhantomData,
+            _s: PhantomData,
+        }
     }
 }
 
-impl<A, T, S> Handler<T, S> for AgentHandler<A>
+unsafe impl<A, T, S> Send for AgentHandler<A, T, S> {}
+
+unsafe impl<A, T, S> Sync for AgentHandler<A, T, S> {}
+
+impl<A, T, S> Clone for AgentHandler<A, T, S> {
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
+impl<A, T, S> Handler<T, S> for AgentHandler<A, T, S>
 where
     A: RequestAgent,
+    T: 'static,
+    S: 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
 
@@ -38,9 +55,9 @@ where
     }
 }
 
-fn handle_errors(res: Result<Option<Response>>) -> Response {
+fn handle_errors(res: Result<Option<Mutex<Response>>>) -> Response {
     match res {
-        Ok(Some(response)) => response,
+        Ok(Some(response)) => response.into_inner().unwrap(),
         Ok(None) => {
             let mut response = Response::new("Handler has interrupted".into());
             *response.status_mut() = StatusCode::SERVICE_UNAVAILABLE;

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Context, Address, Agent, AgentSession, Duty, ManagedContext, Next, OnEvent, Standalone,
+    Address, Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone,
 };
 use crb::core::{time::Duration, Slot};
 use crb::superagent::{OnTimeout, Timeout};
@@ -34,8 +34,8 @@ impl FileWatcher {
     pub fn new() -> Self {
         Self {
             path: DEFAULT_PATH.into(),
-            watcher: Slot::empty("file watcher"),
-            debouncer: Slot::empty("events debouncer"),
+            watcher: Slot::empty(),
+            debouncer: Slot::empty(),
             counter: 0,
         }
     }

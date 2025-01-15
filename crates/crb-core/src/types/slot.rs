@@ -2,6 +2,7 @@
 
 use derive_more::Display;
 use thiserror::Error;
+use std::any::type_name;
 
 /// A reason of slot interaction fail.
 #[derive(Display, Debug)]
@@ -46,14 +47,17 @@ pub struct Slot<T> {
 
 impl<T> Slot<T> {
     /// Create a new instance.
-    pub fn empty(title: &'static str) -> Self {
-        Self { title, value: None }
+    pub fn empty() -> Self {
+        Self {
+            title: type_name::<T>(),
+            value: None,
+        }
     }
 
     /// Create a new instance filled with a value.
-    pub fn filled(title: &'static str, value: T) -> Self {
+    pub fn filled(value: T) -> Self {
         Self {
-            title,
+            title: type_name::<T>(),
             value: Some(value),
         }
     }

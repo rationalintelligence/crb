@@ -577,7 +577,7 @@ The project was originally created by [@therustmonk](https://github.com/therustm
 
 <a href="https://crateful.substack.com/" target="_blank"><img src="https://runtime-blocks.github.io/website/repo/crb/assets/crateful-logo.png" width="100px" /></a>
 
-To support the project, please subscribe to [Crateful](https://crateful.substack.com/), my newsletter about Rust crates, which gathers information using a cast of crab agents written in this framework.
+To support the project, consider subscribing to [Crateful](https://crateful.substack.com/), my newsletter focused on AI agent development in Rust. It features insights gathered by a group of crab agents built with this framework.
 
 # License
 

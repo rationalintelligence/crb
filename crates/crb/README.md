@@ -35,7 +35,7 @@ The key feature is its ability to combine the roles, enabling the implementation
 The following projects have been implemented using the framework:
 
 - [Ice-Nine](https://github.com/NethermindEth/ice-nine) - AI agents that work everywhere.
-- [Crateful](https://lab.knowledge.dev/) - A journal about Rust crates, with information gathered by crab agents.
+- [Crateful](https://lab.knowledge.dev/) - Newsletter about AI agent development in Rust.
 - [Knowledge.Dev](https://knowledge.dev/) - An interactive book for learning practical, idiomatic Rust (product is entirely written in Rust).
 
 # Examples

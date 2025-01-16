@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
+use crb_agent::{Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent, ToAddress};
 use crb_core::{
     time::{sleep, Duration},
     SyncTag,
@@ -9,6 +9,7 @@ use crb_runtime::{JobHandle, Task};
 use crb_send::{MessageSender, Sender};
 use std::sync::Arc;
 
+// TODO: Refactor to use `OnEvent`
 #[async_trait]
 pub trait OnTick<T = ()>: Agent {
     async fn on_tick(&mut self, tag: &T, ctx: &mut Context<Self>) -> Result<()>;
@@ -20,7 +21,7 @@ pub struct Interval {
 }
 
 impl Interval {
-    pub fn new<A, T>(address: Address<A>, duration: Duration, tag: T) -> Self
+    pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, tag: T) -> Self
     where
         A: OnTick<T>,
         T: SyncTag,
@@ -28,7 +29,7 @@ impl Interval {
         let task = IntervalTask {
             duration,
             tag: Arc::new(tag),
-            sender: address.sender(),
+            sender: address.to_address().sender(),
         };
         let mut job = RunAgent::new(task).spawn().job();
         job.cancel_on_drop(true);

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
+use crb_agent::{Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent, ToAddress};
 use crb_core::{
     time::{sleep, Duration},
     Slot, SyncTag,
@@ -8,6 +8,7 @@ use crb_core::{
 use crb_runtime::{JobHandle, Task};
 use crb_send::{MessageSender, Sender};
 
+// TODO: Refactor to use `OnEvent`
 #[async_trait]
 pub trait OnTimeout<T = ()>: Agent {
     async fn on_timeout(&mut self, tag: T, ctx: &mut Context<Self>) -> Result<()>;
@@ -19,7 +20,7 @@ pub struct Timeout {
 }
 
 impl Timeout {
-    pub fn new<A, T>(address: Address<A>, duration: Duration, tag: T) -> Self
+    pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, tag: T) -> Self
     where
         A: OnTimeout<T>,
         T: SyncTag,
@@ -27,7 +28,7 @@ impl Timeout {
         let task = TimeoutTask {
             duration,
             tag: Slot::filled(tag),
-            sender: address.sender(),
+            sender: address.to_address().sender(),
         };
         let mut job = RunAgent::new(task).spawn().job();
         job.cancel_on_drop(true);

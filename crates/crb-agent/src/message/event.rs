@@ -41,6 +41,7 @@ impl<A: Agent> Context<A> {
     }
 }
 
+/// Do not introduce tags: use event wrapper instead.
 #[async_trait]
 pub trait OnEvent<E>: Agent {
     // TODO: Add when RFC 192 will be implemented (associated types defaults)

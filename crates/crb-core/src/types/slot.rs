@@ -89,6 +89,11 @@ impl<T> Slot<T> {
             .ok_or_else(|| SlotError::empty(&self.title))
     }
 
+    /// Take a value out.
+    pub fn reset(&mut self) {
+        self.value.take();
+    }
+
     /// Replace an entry a value out.
     pub fn refill(&mut self, value: T) -> Option<T> {
         self.value.replace(value)

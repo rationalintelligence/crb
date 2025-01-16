@@ -1,4 +1,4 @@
-<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-header.png" width="100%" />
+<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-header.png" width="400px" />
 
 # CRB | Composable Runtime Blocks
 
@@ -24,11 +24,11 @@ A hybrid workload is a concurrent task capable of switching roles - it can funct
 
 The implementation is designed as a **fully portable solution** that can run in a standard environment, a WASM virtual machine (e.g., in a browser), or a TEE enclave. This approach significantly reduces development costs by allowing you to reuse code across all parts of your application: backend, frontend, agents, and more.
 
-<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-arch.png" width="400px" align="center" />
+<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-arch.png" width="400px" />
 
 The key feature is its ability to combine the roles, enabling the implementation of algorithms with **complex branching** that would be impossible in the flat structure of a standard function. This makes it ideal for building the framework of large-scale applications or implementing complex workflows, such as AI pipelines.
 
-<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-hybryd.png" width="400px" align="center" />
+<img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-hybryd.png" width="400px" />
 
 # Projects
 

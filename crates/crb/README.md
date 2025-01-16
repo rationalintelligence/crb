@@ -1,6 +1,6 @@
 <img src="https://runtime-blocks.github.io/website/repo/crb/assets/crb-header.png" width="400px" />
 
-# CRB | Composable Runtime Blocks
+# Composable Runtime Blocks
 
 [![Crates.io][crates-badge]][crates-url]
 [![MIT licensed][mit-badge]][mit-url]

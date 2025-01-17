@@ -3,42 +3,60 @@ use async_trait::async_trait;
 use crb_agent::{Agent, AgentSession, DoAsync, Next, OnEvent, RunAgent, ToAddress};
 use crb_core::{
     time::{sleep, Duration},
-    Slot, Tag,
+    Tag,
 };
 use crb_runtime::{JobHandle, Task};
 use crb_send::{Recipient, Sender};
 
-pub struct Timeout {
-    #[allow(unused)]
-    job: JobHandle,
+pub struct Timeout<T> {
+    job: Option<JobHandle>,
+    task: TimeoutTask<T>,
 }
 
-impl Timeout {
-    pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, event: T) -> Self
-    where
-        A: OnEvent<T>,
-        T: Tag,
-    {
+impl<T> Timeout<T>
+where
+    T: Tag + Clone,
+{
+    pub fn new(duration: Duration, event: T) -> Self {
         let task = TimeoutTask {
             duration,
-            event: Slot::filled(event),
-            sender: address.to_address().recipient(),
+            event,
+            listeners: Vec::new(),
         };
+        Self { job: None, task }
+    }
+
+    pub fn start(&mut self) {
+        self.clear();
+        let task = self.task.clone();
         let mut job = RunAgent::new(task).spawn().job();
         job.cancel_on_drop(true);
-        Self { job }
+        self.job = Some(job);
+    }
+
+    pub fn clear(&mut self) {
+        self.job.take();
+    }
+
+    pub fn add_listener<A>(&mut self, address: impl ToAddress<A>)
+    where
+        A: OnEvent<T>,
+    {
+        let recipient = address.to_address().recipient();
+        self.task.listeners.push(recipient);
     }
 }
 
+#[derive(Clone)]
 struct TimeoutTask<T> {
     duration: Duration,
-    event: Slot<T>,
-    sender: Recipient<T>,
+    event: T,
+    listeners: Vec<Recipient<T>>,
 }
 
 impl<T> Agent for TimeoutTask<T>
 where
-    T: Tag,
+    T: Tag + Clone,
 {
     type Context = AgentSession<Self>;
     type Output = ();
@@ -51,12 +69,13 @@ where
 #[async_trait]
 impl<T> DoAsync for TimeoutTask<T>
 where
-    T: Tag,
+    T: Tag + Clone,
 {
     async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         sleep(self.duration).await;
-        let event = self.event.take()?;
-        self.sender.send(event)?;
+        for listener in &self.listeners {
+            listener.send(self.event.clone())?;
+        }
         Ok(Next::done())
     }
 }

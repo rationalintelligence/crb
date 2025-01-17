@@ -4,7 +4,7 @@ use crb::agent::{
     Address, Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone,
 };
 use crb::core::{time::Duration, Slot};
-use crb::superagent::{OnTimeout, Timeout};
+use crb::superagent::Timeout;
 use derive_more::From;
 use notify::{
     recommended_watcher, Event, EventHandler, RecommendedWatcher, RecursiveMode, Watcher,
@@ -92,16 +92,18 @@ impl OnEvent<EventResult> for FileWatcher {
         if self.debouncer.is_empty() {
             let address = ctx.address().clone();
             let duration = Duration::from_millis(DEBOUNCE_MS);
-            let timeout = Timeout::new(address, duration, ());
+            let timeout = Timeout::new(address, duration, Tick);
             self.debouncer.fill(timeout)?;
         }
         Ok(())
     }
 }
 
+struct Tick;
+
 #[async_trait]
-impl OnTimeout for FileWatcher {
-    async fn on_timeout(&mut self, _: (), _ctx: &mut Context<Self>) -> Result<()> {
+impl OnEvent<Tick> for FileWatcher {
+    async fn handle(&mut self, _: Tick, _ctx: &mut Context<Self>) -> Result<()> {
         self.debouncer.take()?;
         println!(
             "{} file changed. Debounced events: {}",

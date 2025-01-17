@@ -7,10 +7,8 @@
 //! two priority queues). If we use the `SendError` we have to
 //! drop the details!
 
-pub mod message;
 pub mod notifier;
 pub mod sender;
 
-pub use message::*;
 pub use notifier::*;
 pub use sender::*;

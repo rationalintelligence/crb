@@ -8,12 +8,32 @@ use crb_core::{
 use crb_runtime::{JobHandle, Task};
 use crb_send::{Recipient, Sender};
 
-pub struct Timeout<T> {
+pub struct Timeout {
+    #[allow(unused)]
+    job: Option<JobHandle>,
+}
+
+impl Timeout {
+    pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, event: T) -> Self
+    where
+        A: OnEvent<T>,
+        T: Tag + Clone,
+    {
+        let mut switch = TimeoutSwitch::new(duration, event);
+        switch.add_listener(address);
+        switch.start();
+        Self {
+            job: switch.job.take(),
+        }
+    }
+}
+
+pub struct TimeoutSwitch<T> {
     job: Option<JobHandle>,
     task: TimeoutTask<T>,
 }
 
-impl<T> Timeout<T>
+impl<T> TimeoutSwitch<T>
 where
     T: Tag + Clone,
 {

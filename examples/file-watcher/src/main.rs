@@ -99,6 +99,7 @@ impl OnEvent<EventResult> for FileWatcher {
     }
 }
 
+#[derive(Clone)]
 struct Tick;
 
 #[async_trait]

@@ -22,7 +22,7 @@ impl Interval {
         let task = IntervalTask {
             duration,
             event,
-            sender: address.to_address().recipient(),
+            listeners: vec![address.to_address().recipient()],
         };
         let mut job = RunAgent::new(task).spawn().job();
         job.cancel_on_drop(true);
@@ -30,10 +30,51 @@ impl Interval {
     }
 }
 
+pub struct IntervalSwitch<T> {
+    job: Option<JobHandle>,
+    task: IntervalTask<T>,
+}
+
+impl<T> IntervalSwitch<T>
+where
+    T: Tag + Clone,
+{
+    pub fn new(duration: Duration, event: T) -> Self {
+        let task = IntervalTask {
+            duration,
+            event,
+            listeners: Vec::new(),
+        };
+        Self { job: None, task }
+    }
+
+    pub fn on(&mut self) {
+        if self.job.is_none() {
+            let task = self.task.clone();
+            let mut job = RunAgent::new(task).spawn().job();
+            job.cancel_on_drop(true);
+            self.job = Some(job);
+        }
+    }
+
+    pub fn off(&mut self) {
+        self.job.take();
+    }
+
+    pub fn add_listener<A>(&mut self, address: impl ToAddress<A>)
+    where
+        A: OnEvent<T>,
+    {
+        let recipient = address.to_address().recipient();
+        self.task.listeners.push(recipient);
+    }
+}
+
+#[derive(Clone)]
 struct IntervalTask<T> {
     duration: Duration,
     event: T,
-    sender: Recipient<T>,
+    listeners: Vec<Recipient<T>>,
 }
 
 impl<T> Agent for IntervalTask<T>
@@ -54,8 +95,9 @@ where
     T: Tag + Clone,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
-        let event = self.event.clone();
-        self.sender.send(event)?;
+        for listener in &self.listeners {
+            listener.send(self.event.clone())?;
+        }
         sleep(self.duration).await;
         Ok(None)
     }

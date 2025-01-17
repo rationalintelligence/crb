@@ -6,6 +6,7 @@
 - **Subscriptions** - The new pattern.
 - **Context** - A context wrapper that could be extended as an `Address`.
 - **ToAddress** - A trait to get a cloned address from `Address` or `Context` references.
+- **Switches** - Added `TimeoutSwitch` and `IntervalSwitch` - reusable versions of `Timeout` and `Interval`.
 
 ## Improved
 

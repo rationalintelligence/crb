@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use crb_agent::{Agent, AgentSession, DoAsync, Next, OnEvent, RunAgent, ToAddress};
 use crb_core::{
     time::{sleep, Duration},
-    Slot, SyncTag,
+    Slot, Tag,
 };
 use crb_runtime::{JobHandle, Task};
 use crb_send::{Recipient, Sender};
@@ -17,7 +17,7 @@ impl Timeout {
     pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, event: T) -> Self
     where
         A: OnEvent<T>,
-        T: SyncTag,
+        T: Tag,
     {
         let task = TimeoutTask {
             duration,
@@ -38,7 +38,7 @@ struct TimeoutTask<T> {
 
 impl<T> Agent for TimeoutTask<T>
 where
-    T: SyncTag,
+    T: Tag,
 {
     type Context = AgentSession<Self>;
     type Output = ();
@@ -51,7 +51,7 @@ where
 #[async_trait]
 impl<T> DoAsync for TimeoutTask<T>
 where
-    T: SyncTag,
+    T: Tag,
 {
     async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         sleep(self.duration).await;

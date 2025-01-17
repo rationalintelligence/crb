@@ -1,19 +1,12 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent, ToAddress};
+use crb_agent::{Agent, AgentSession, DoAsync, Next, OnEvent, RunAgent, ToAddress};
 use crb_core::{
     time::{sleep, Duration},
-    SyncTag,
+    Tag,
 };
 use crb_runtime::{JobHandle, Task};
-use crb_send::{MessageSender, Sender};
-use std::sync::Arc;
-
-// TODO: Refactor to use `OnEvent`
-#[async_trait]
-pub trait OnTick<T = ()>: Agent {
-    async fn on_tick(&mut self, tag: &T, ctx: &mut Context<Self>) -> Result<()>;
-}
+use crb_send::{Recipient, Sender};
 
 pub struct Interval {
     #[allow(unused)]
@@ -21,15 +14,15 @@ pub struct Interval {
 }
 
 impl Interval {
-    pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, tag: T) -> Self
+    pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, event: T) -> Self
     where
-        A: OnTick<T>,
-        T: SyncTag,
+        A: OnEvent<T>,
+        T: Tag + Clone,
     {
         let task = IntervalTask {
             duration,
-            tag: Arc::new(tag),
-            sender: address.to_address().sender(),
+            event,
+            sender: address.to_address().recipient(),
         };
         let mut job = RunAgent::new(task).spawn().job();
         job.cancel_on_drop(true);
@@ -39,13 +32,13 @@ impl Interval {
 
 struct IntervalTask<T> {
     duration: Duration,
-    tag: Arc<T>,
-    sender: MessageSender<Tick<T>>,
+    event: T,
+    sender: Recipient<T>,
 }
 
 impl<T> Agent for IntervalTask<T>
 where
-    T: SyncTag,
+    T: Tag + Clone,
 {
     type Context = AgentSession<Self>;
     type Output = ();
@@ -58,29 +51,12 @@ where
 #[async_trait]
 impl<T> DoAsync for IntervalTask<T>
 where
-    T: SyncTag,
+    T: Tag + Clone,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
-        let tick = Tick {
-            tag: self.tag.clone(),
-        };
-        self.sender.send(tick)?;
+        let event = self.event.clone();
+        self.sender.send(event)?;
         sleep(self.duration).await;
         Ok(None)
-    }
-}
-
-struct Tick<T> {
-    tag: Arc<T>,
-}
-
-#[async_trait]
-impl<A, T> MessageFor<A> for Tick<T>
-where
-    A: OnTick<T>,
-    T: SyncTag,
-{
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
-        agent.on_tick(&self.tag, ctx).await
     }
 }

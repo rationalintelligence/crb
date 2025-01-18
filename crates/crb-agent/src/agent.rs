@@ -37,14 +37,6 @@ pub trait Agent: Sized + Send + 'static {
     fn failed(&mut self, err: &Error, _ctx: &mut Context<Self>) {
         log::error!("Agent [{}] failed: {err}", type_name::<Self>());
     }
-
-    fn finalize(self, _ctx: &mut Context<Self>) -> Option<Self::Output> {
-        self.end()
-    }
-
-    fn end(self) -> Option<Self::Output> {
-        None
-    }
 }
 
 pub trait Output: Sync + Send + 'static {}

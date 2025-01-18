@@ -32,10 +32,11 @@ impl<T: Goal> Agent for AsyncFn<T> {
     }
 }
 
+#[async_trait]
 impl<T: Goal> Mission for AsyncFn<T> {
     type Goal = T;
 
-    fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
+    async fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
         self.output
     }
 }

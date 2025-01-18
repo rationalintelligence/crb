@@ -1,13 +1,13 @@
 use anyhow::Result;
 use axum::{extract::Request, handler::Handler, response::Response};
-use crb::agent::{Agent, RunAgent};
+use crb::superagent::{Mission, RunMission};
 use futures::{Future, FutureExt};
 use http::StatusCode;
 use std::marker::PhantomData;
 use std::pin::Pin;
-use std::sync::Mutex;
 
-pub trait RequestAgent: Agent<Context: Default, Output = Mutex<Response>> {
+// TODO: Goal: IntoResponse
+pub trait RequestAgent: Mission<Context: Default, Goal = Response> {
     fn from_request(request: Request) -> Self;
 }
 
@@ -48,16 +48,16 @@ where
     fn call(self, req: Request, _state: S) -> Self::Future {
         FutureExt::boxed(async {
             let agent = A::from_request(req);
-            let mut runtime = RunAgent::new(agent);
-            let result = runtime.perform_and_return().await;
+            let mut runtime = RunMission::new(agent);
+            let result = runtime.perform().await;
             handle_errors(result)
         })
     }
 }
 
-fn handle_errors(res: Result<Option<Mutex<Response>>>) -> Response {
+fn handle_errors(res: Result<Option<Response>>) -> Response {
     match res {
-        Ok(Some(response)) => response.into_inner().unwrap(),
+        Ok(Some(response)) => response,
         Ok(None) => {
             let mut response = Response::new("Handler has interrupted".into());
             *response.status_mut() = StatusCode::SERVICE_UNAVAILABLE;

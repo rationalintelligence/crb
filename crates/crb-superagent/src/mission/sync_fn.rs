@@ -1,5 +1,6 @@
 use super::{runtime::RunMission, Goal, Mission};
 use anyhow::Result;
+use async_trait::async_trait;
 use crb_agent::{Agent, AgentSession, Context, DoSync, Next};
 
 impl<T: Goal> RunMission<SyncFn<T>> {
@@ -30,10 +31,11 @@ impl<T: Goal> Agent for SyncFn<T> {
     }
 }
 
+#[async_trait]
 impl<T: Goal> Mission for SyncFn<T> {
     type Goal = T;
 
-    fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
+    async fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
         self.output
     }
 }

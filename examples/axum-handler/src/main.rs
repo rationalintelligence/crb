@@ -1,8 +1,9 @@
 use anyhow::Result;
+use async_trait::async_trait;
 use axum::{extract::Request, response::Response, routing::get, Router};
-use crb::agent::{Agent, AgentSession, Next};
+use crb::agent::{Agent, AgentSession, Next, Context};
+use crb::superagent::Mission;
 use crb_example_axum_handler::{AgentHandler, RequestAgent};
-use std::sync::Mutex;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -23,9 +24,18 @@ pub struct HelloWorld;
 
 impl Agent for HelloWorld {
     type Context = AgentSession<Self>;
-    type Output = Mutex<Response>;
+    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         Next::interrupt()
+    }
+}
+
+#[async_trait]
+impl Mission for HelloWorld {
+    type Goal = Response;
+
+    async fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
+        Some(Response::new("Hello!".into()))
     }
 }

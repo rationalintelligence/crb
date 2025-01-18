@@ -69,17 +69,15 @@ impl fmt::Debug for StopReason {
     }
 }
 
-pub enum ConsumptionReason<O> {
-    // TODO: Must contains `Option<Output>`
-    // optional - to consume for molting
-    Transformed(Option<O>),
+pub enum ConsumptionReason {
+    Transformed,
     Crashed(Error),
 }
 
-impl<O> fmt::Debug for ConsumptionReason<O> {
+impl fmt::Debug for ConsumptionReason {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
-            Self::Transformed(_) => "Transformed",
+            Self::Transformed => "Transformed",
             Self::Crashed(_) => "Crashed(_)",
         };
         write!(f, "ConsumptionReason::{}", value)
@@ -92,7 +90,7 @@ pub enum Transition<T: Agent + ?Sized> {
         command: TransitionCommand<T>,
     },
     Consume {
-        reason: ConsumptionReason<T::Output>,
+        reason: ConsumptionReason,
     },
 }
 

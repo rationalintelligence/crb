@@ -47,7 +47,7 @@ where
             let next_runtime = RunAgent::new(next_agent);
             session.next_runtime = Some(Box::new(next_runtime));
         }
-        let reason = ConsumptionReason::Transformed(None);
+        let reason = ConsumptionReason::Transformed;
         Transition::Consume { reason }
     }
 }

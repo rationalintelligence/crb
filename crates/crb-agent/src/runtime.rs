@@ -31,14 +31,14 @@ impl<A: Agent> RunAgent<A> {
     }
 }
 
-impl<T: Agent> RunAgent<T> {
+impl<A: Agent> RunAgent<A> {
     pub async fn perform_and_report(&mut self) -> Result<()> {
         let output = self.perform_and_return().await?;
         self.context.session().joint.report(output)?;
         Ok(())
     }
 
-    pub async fn perform_and_return(&mut self) -> Result<Option<T::Output>> {
+    pub async fn perform_and_return(&mut self) -> Result<Option<A::Output>> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         let output = Abortable::new(fut, reg).await??;
@@ -51,7 +51,7 @@ impl<T: Agent> RunAgent<T> {
         Ok(output)
     }
 
-    async fn perform_task(&mut self) -> Result<Option<T::Output>> {
+    async fn perform_task(&mut self) -> Result<Option<A::Output>> {
         if let Some(mut agent) = self.agent.take() {
             // let session = self.context.session();
 
@@ -128,9 +128,9 @@ impl<A: Agent> Task<A> for RunAgent<A> {}
 impl<A: Agent> InteractiveTask<A> for RunAgent<A> {}
 
 #[async_trait]
-impl<T> Runtime for RunAgent<T>
+impl<A> Runtime for RunAgent<A>
 where
-    T: Agent,
+    A: Agent,
 {
     fn get_interruptor(&mut self) -> Interruptor {
         self.context.session().controller.interruptor.clone()

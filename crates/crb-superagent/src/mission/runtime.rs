@@ -1,19 +1,10 @@
+use super::{Mission, Observer};
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Agent, Context, RunAgent};
+use crb_agent::RunAgent;
 use crb_runtime::{
     InteractiveRuntime, InteractiveTask, Interruptor, ReachableContext, Runtime, Task,
 };
-
-pub trait Mission: Agent {
-    type Goal;
-
-    fn deliver(self, ctx: &mut Context<Self>) -> Option<Self::Goal>;
-}
-
-pub trait Observer<M: Mission>: Send {
-    fn check(&mut self, goal: &M::Goal) -> Result<()>;
-}
 
 pub struct RunMission<M: Mission> {
     pub runtime: RunAgent<M>,

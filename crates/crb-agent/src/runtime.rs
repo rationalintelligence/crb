@@ -32,10 +32,15 @@ impl<A: Agent> RunAgent<A> {
 }
 
 impl<A: Agent> RunAgent<A> {
+    pub fn report(&mut self, interrupted: bool) -> Result<()> {
+        self.context.session().joint.report(interrupted)?;
+        Ok(())
+    }
+
     pub async fn perform_and_report(&mut self) -> Result<()> {
         self.perform().await?;
         let interrupted = self.agent.is_none();
-        self.context.session().joint.report(interrupted)?;
+        self.report(interrupted)?;
         Ok(())
     }
 

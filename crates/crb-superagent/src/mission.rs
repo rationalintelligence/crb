@@ -31,8 +31,11 @@ impl<M: Mission> RunMission<M> {
                     self.runtime.failures.put(res);
                 }
             }
+            let interrupted = output.is_none();
+            self.runtime.report(interrupted)?;
             Ok(output)
         } else {
+            self.runtime.report(true)?;
             Ok(None)
         }
     }

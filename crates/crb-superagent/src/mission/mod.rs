@@ -1,6 +1,7 @@
-pub mod fn_agent;
+pub mod async_fn;
 pub mod reporting;
 pub mod runtime;
+pub mod sync_fn;
 
 use anyhow::Result;
 use crb_agent::{Agent, Context};

@@ -1,11 +1,9 @@
-use crate::agent::{Agent, Output};
-use crate::context::{AgentContext, AgentSession, Context};
+use crate::agent::Agent;
+use crate::context::{AgentContext, Context};
 use crate::performers::{AgentState, Next, StatePerformer, Transition, TransitionCommand};
-use crate::runtime::RunAgent;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::Interruptor;
-use futures::Future;
 use std::marker::PhantomData;
 
 impl<T> Next<T>
@@ -79,53 +77,5 @@ where
         let next_state = agent.perform(state, interruptor).await;
         let command = TransitionCommand::Next(next_state);
         Transition::Continue { agent, command }
-    }
-}
-
-impl<T> RunAgent<AsyncFn<T>>
-where
-    T: Output,
-{
-    pub fn new_async<F: AnyAsyncFut<T>>(fut: F) -> Self {
-        let task = AsyncFn::<T> {
-            fut: Some(Box::new(fut)),
-            output: None,
-        };
-        Self::new(task)
-    }
-}
-
-pub trait AnyAsyncFut<T>: Future<Output = T> + Send + 'static {}
-
-impl<F, T> AnyAsyncFut<T> for F where F: Future<Output = T> + Send + 'static {}
-
-pub struct AsyncFn<T> {
-    fut: Option<Box<dyn AnyAsyncFut<T>>>,
-    output: Option<T>,
-}
-
-impl<T: Output> Agent for AsyncFn<T> {
-    type Context = AgentSession<Self>;
-    type Output = T;
-
-    fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
-        Next::do_async(CallFn)
-    }
-
-    fn finalize(self, _ctx: &mut Context<Self>) -> Option<Self::Output> {
-        self.output
-    }
-}
-
-struct CallFn;
-
-#[async_trait]
-impl<T: Output> DoAsync<CallFn> for AsyncFn<T> {
-    async fn once(&mut self, _state: &mut CallFn) -> Result<Next<Self>> {
-        let fut = self.fut.take().unwrap();
-        let pinned_fut = Box::into_pin(fut);
-        let output = pinned_fut.await;
-        self.output = Some(output);
-        Ok(Next::done())
     }
 }

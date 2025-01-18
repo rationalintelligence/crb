@@ -12,6 +12,16 @@ pub struct RunMission<M: Mission> {
 }
 
 impl<M: Mission> RunMission<M> {
+    pub fn new(mission: M) -> Self
+    where
+        M::Context: Default,
+    {
+        Self {
+            runtime: RunAgent::new(mission),
+            observers: Vec::new(),
+        }
+    }
+
     pub async fn perform(&mut self) -> Result<Option<M::Goal>> {
         self.runtime.perform().await?;
         if let Some(agent) = self.runtime.agent.take() {

@@ -29,9 +29,7 @@ impl<A: Agent> RunAgent<A> {
             finalizers: Vec::new(),
         }
     }
-}
 
-impl<A: Agent> RunAgent<A> {
     pub fn report(&mut self, interrupted: bool) -> Result<()> {
         self.context.session().joint.report(interrupted)?;
         Ok(())

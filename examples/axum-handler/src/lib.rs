@@ -1,13 +1,12 @@
 use anyhow::Result;
-use axum::{extract::Request, handler::Handler, response::Response};
+use axum::{extract::Request, handler::Handler, response::{Response, IntoResponse}};
 use crb::superagent::{Mission, RunMission};
 use futures::{Future, FutureExt};
 use http::StatusCode;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
-// TODO: Goal: IntoResponse
-pub trait RequestAgent: Mission<Context: Default, Goal = Response> {
+pub trait RequestAgent: Mission<Context: Default, Goal: IntoResponse> {
     fn from_request(request: Request) -> Self;
 }
 
@@ -55,9 +54,12 @@ where
     }
 }
 
-fn handle_errors(res: Result<Option<Response>>) -> Response {
+fn handle_errors<R>(res: Result<Option<R>>) -> Response
+where
+    R: IntoResponse,
+{
     match res {
-        Ok(Some(response)) => response,
+        Ok(Some(response)) => response.into_response(),
         Ok(None) => {
             let mut response = Response::new("Handler has interrupted".into());
             *response.status_mut() = StatusCode::SERVICE_UNAVAILABLE;

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use axum::{extract::Request, response::Response, routing::get, Router};
+use axum::{extract::Request, routing::get, Router};
 use crb::agent::{Agent, AgentSession, Next, Context};
 use crb::superagent::Mission;
 use crb_example_axum_handler::{AgentHandler, RequestAgent};
@@ -33,9 +33,9 @@ impl Agent for HelloWorld {
 
 #[async_trait]
 impl Mission for HelloWorld {
-    type Goal = Response;
+    type Goal = &'static str;
 
     async fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
-        Some(Response::new("Hello!".into()))
+        Some("Hello!")
     }
 }

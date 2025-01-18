@@ -1,19 +1,21 @@
 use anyhow::Result;
-use axum::{extract::Request, routing::get, Router};
+use axum::{extract::Request, routing::get, Router, response::Redirect};
 use crb::agent::{Agent, AgentSession, Next};
 use crb_example_axum_handler::{AgentHandler, AxumAgent};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let app = Router::new().route("/", get(AgentHandler::<HelloWorld, (), ()>::new()));
+    let app = Router::new().route("/", get(AgentHandler::<CrbWorld, (), ()>::new()));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await?;
     axum::serve(listener, app).await?;
     Ok(())
 }
 
-pub struct HelloWorld;
+const URL: &str = "https://runtime-blocks.github.io/website/repo/crb/assets/crb-header.png";
 
-impl Agent for HelloWorld {
+pub struct CrbWorld;
+
+impl Agent for CrbWorld {
     type Context = AgentSession<Self>;
     type Output = ();
 
@@ -22,14 +24,14 @@ impl Agent for HelloWorld {
     }
 }
 
-impl AxumAgent for HelloWorld {
-    type Response = &'static str;
+impl AxumAgent for CrbWorld {
+    type Response = Redirect;
 
     fn from_request(_request: Request) -> Self {
         Self
     }
 
     fn to_response(self) -> Option<Self::Response> {
-        Some("Hello!")
+        Some(Redirect::temporary(URL))
     }
 }

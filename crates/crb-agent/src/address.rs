@@ -7,7 +7,7 @@ use crb_send::{Recipient, Sender};
 
 pub struct AddressJoint<A: Agent + ?Sized> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
-    status_tx: watch::Sender<AgentStatus<A>>,
+    status_tx: watch::Sender<AgentStatus>,
 }
 
 impl<A: Agent> AddressJoint<A> {
@@ -19,15 +19,18 @@ impl<A: Agent> AddressJoint<A> {
         (address, joint)
     }
 
-    pub async fn next_envelope(&mut self) -> Option<Envelope<A>> {
-        self.msg_rx.recv().await
+    pub fn report(&mut self, interrupted: bool) -> Result<()> {
+        let status = if interrupted {
+            AgentStatus::Interrupted
+        } else {
+            AgentStatus::Done
+        };
+        self.status_tx.send(status)?;
+        Ok(())
     }
 
-    pub fn report(&mut self, output: Option<A::Output>) -> Result<()> {
-        let status = output
-            .map(AgentStatus::Done)
-            .unwrap_or(AgentStatus::Interrupted);
-        self.status_tx.send(status).map_err(Error::from)
+    pub async fn next_envelope(&mut self) -> Option<Envelope<A>> {
+        self.msg_rx.recv().await
     }
 
     pub fn close(&mut self) {
@@ -37,7 +40,7 @@ impl<A: Agent> AddressJoint<A> {
 
 pub struct Address<A: Agent + ?Sized> {
     msg_tx: mpsc::UnboundedSender<Envelope<A>>,
-    status_rx: watch::Receiver<AgentStatus<A>>,
+    status_rx: watch::Receiver<AgentStatus>,
 }
 
 impl<A: Agent> Address<A> {
@@ -48,22 +51,9 @@ impl<A: Agent> Address<A> {
     }
 
     /// Important! `join` must use a reference to allow using it under `DerefMut` trait
-    pub async fn join(&mut self) -> Result<AgentOutput<'_, A>> {
-        let status = self.status_rx.wait_for(AgentStatus::is_done).await?;
-        Ok(AgentOutput { status })
-    }
-}
-
-pub struct AgentOutput<'a, A: Agent> {
-    status: watch::Ref<'a, AgentStatus<A>>,
-}
-
-impl<'a, A: Agent> AgentOutput<'a, A> {
-    pub fn output(&mut self) -> Option<A::Output>
-    where
-        A::Output: Clone,
-    {
-        self.status.output().cloned()
+    pub async fn join(&mut self) -> Result<AgentStatus> {
+        let status = self.status_rx.wait_for(AgentStatus::is_finished).await?;
+        Ok(status.clone())
     }
 }
 
@@ -95,24 +85,16 @@ impl<A: Agent> Address<A> {
     }
 }
 
-#[derive(PartialEq, Eq)]
-pub enum AgentStatus<T: Agent + ?Sized> {
+#[derive(PartialEq, Eq, Clone)]
+pub enum AgentStatus {
     Active,
     Interrupted,
-    Done(T::Output),
+    Done,
 }
 
-impl<T: Agent> AgentStatus<T> {
-    pub fn is_done(&self) -> bool {
-        matches!(self, Self::Interrupted | Self::Done(_))
-    }
-
-    pub fn output(&self) -> Option<&T::Output> {
-        match self {
-            Self::Active => None,
-            Self::Interrupted => None,
-            Self::Done(value) => Some(value),
-        }
+impl AgentStatus {
+    pub fn is_finished(&self) -> bool {
+        matches!(self, Self::Interrupted | Self::Done)
     }
 }
 

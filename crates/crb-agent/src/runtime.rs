@@ -33,22 +33,17 @@ impl<A: Agent> RunAgent<A> {
 
 impl<A: Agent> RunAgent<A> {
     pub async fn perform_and_report(&mut self) -> Result<()> {
-        let output = self.perform_and_return().await?;
-        self.context.session().joint.report(output)?;
+        self.perform().await?;
+        let interrupted = self.agent.is_none();
+        self.context.session().joint.report(interrupted)?;
         Ok(())
     }
 
-    pub async fn perform_and_return(&mut self) -> Result<Option<A::Output>> {
+    pub async fn perform(&mut self) -> Result<()> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
-        let output = Abortable::new(fut, reg).await??;
-        if let Some(output) = output.as_ref() {
-            for finalizer in &mut self.finalizers {
-                let res = finalizer.finalize(output);
-                self.failures.put(res);
-            }
-        }
-        Ok(output)
+        Abortable::new(fut, reg).await??;
+        Ok(())
     }
 
     async fn perform_task(&mut self) -> Result<Option<A::Output>> {
@@ -138,7 +133,7 @@ where
 
     async fn routine(&mut self) {
         let result = self.perform_and_report().await;
-        self.failures.put(result.map(drop));
+        self.failures.put(result);
     }
 }
 

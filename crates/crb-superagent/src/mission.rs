@@ -22,7 +22,7 @@ pub struct RunMission<M: Mission> {
 
 impl<M: Mission> RunMission<M> {
     pub async fn perform(&mut self) -> Result<Option<M::Goal>> {
-        self.runtime.perform_and_return().await?;
+        self.runtime.perform().await?;
         if let Some(agent) = self.runtime.agent.take() {
             let output = agent.deliver(&mut self.runtime.context);
             if let Some(output) = output.as_ref() {

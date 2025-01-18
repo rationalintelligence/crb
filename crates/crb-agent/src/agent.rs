@@ -63,7 +63,7 @@ pub trait Standalone: Agent {
 
 #[async_trait]
 pub trait Runnable: Agent {
-    async fn run(self) -> Result<Option<Self::Output>>;
+    async fn run(self) -> Result<()>;
 }
 
 #[async_trait]
@@ -72,8 +72,9 @@ where
     Self::Context: Default,
     A::Output: Clone,
 {
-    async fn run(self) -> Result<Option<Self::Output>> {
+    async fn run(self) -> Result<()> {
         let mut runtime = RunAgent::new(self);
-        runtime.perform_and_return().await
+        runtime.perform_and_report().await?;
+        Ok(())
     }
 }

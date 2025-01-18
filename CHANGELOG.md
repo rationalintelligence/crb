@@ -1,20 +1,26 @@
-# CRB v0.0.27 - upcoming...
+# CRB v0.0.28 - upcoming...
+
+
+
+# CRB v0.0.27 - 2025-01-18
 
 ## Added
 
-- **Timeout** - Timeouts that send an event only once.
-- **Subscriptions** - The new pattern.
-- **Context** - A context wrapper that could be extended as an `Address`.
-- **ToAddress** - A trait to get a cloned address from `Address` or `Context` references.
-- **Switches** - Added `TimeoutSwitch` and `IntervalSwitch` - reusable versions of `Timeout` and `Interval`.
+- **Timeout events** - Introduced timeout functionality that triggers an event exactly once after the specified duration.
+- **Subscriptions pattern** - Implemented a new subscription-based pattern to simplify event handling and improve modularity.
+- **Context wrapper** - Added a versatile `Context` wrapper that can now be extended as an `Address`.
+- **ToAddress trait** - The new `ToAddress` trait, which allows seamless cloning of addresses from `Address` or `Context` references.
+- **Switches** - Added `TimeoutSwitch` and `IntervalSwitch`, reusable components for reusing `Timeout` and `Interval` functionality more efficiently.
 
 ## Improved
 
-- **Naming for slots**
-- **Context renaming** - The `Context` trait has been reanmed to `ReachableContext`.
-- **InContext remaning** - The `InContext` trait has been renamed to `Duty` to reflect its responsibility for maintaining an agent itself.
-- **EventSender renaming** - The `EventSender` struct has been renamed to `MessageSender` to avoid confusion with agents' events.
-- **Output removing** - The associated type `Output` has beed removed and the new `mission` module is recommended to use to extract a result from a actor.
+- **Context renaming** - Renamed the `Context` trait to `ReachableContext` to better convey its purpose and usage.
+- **InContext renaming** - Changed the `InContext` trait to `Duty`, reflecting its role in maintaining an agent and its responsibilities.
+- **EventSender renaming** - Renamed the `EventSender` struct to `Recipient` (`MessageSender` between the changes) to reduce ambiguity and align with its primary purpose of sending messages.
+- **Output removal** - Removed the associated type `Output`. The new `mission` module is now the recommended approach for extracting results from an actor.
+- **Slot naming conventions** - Enhanced the naming scheme for slots to improve clarity and consistency across the codebase.
+
+
 
 # CRB v0.0.26 - 2025-01-11
 

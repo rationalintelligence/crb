@@ -7,7 +7,6 @@ struct Printer;
 
 impl Agent for Printer {
     type Context = AgentSession<Self>;
-    type Output = ();
 }
 
 struct Print(pub String);
@@ -27,7 +26,6 @@ impl Standalone for Main {}
 #[async_trait]
 impl Agent for Main {
     type Context = SupervisorSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, ctx: &mut Context<Self>) -> Next<Self> {
         ctx.event(SendPrint)

@@ -25,7 +25,6 @@ pub struct AsyncFn<T> {
 
 impl<T: Goal> Agent for AsyncFn<T> {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         Next::do_async(CallFn)

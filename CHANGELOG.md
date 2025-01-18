@@ -14,6 +14,7 @@
 - **Context renaming** - The `Context` trait has been reanmed to `ReachableContext`.
 - **InContext remaning** - The `InContext` trait has been renamed to `Duty` to reflect its responsibility for maintaining an agent itself.
 - **EventSender renaming** - The `EventSender` struct has been renamed to `MessageSender` to avoid confusion with agents' events.
+- **Output removing** - The associated type `Output` has beed removed and the new `mission` module is recommended to use to extract a result from a actor.
 
 # CRB v0.0.26 - 2025-01-11
 

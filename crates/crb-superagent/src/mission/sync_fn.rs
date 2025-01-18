@@ -24,7 +24,6 @@ pub struct SyncFn<T> {
 
 impl<T: Goal> Agent for SyncFn<T> {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         Next::do_sync(CallFn)

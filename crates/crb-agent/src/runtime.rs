@@ -46,7 +46,7 @@ impl<A: Agent> RunAgent<A> {
         Ok(())
     }
 
-    async fn perform_task(&mut self) -> Result<Option<A::Output>> {
+    async fn perform_task(&mut self) -> Result<()> {
         if let Some(mut agent) = self.agent.take() {
             // let session = self.context.session();
 
@@ -91,7 +91,7 @@ impl<A: Agent> RunAgent<A> {
                         },
                         Transition::Consume { reason } => match reason {
                             ConsumptionReason::Transformed => {
-                                return Ok(None);
+                                return Ok(());
                             }
                             ConsumptionReason::Crashed(err) => {
                                 return Err(err);
@@ -112,7 +112,7 @@ impl<A: Agent> RunAgent<A> {
             // Finalize
             let agent = pair.0;
             self.agent = Some(agent);
-            Ok(None)
+            Ok(())
         } else {
             Err(Error::msg("Agent's agent has consumed already."))
         }

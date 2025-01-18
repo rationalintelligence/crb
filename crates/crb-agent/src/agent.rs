@@ -9,7 +9,6 @@ use std::any::type_name;
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
     type Context: AgentContext<Self>;
-    type Output: Output;
 
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         self.begin()
@@ -62,7 +61,6 @@ pub trait Runnable: Agent {
 impl<A: Agent> Runnable for A
 where
     Self::Context: Default,
-    A::Output: Clone,
 {
     async fn run(self) -> Result<()> {
         let mut runtime = RunAgent::new(self);

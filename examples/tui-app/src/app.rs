@@ -28,7 +28,6 @@ impl Supervisor for TuiApp {
 
 impl Agent for TuiApp {
     type Context = SupervisorSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         Next::duty(Configure)

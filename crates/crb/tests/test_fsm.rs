@@ -26,7 +26,6 @@ impl Standalone for Task {}
 
 impl Agent for Task {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         self.state.next()

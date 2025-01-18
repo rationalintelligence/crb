@@ -9,7 +9,6 @@ impl Standalone for TestAgent {}
 
 impl Agent for TestAgent {
     type Context = AgentSession<Self>;
-    type Output = ();
 }
 
 struct Print(pub String);

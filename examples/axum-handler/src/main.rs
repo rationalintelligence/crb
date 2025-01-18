@@ -17,7 +17,6 @@ pub struct CrbWorld;
 
 impl Agent for CrbWorld {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         Next::done()

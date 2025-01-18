@@ -25,7 +25,6 @@ impl CratesLoader {
 
 impl Agent for CratesLoader {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         Next::do_async(DownloadDump)

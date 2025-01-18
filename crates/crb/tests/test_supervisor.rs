@@ -25,7 +25,6 @@ impl Supervisor for TestSupervisor {
 
 impl Agent for TestSupervisor {
     type Context = SupervisorSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, ctx: &mut Context<Self>) -> Next<Self> {
         ctx.spawn_agent(Child, ());
@@ -37,7 +36,6 @@ struct Child;
 
 impl Agent for Child {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, ctx: &mut Context<Self>) -> Next<Self> {
         println!("A child: has been spawned!");

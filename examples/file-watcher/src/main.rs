@@ -45,7 +45,6 @@ impl Standalone for FileWatcher {}
 
 impl Agent for FileWatcher {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         Next::duty(Configure)

@@ -15,7 +15,6 @@ impl EventsDrainer {
 
 impl Agent for EventsDrainer {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         Next::do_sync(())

@@ -80,7 +80,6 @@ impl<State: PipelineState> Standalone for Pipeline<State> {}
 
 impl<State: PipelineState> Agent for Pipeline<State> {
     type Context = SupervisorSession<Self>;
-    type Output = ();
 }
 
 #[derive(Deref)]

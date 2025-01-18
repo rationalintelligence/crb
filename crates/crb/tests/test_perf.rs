@@ -39,7 +39,6 @@ impl Standalone for TestTime {}
 
 impl Agent for TestTime {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         self.reset();

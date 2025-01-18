@@ -21,7 +21,6 @@ impl ShellOne {
 
 impl Agent for ShellOne {
     type Context = MoltingSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         self.value_1 = Some(1);
@@ -48,7 +47,6 @@ struct ShellTwo {
 
 impl Agent for ShellTwo {
     type Context = MoltingSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         self.value_2 = Some(2);
@@ -75,7 +73,6 @@ struct ShellThree {
 
 impl Agent for ShellThree {
     type Context = MoltingSession<Self>;
-    type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
         println!("Crab = {:?}", self.crab);

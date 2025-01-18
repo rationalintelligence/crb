@@ -11,7 +11,6 @@ struct FirstProcessor {
 #[async_trait]
 impl Agent for FirstProcessor {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         println!("FirstProcessor");
@@ -47,7 +46,6 @@ struct SecondProcessor {
 #[async_trait]
 impl Agent for SecondProcessor {
     type Context = AgentSession<Self>;
-    type Output = ();
 
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         println!("SecondProcessor");

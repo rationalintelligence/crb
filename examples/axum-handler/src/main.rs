@@ -1,9 +1,7 @@
 use anyhow::Result;
-use async_trait::async_trait;
 use axum::{extract::Request, routing::get, Router};
-use crb::agent::{Agent, AgentSession, Next, Context};
-use crb::superagent::Mission;
-use crb_example_axum_handler::{AgentHandler, RequestAgent};
+use crb::agent::{Agent, AgentSession, Next};
+use crb_example_axum_handler::{AgentHandler, AxumAgent};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -13,13 +11,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-impl RequestAgent for HelloWorld {
-    fn from_request(_request: Request) -> Self {
-        println!("HELLO!");
-        Self
-    }
-}
-
 pub struct HelloWorld;
 
 impl Agent for HelloWorld {
@@ -27,15 +18,18 @@ impl Agent for HelloWorld {
     type Output = ();
 
     fn begin(&mut self) -> Next<Self> {
-        Next::interrupt()
+        Next::done()
     }
 }
 
-#[async_trait]
-impl Mission for HelloWorld {
-    type Goal = &'static str;
+impl AxumAgent for HelloWorld {
+    type Response = &'static str;
 
-    async fn deliver(self, _ctx: &mut Context<Self>) -> Option<Self::Goal> {
+    fn from_request(_request: Request) -> Self {
+        Self
+    }
+
+    fn to_response(self) -> Option<Self::Response> {
         Some("Hello!")
     }
 }

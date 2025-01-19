@@ -1,4 +1,5 @@
-use crate::mission::{async_fn::AnyAsyncFut, sync_fn::AnySyncFn, RunMission};
+use crate::routine::{AsyncRoutine, Routine, SyncRoutine};
+use crb_agent::RunAgent;
 use crb_runtime::{JobHandle, Task};
 
 pub struct Drainer {
@@ -7,20 +8,22 @@ pub struct Drainer {
 }
 
 impl Drainer {
-    pub fn new_async<F>(fut: F) -> Self
+    pub fn new_async<R>(routine: R) -> Self
     where
-        F: AnyAsyncFut,
+        R: AsyncRoutine,
     {
-        let mut job = RunMission::new_async(fut).spawn().job();
-        job.cancel_on_drop(true);
-        Self { job: Some(job) }
+        Self::spawn(Routine::new_async(routine))
     }
 
-    pub fn new_sync<F>(func: F) -> Self
+    pub fn new_sync<R>(routine: R) -> Self
     where
-        F: AnySyncFn,
+        R: SyncRoutine,
     {
-        let mut job = RunMission::new_sync(func).spawn().job();
+        Self::spawn(Routine::new_sync(routine))
+    }
+
+    pub fn spawn(routine: Routine) -> Self {
+        let mut job = RunAgent::new(routine).spawn().job();
         job.cancel_on_drop(true);
         Self { job: Some(job) }
     }

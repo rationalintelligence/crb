@@ -22,8 +22,8 @@ impl Routine {
         Self::AsyncRoutine(Box::new(routine))
     }
 
-    pub fn new_sync<R: AsyncRoutine>(routine: R) -> Self {
-        Self::AsyncRoutine(Box::new(routine))
+    pub fn new_sync<R: SyncRoutine>(routine: R) -> Self {
+        Self::SyncRoutine(Box::new(routine))
     }
 }
 

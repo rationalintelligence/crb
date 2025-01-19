@@ -38,6 +38,12 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     async fn rollback(_this: Option<&mut Self>, _err: Error, _ctx: &mut Context<Self>) {}
+
+    fn finalize(&mut self, _ctx: &mut Context<Self>) {
+        self.end()
+    }
+
+    fn end(&mut self) {}
 }
 
 pub trait Output: Sync + Send + 'static {}

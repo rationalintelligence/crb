@@ -112,7 +112,8 @@ impl<A: Agent> RunAgent<A> {
             }
 
             // Finalize
-            let agent = pair.0;
+            let mut agent = pair.0;
+            agent.finalize(&mut self.context);
             self.agent = Some(agent);
             Ok(())
         } else {

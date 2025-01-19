@@ -9,7 +9,11 @@
 
 - Signals listening
 - Gracefull shutdown
+- Add `repeat_async` and `repeat_sync` Fut/Fn performers
+- Use repeaters for the `Drainer`
 
+## Added
+- **Drainer** - A special task-agent in the superagent crate to drain events sources.
 
 # CRB v0.0.27 - 2025-01-18
 

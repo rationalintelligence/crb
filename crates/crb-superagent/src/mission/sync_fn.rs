@@ -13,7 +13,7 @@ impl<T: Goal> RunMission<SyncFn<T>> {
     }
 }
 
-pub trait AnySyncFn<T>: FnOnce() -> T + Send + 'static {}
+pub trait AnySyncFn<T = ()>: FnOnce() -> T + Send + 'static {}
 
 impl<F, T> AnySyncFn<T> for F where F: FnOnce() -> T + Send + 'static {}
 

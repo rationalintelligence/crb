@@ -14,7 +14,7 @@ impl<T: Goal> RunMission<AsyncFn<T>> {
     }
 }
 
-pub trait AnyAsyncFut<T>: Future<Output = T> + Send + 'static {}
+pub trait AnyAsyncFut<T = ()>: Future<Output = T> + Send + 'static {}
 
 impl<F, T> AnyAsyncFut<T> for F where F: Future<Output = T> + Send + 'static {}
 

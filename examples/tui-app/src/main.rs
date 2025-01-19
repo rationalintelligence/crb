@@ -4,7 +4,7 @@ use crb_example_tui_app::TuiApp;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    TuiApp::new().run().await?;
+    TuiApp::new().run().await;
     // Unblocking stdin
     std::process::exit(0);
 }

@@ -1,4 +1,8 @@
-use axum::{extract::Request, handler::Handler, response::{Response, IntoResponse}};
+use axum::{
+    extract::Request,
+    handler::Handler,
+    response::{IntoResponse, Response},
+};
 use crb::agent::{Agent, RunAgent};
 use futures::{Future, FutureExt};
 use http::StatusCode;
@@ -46,9 +50,7 @@ where
     type Future = Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
 
     fn call(self, req: Request, _state: S) -> Self::Future {
-        FutureExt::boxed(async {
-            Runner::<A>::new(req).perform().await
-        })
+        FutureExt::boxed(async { Runner::<A>::new(req).perform().await })
     }
 }
 
@@ -60,33 +62,16 @@ impl<A: AxumAgent> Runner<A> {
     fn new(req: Request) -> Self {
         let agent = A::from_request(req);
         let runtime = RunAgent::new(agent);
-        Self {
-            runtime,
-        }
+        Self { runtime }
     }
 
     async fn perform(&mut self) -> Response {
-        let result = {
-            if let Err(err) = self.runtime.perform().await {
-                Err(err)
-            } else if let Some(agent) = self.runtime.agent.take() {
-                Ok(agent.to_response())
-            } else {
-                Ok(None)
-            }
-        };
-        match result {
-            Ok(Some(response)) => response.into_response(),
-            Ok(None) => {
-                let mut response = Response::new("Handler has interrupted".into());
-                *response.status_mut() = StatusCode::SERVICE_UNAVAILABLE;
-                response
-            }
-            Err(err) => {
-                let mut response = Response::new(err.to_string().into());
-                *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
-                response
-            }
-        }
+        self.runtime.perform().await;
+        self.runtime
+            .agent
+            .take()
+            .and_then(AxumAgent::to_response)
+            .map(IntoResponse::into_response)
+            .unwrap_or_else(|| StatusCode::INTERNAL_SERVER_ERROR.into_response())
     }
 }

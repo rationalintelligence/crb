@@ -1,5 +1,5 @@
 use anyhow::Result;
-use axum::{extract::Request, routing::get, Router, response::Redirect};
+use axum::{extract::Request, response::Redirect, routing::get, Router};
 use crb::agent::{Agent, AgentSession, Next};
 use crb_example_axum_handler::{AgentHandler, AxumAgent};
 

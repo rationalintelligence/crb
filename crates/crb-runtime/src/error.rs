@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 
 const DEFAULT_LIMIT: usize = 8;
 
+// TODO: Consider removing
 pub struct Failures {
     limit: usize,
     errors: VecDeque<Error>,

@@ -4,15 +4,14 @@ use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCom
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
-    Failures, InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, ReachableContext,
-    Runtime, Task,
+    InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, ReachableContext, Runtime,
+    Task,
 };
 use futures::stream::Abortable;
 
 pub struct RunAgent<A: Agent> {
     pub agent: Option<A>,
     pub context: Context<A>,
-    pub failures: Failures,
 }
 
 impl<A: Agent> RunAgent<A> {
@@ -23,7 +22,6 @@ impl<A: Agent> RunAgent<A> {
         Self {
             agent: Some(agent),
             context: Context::wrap(A::Context::default()),
-            failures: Failures::default(),
         }
     }
 

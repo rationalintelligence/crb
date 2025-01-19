@@ -27,8 +27,7 @@ impl<M: Mission> RunMission<M> {
             let output = agent.deliver(&mut self.runtime.context).await;
             if let Some(output) = output.as_ref() {
                 for observer in &mut self.observers {
-                    let res = observer.check(output);
-                    self.runtime.failures.put(res);
+                    observer.check(output).ok();
                 }
             }
             let interrupted = output.is_none();

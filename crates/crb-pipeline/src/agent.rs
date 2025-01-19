@@ -82,8 +82,7 @@ where
         if let Some(agent) = self.runtime.agent.as_mut() {
             while let Some(message) = agent.next_output().await {
                 let msg = StageReport::<A>::new(self.meta, message);
-                let res = self.pipeline.send(msg);
-                self.runtime.failures.put(res);
+                self.pipeline.send(msg).ok();
             }
         }
     }

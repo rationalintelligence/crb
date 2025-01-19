@@ -27,7 +27,7 @@ impl<T: Goal> Agent for AsyncFn<T> {
     type Context = AgentSession<Self>;
 
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
-        Next::do_async(CallFn)
+        Next::do_async(AwaitFut)
     }
 }
 
@@ -40,11 +40,11 @@ impl<T: Goal> Mission for AsyncFn<T> {
     }
 }
 
-struct CallFn;
+struct AwaitFut;
 
 #[async_trait]
-impl<T: Goal> DoAsync<CallFn> for AsyncFn<T> {
-    async fn once(&mut self, _state: &mut CallFn) -> Result<Next<Self>> {
+impl<T: Goal> DoAsync<AwaitFut> for AsyncFn<T> {
+    async fn once(&mut self, _state: &mut AwaitFut) -> Result<Next<Self>> {
         let fut = self.fut.take().unwrap();
         let pinned_fut = Box::into_pin(fut);
         let output = pinned_fut.await;

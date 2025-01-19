@@ -27,19 +27,24 @@ impl<A: Agent> RunAgent<A> {
         }
     }
 
-    pub fn report(&mut self, interrupted: bool) -> Result<()> {
-        self.context.session().joint.report(interrupted)?;
-        Ok(())
+    pub fn report(&mut self, interrupted: bool) {
+        self.context.session().joint.report(interrupted).ok();
     }
 
-    pub async fn perform_and_report(&mut self) -> Result<()> {
-        self.perform().await?;
+    pub async fn perform_and_report(&mut self) {
+        self.perform().await;
         let interrupted = self.agent.is_none();
-        self.report(interrupted)?;
-        Ok(())
+        self.report(interrupted);
     }
 
-    pub async fn perform(&mut self) -> Result<()> {
+    pub async fn perform(&mut self) {
+        let result = self.perform_abortable_task().await;
+        if let Err(err) = result {
+            A::rollback(self.agent.as_mut(), err, &mut self.context).await;
+        }
+    }
+
+    pub async fn perform_abortable_task(&mut self) -> Result<()> {
         let reg = self.context.session().controller.take_registration()?;
         let fut = self.perform_task();
         Abortable::new(fut, reg).await??;
@@ -73,7 +78,7 @@ impl<A: Agent> RunAgent<A> {
                             TransitionCommand::Stop(reason) => {
                                 match reason {
                                     StopReason::Failed(err) => {
-                                        agent.failed(&err, &mut self.context);
+                                        agent.failed(err, &mut self.context);
                                     }
                                     StopReason::Interrupted | StopReason::Done => {}
                                 }
@@ -100,10 +105,9 @@ impl<A: Agent> RunAgent<A> {
                     }
                 } else {
                     let result = agent.event(&mut self.context).await;
-                    if let Err(err) = &result {
+                    if let Err(err) = result {
                         agent.failed(err, &mut self.context);
                     }
-                    self.failures.put(result);
                     let next_state = self.context.session().next_state.take();
                     pair = (agent, next_state);
                 }
@@ -132,8 +136,7 @@ where
     }
 
     async fn routine(&mut self) {
-        let result = self.perform_and_report().await;
-        self.failures.put(result);
+        self.perform_and_report().await;
     }
 }
 

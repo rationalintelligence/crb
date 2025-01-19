@@ -1,5 +1,4 @@
 use super::{Mission, Observer};
-use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::RunAgent;
 use crb_runtime::{
@@ -22,8 +21,8 @@ impl<M: Mission> RunMission<M> {
         }
     }
 
-    pub async fn perform(&mut self) -> Result<Option<M::Goal>> {
-        self.runtime.perform().await?;
+    pub async fn perform(&mut self) -> Option<M::Goal> {
+        self.runtime.perform().await;
         if let Some(agent) = self.runtime.agent.take() {
             let output = agent.deliver(&mut self.runtime.context).await;
             if let Some(output) = output.as_ref() {
@@ -33,11 +32,11 @@ impl<M: Mission> RunMission<M> {
                 }
             }
             let interrupted = output.is_none();
-            self.runtime.report(interrupted)?;
-            Ok(output)
+            self.runtime.report(interrupted);
+            output
         } else {
-            self.runtime.report(true)?;
-            Ok(None)
+            self.runtime.report(true);
+            None
         }
     }
 }
@@ -55,8 +54,7 @@ where
     }
 
     async fn routine(&mut self) {
-        let result = self.perform().await.map(drop);
-        self.runtime.failures.put(result.map(drop));
+        self.perform().await;
     }
 }
 

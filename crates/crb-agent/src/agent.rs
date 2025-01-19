@@ -33,9 +33,11 @@ pub trait Agent: Sized + Send + 'static {
         Ok(())
     }
 
-    fn failed(&mut self, err: &Error, _ctx: &mut Context<Self>) {
+    fn failed(&mut self, err: Error, _ctx: &mut Context<Self>) {
         log::error!("Agent [{}] failed: {err}", type_name::<Self>());
     }
+
+    async fn rollback(_this: Option<&mut Self>, _err: Error, _ctx: &mut Context<Self>) {}
 }
 
 pub trait Output: Sync + Send + 'static {}
@@ -54,7 +56,7 @@ pub trait Standalone: Agent {
 
 #[async_trait]
 pub trait Runnable: Agent {
-    async fn run(self) -> Result<()>;
+    async fn run(self);
 }
 
 #[async_trait]
@@ -62,9 +64,8 @@ impl<A: Agent> Runnable for A
 where
     Self::Context: Default,
 {
-    async fn run(self) -> Result<()> {
+    async fn run(self) {
         let mut runtime = RunAgent::new(self);
-        runtime.perform_and_report().await?;
-        Ok(())
+        runtime.perform_and_report().await;
     }
 }

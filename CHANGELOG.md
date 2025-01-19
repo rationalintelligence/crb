@@ -1,5 +1,14 @@
+# TODO
+
+- Epochs example
+- Child expiration example
+
 # CRB v0.0.28 - upcoming...
 
+## In progress
+
+- Signals listening
+- Gracefull shutdown
 
 
 # CRB v0.0.27 - 2025-01-18

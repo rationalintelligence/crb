@@ -1,5 +1,5 @@
 pub mod interval;
-pub mod timeout;
+pub mod timer;
 
 pub use interval::*;
-pub use timeout::*;
+pub use timer::*;

@@ -48,6 +48,10 @@ where
         Self { job: None, task }
     }
 
+    pub fn set_duration(&mut self, duration: Duration) {
+        self.task.duration = duration;
+    }
+
     pub fn on(&mut self) {
         if self.job.is_none() {
             let task = self.task.clone();

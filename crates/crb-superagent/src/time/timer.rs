@@ -8,18 +8,18 @@ use crb_core::{
 use crb_runtime::{JobHandle, Task};
 use crb_send::{Recipient, Sender};
 
-pub struct Timeout {
+pub struct Timer {
     #[allow(unused)]
     job: Option<JobHandle>,
 }
 
-impl Timeout {
+impl Timer {
     pub fn new<A, T>(address: impl ToAddress<A>, duration: Duration, event: T) -> Self
     where
         A: OnEvent<T>,
         T: Tag + Clone,
     {
-        let mut switch = TimeoutSwitch::new(duration, event);
+        let mut switch = TimerSwitch::new(duration, event);
         switch.add_listener(address);
         switch.start();
         Self {
@@ -28,22 +28,26 @@ impl Timeout {
     }
 }
 
-pub struct TimeoutSwitch<T> {
+pub struct TimerSwitch<T> {
     job: Option<JobHandle>,
-    task: TimeoutTask<T>,
+    task: TimerTask<T>,
 }
 
-impl<T> TimeoutSwitch<T>
+impl<T> TimerSwitch<T>
 where
     T: Tag + Clone,
 {
     pub fn new(duration: Duration, event: T) -> Self {
-        let task = TimeoutTask {
+        let task = TimerTask {
             duration,
             event,
             listeners: Vec::new(),
         };
         Self { job: None, task }
+    }
+
+    pub fn set_duration(&mut self, duration: Duration) {
+        self.task.duration = duration;
     }
 
     pub fn start(&mut self) {
@@ -68,13 +72,13 @@ where
 }
 
 #[derive(Clone)]
-struct TimeoutTask<T> {
+struct TimerTask<T> {
     duration: Duration,
     event: T,
     listeners: Vec<Recipient<T>>,
 }
 
-impl<T> Agent for TimeoutTask<T>
+impl<T> Agent for TimerTask<T>
 where
     T: Tag + Clone,
 {
@@ -86,7 +90,7 @@ where
 }
 
 #[async_trait]
-impl<T> DoAsync for TimeoutTask<T>
+impl<T> DoAsync for TimerTask<T>
 where
     T: Tag + Clone,
 {

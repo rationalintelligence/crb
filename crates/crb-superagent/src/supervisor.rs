@@ -12,7 +12,7 @@ use typed_slab::TypedSlab;
 pub struct ActivityId(usize);
 
 pub trait Supervisor: Agent {
-    type GroupBy: Debug + Ord + Clone + Sync + Send + Eq + Hash;
+    type GroupBy: Ord + Clone + Send + Eq + Hash;
 
     fn finished(&mut self, _rel: &Relation<Self>, _ctx: &mut Context<Self>) {}
 }

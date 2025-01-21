@@ -13,7 +13,12 @@
 - Use repeaters for the `Drainer`
 
 ## Added
+
 - **Drainer** - A special task-agent in the superagent crate to drain events sources.
+
+## Improved
+
+- **Timer** - Both `Timeout` and `Interval` joined into a single worker `Timer`.
 
 # CRB v0.0.27 - 2025-01-18
 

@@ -10,7 +10,7 @@ use crb_send::{Recipient, Sender};
 
 pub struct Interval {
     #[allow(unused)]
-    job: JobHandle,
+    job: Option<JobHandle>,
 }
 
 impl Interval {
@@ -19,14 +19,12 @@ impl Interval {
         A: OnEvent<T>,
         T: Tag + Clone,
     {
-        let task = IntervalTask {
-            duration,
-            event,
-            listeners: vec![address.to_address().recipient()],
-        };
-        let mut job = RunAgent::new(task).spawn().job();
-        job.cancel_on_drop(true);
-        Self { job }
+        let mut switch = IntervalSwitch::new(duration, event);
+        switch.add_listener(address);
+        switch.on();
+        Self {
+            job: switch.job.take(),
+        }
     }
 }
 

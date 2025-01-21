@@ -2,10 +2,10 @@ use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
     Address, Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone,
+    ToAddress,
 };
 use crb::core::{time::Duration, Slot};
 use crb::superagent::Timer;
-use derive_more::From;
 use notify::{
     recommended_watcher, Event, EventHandler, RecommendedWatcher, RecursiveMode, Watcher,
 };
@@ -57,16 +57,22 @@ impl Agent for FileWatcher {
     }
 }
 
+impl FileWatcher {
+    fn configure_debouncer(&mut self, ctx: &mut Context<Self>) {
+        let duration = Duration::from_millis(DEBOUNCE_MS);
+        self.debouncer.set_duration(duration);
+        self.debouncer.add_listener(&*ctx);
+        self.debouncer.set_repeat(true);
+    }
+}
+
 struct Initialize;
 
 #[async_trait]
 impl Duty<Initialize> for FileWatcher {
     async fn handle(&mut self, _: Initialize, ctx: &mut Context<Self>) -> Result<Next<Self>> {
-        let duration = Duration::from_millis(DEBOUNCE_MS);
-        self.debouncer.set_duration(duration);
-        self.debouncer.add_listener(&*ctx);
-        self.debouncer.set_repeat(true);
-        let forwarder = EventsForwarder::from(ctx.address().clone());
+        self.configure_debouncer(ctx);
+        let forwarder = EventsForwarder::new(&*ctx);
         let mut watcher = recommended_watcher(forwarder)?;
         watcher.watch(&self.path, RecursiveMode::NonRecursive)?;
         self.watcher.fill(watcher)?;
@@ -74,9 +80,17 @@ impl Duty<Initialize> for FileWatcher {
     }
 }
 
-#[derive(From)]
+// TODO: Add the `FromAddress` trait and derive it?
 struct EventsForwarder {
     address: Address<FileWatcher>,
+}
+
+impl EventsForwarder {
+    fn new(addr: impl ToAddress<FileWatcher>) -> Self {
+        Self {
+            address: addr.to_address(),
+        }
+    }
 }
 
 impl EventHandler for EventsForwarder {

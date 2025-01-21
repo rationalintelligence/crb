@@ -8,6 +8,8 @@ use crb_core::{
 use crb_runtime::{JobHandle, Task};
 use crb_send::{Recipient, Sender};
 
+// TODO: Add TimerBuilder
+
 pub struct TimerHandle {
     #[allow(unused)]
     job: Option<JobHandle>,
@@ -45,6 +47,10 @@ where
         Self { job: None, task }
     }
 
+    pub fn is_active(&self) -> bool {
+        self.job.is_some()
+    }
+
     pub fn set_duration(&mut self, duration: Duration) {
         self.task.duration = duration;
     }
@@ -54,7 +60,7 @@ where
     }
 
     pub fn on(&mut self) {
-        if self.job.is_none() {
+        if !self.is_active() {
             let task = self.task.clone();
             let mut job = RunAgent::new(task).spawn().job();
             job.cancel_on_drop(true);

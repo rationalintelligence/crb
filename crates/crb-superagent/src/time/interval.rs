@@ -42,12 +42,17 @@ where
             duration,
             event,
             listeners: Vec::new(),
+            repeat: false,
         };
         Self { job: None, task }
     }
 
     pub fn set_duration(&mut self, duration: Duration) {
         self.task.duration = duration;
+    }
+
+    pub fn set_repeat(&mut self, repeat: bool) {
+        self.task.repeat = repeat;
     }
 
     pub fn on(&mut self) {
@@ -77,6 +82,7 @@ struct IntervalTask<T> {
     duration: Duration,
     event: T,
     listeners: Vec<Recipient<T>>,
+    repeat: bool,
 }
 
 impl<T> Agent for IntervalTask<T>
@@ -90,16 +96,31 @@ where
     }
 }
 
+impl<T> IntervalTask<T>
+where
+    T: Tag + Clone,
+{
+    fn distribute(&self) {
+        for listener in &self.listeners {
+            listener.send(self.event.clone()).ok();
+        }
+    }
+}
+
 #[async_trait]
 impl<T> DoAsync for IntervalTask<T>
 where
     T: Tag + Clone,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
-        for listener in &self.listeners {
-            listener.send(self.event.clone())?;
+        if self.repeat {
+            self.distribute();
+            sleep(self.duration).await;
+            Ok(None)
+        } else {
+            sleep(self.duration).await;
+            self.distribute();
+            Ok(Some(Next::done()))
         }
-        sleep(self.duration).await;
-        Ok(None)
     }
 }

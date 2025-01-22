@@ -1,4 +1,4 @@
-use crate::address::{Address, AddressJoint};
+use crate::address::{Address, AddressJoint, Envelope};
 use crate::agent::Agent;
 use crate::performers::Next;
 use crb_runtime::{Controller, ManagedContext, ReachableContext};
@@ -21,6 +21,12 @@ where
 {
     pub fn address(&self) -> &<A::Context as ReachableContext>::Address {
         ReachableContext::address(&self.context)
+    }
+}
+
+impl<A: Agent> Context<A> {
+    pub async fn next_envelope(&mut self) -> Option<Envelope<A>> {
+        self.session().joint().next_envelope().await
     }
 }
 

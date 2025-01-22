@@ -23,7 +23,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     async fn event(&mut self, ctx: &mut Context<Self>) -> Result<()> {
-        let envelope = ctx.session().joint().next_envelope();
+        let envelope = ctx.next_envelope();
         if let Some(envelope) = envelope.await {
             envelope.handle(self, ctx).await?;
         } else {

@@ -1,7 +1,9 @@
 pub mod interaction;
+pub mod ping;
 pub mod subscription;
 
 pub use interaction::*;
+pub use ping::*;
 pub use subscription::*;
 
 use anyhow::{anyhow, Error, Result};

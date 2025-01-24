@@ -1,6 +1,6 @@
 [package]
 public = false
-name = "file-watcher"
+name = "crb-example-file-watcher"
 version = "0.1.0"
 edition = "2021"
 

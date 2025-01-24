@@ -4,8 +4,9 @@ use crate::context::Context;
 use crate::message::event::OnEvent;
 use crb_send::Recipient;
 use derive_more::{Deref, DerefMut};
+use std::sync::Arc;
 
-pub type UniAddress<T> = Box<T>;
+pub type UniAddress<T> = Arc<T>;
 
 pub trait ToAddress<A: Agent> {
     fn to_address(&self) -> Address<A>;

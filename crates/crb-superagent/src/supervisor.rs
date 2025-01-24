@@ -3,9 +3,10 @@ use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
 use crb_runtime::{InteractiveRuntime, Interruptor, ManagedContext, ReachableContext, Runtime};
 use derive_more::{Deref, DerefMut, From, Into};
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Debug;
-use std::hash::Hash;
+use std::hash::{Hash, Hasher};
 use typed_slab::TypedSlab;
 
 #[derive(Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Hash, From, Into)]
@@ -268,6 +269,35 @@ impl<S: Supervisor> Clone for Relation<S> {
             id: self.id,
             group: self.group.clone(),
         }
+    }
+}
+
+impl<S: Supervisor> PartialEq for Relation<S> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.group == other.group
+    }
+}
+
+impl<S: Supervisor> Eq for Relation<S> {}
+
+impl<S: Supervisor> PartialOrd for Relation<S> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl<S: Supervisor> Ord for Relation<S> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.id
+            .cmp(&other.id)
+            .then_with(|| self.group.cmp(&other.group))
+    }
+}
+
+impl<S: Supervisor> Hash for Relation<S> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.group.hash(state);
     }
 }
 

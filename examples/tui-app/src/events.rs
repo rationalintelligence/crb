@@ -1,6 +1,6 @@
 use crate::app::TuiApp;
 use anyhow::Result;
-use crb::agent::{Address, Agent, AgentSession, DoSync, Next};
+use crb::agent::{Address, Agent, ToAddress, AgentSession, DoSync, Next};
 use crossterm::event;
 
 pub struct EventsDrainer {
@@ -8,8 +8,8 @@ pub struct EventsDrainer {
 }
 
 impl EventsDrainer {
-    pub fn new(app: Address<TuiApp>) -> Self {
-        Self { app }
+    pub fn new(app: impl ToAddress<TuiApp>) -> Self {
+        Self { app: app.to_address() }
     }
 }
 

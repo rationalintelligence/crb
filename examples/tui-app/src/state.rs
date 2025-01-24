@@ -9,7 +9,7 @@ impl AppState {
         Self { crabs: 0 }
     }
 
-    pub fn plus_one(&mut self) {
+    pub fn plus_crab(&mut self) {
         self.crabs += 1;
     }
 

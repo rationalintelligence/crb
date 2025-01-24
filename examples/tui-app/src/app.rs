@@ -41,8 +41,7 @@ impl Duty<Configure> for TuiApp {
     async fn handle(&mut self, _: Configure, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         let terminal = ratatui::try_init()?;
         self.terminal.fill(terminal)?;
-        let address = ctx.address().clone();
-        let drainer = EventsDrainer::new(address);
+        let drainer = EventsDrainer::new(&ctx);
         ctx.spawn_agent(drainer, ());
         Ok(Next::do_sync(Render))
     }
@@ -55,7 +54,7 @@ impl OnEvent<Event> for TuiApp {
             Event::Key(event) => match event.code {
                 KeyCode::Char('q') => Next::do_async(Terminate),
                 _ => {
-                    self.state.plus_one();
+                    self.state.plus_crab();
                     Next::do_sync(Render)
                 }
             },

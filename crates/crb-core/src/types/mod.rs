@@ -2,10 +2,10 @@
 //! for types of messages.
 
 pub mod slot;
-pub mod uid;
+pub mod unique;
 
 pub use slot::*;
-pub use uid::*;
+pub use unique::*;
 
 /// A tag that can be sent between threads.
 pub trait Tag: Send + 'static {}

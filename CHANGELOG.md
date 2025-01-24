@@ -16,10 +16,12 @@
 
 - **Drainer** - A special task-agent in the superagent crate to drain events sources.
 - **ToRecipient** - A trait to produce a recipient for events.
+- **Ping** - A ping extension has been added.
 
 ## Improved
 
 - **Timer** - Both `Timeout` and `Interval` joined into a single worker `Timer`.
+- **Unique** - `UniqueId` has been renamed to `Unique`.
 
 # CRB v0.0.27 - 2025-01-18
 

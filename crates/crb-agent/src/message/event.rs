@@ -1,9 +1,33 @@
 use crate::address::{Address, MessageFor};
 use crate::agent::Agent;
 use crate::context::Context;
-use anyhow::{Error, Result};
+use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
 use crb_send::Recipient;
+
+pub trait EventExt<E: TheEvent> {
+    fn event(&self, event: E) -> Result<()>;
+}
+
+impl<A, E> EventExt<E> for Address<A>
+where
+    A: OnEvent<E>,
+    E: TheEvent,
+{
+    fn event(&self, event: E) -> Result<()> {
+        Address::event(self, event)
+    }
+}
+
+impl<A, E> EventExt<E> for Context<A>
+where
+    A: OnEvent<E>,
+    E: TheEvent,
+{
+    fn event(&self, event: E) -> Result<()> {
+        self.address().event(event)
+    }
+}
 
 pub trait TheEvent: Send + 'static {}
 
@@ -47,11 +71,13 @@ impl<A: Agent> Context<A> {
 
 /// Do not introduce tags: use event wrapper instead.
 #[async_trait]
-pub trait OnEvent<E>: Agent {
+pub trait OnEvent<E: TheEvent>: Agent {
     // TODO: Add when RFC 192 will be implemented (associated types defaults)
     // type Error: Into<Error> + Send + 'static;
 
-    async fn handle(&mut self, event: E, ctx: &mut Context<Self>) -> Result<()>;
+    async fn handle(&mut self, _event: E, _ctx: &mut Context<Self>) -> Result<()> {
+        Err(anyhow!("The handle method in not implemented."))
+    }
 
     async fn fallback(&mut self, err: Error, _ctx: &mut Context<Self>) -> Result<()> {
         Err(err)

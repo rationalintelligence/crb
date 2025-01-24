@@ -5,6 +5,8 @@ use crate::message::event::OnEvent;
 use crb_send::Recipient;
 use derive_more::{Deref, DerefMut};
 
+pub type UniAddress<T> = Box<T>;
+
 pub trait ToAddress<A: Agent> {
     fn to_address(&self) -> Address<A>;
 }

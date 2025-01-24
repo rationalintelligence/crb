@@ -61,8 +61,7 @@ impl FileWatcher {
     fn configure_debouncer(&mut self, ctx: &mut Context<Self>) {
         let duration = Duration::from_millis(DEBOUNCE_MS);
         self.debouncer.set_duration(duration);
-        self.debouncer.add_listener(&*ctx);
-        self.debouncer.set_repeat(true);
+        self.debouncer.add_listener(ctx);
     }
 }
 
@@ -72,7 +71,7 @@ struct Initialize;
 impl Duty<Initialize> for FileWatcher {
     async fn handle(&mut self, _: Initialize, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         self.configure_debouncer(ctx);
-        let forwarder = EventsForwarder::new(&*ctx);
+        let forwarder = EventsForwarder::new(ctx);
         let mut watcher = recommended_watcher(forwarder)?;
         watcher.watch(&self.path, RecursiveMode::NonRecursive)?;
         self.watcher.fill(watcher)?;
@@ -80,7 +79,6 @@ impl Duty<Initialize> for FileWatcher {
     }
 }
 
-// TODO: Add the `FromAddress` trait and derive it?
 struct EventsForwarder {
     address: Address<FileWatcher>,
 }
@@ -118,11 +116,8 @@ struct Tick;
 impl OnEvent<Tick> for FileWatcher {
     async fn handle(&mut self, _: Tick, _ctx: &mut Context<Self>) -> Result<()> {
         self.debouncer.off();
-        println!(
-            "{} file changed. Debounced events: {}",
-            self.path.display(),
-            self.counter
-        );
+        print!("{} file changed.", self.path.display());
+        println!(" Debounced events: {}", self.counter);
         self.counter = 0;
         Ok(())
     }

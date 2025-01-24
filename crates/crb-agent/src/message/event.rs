@@ -5,11 +5,15 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_send::Recipient;
 
+pub trait TheEvent: Send + 'static {}
+
+impl<T> TheEvent for T where Self: Send + 'static {}
+
 impl<A: Agent> Address<A> {
     pub fn event<E>(&self, event: E) -> Result<()>
     where
         A: OnEvent<E>,
-        E: Send + 'static,
+        E: TheEvent,
     {
         self.send(Event::new(event))
     }
@@ -17,7 +21,7 @@ impl<A: Agent> Address<A> {
     pub fn recipient<E>(&self) -> Recipient<E>
     where
         A: OnEvent<E>,
-        E: Send + 'static,
+        E: TheEvent,
     {
         Recipient::new(self.clone()).reform(Event::new)
     }
@@ -27,7 +31,7 @@ impl<A: Agent> Context<A> {
     pub fn event<E>(&self, event: E) -> Result<()>
     where
         A: OnEvent<E>,
-        E: Send + 'static,
+        E: TheEvent,
     {
         self.address().event(event)
     }
@@ -35,7 +39,7 @@ impl<A: Agent> Context<A> {
     pub fn recipient<E>(&self) -> Recipient<E>
     where
         A: OnEvent<E>,
-        E: Send + 'static,
+        E: TheEvent,
     {
         self.address().recipient()
     }
@@ -68,7 +72,7 @@ impl<E> Event<E> {
 impl<A, E> MessageFor<A> for Event<E>
 where
     A: OnEvent<E>,
-    E: Send + 'static,
+    E: TheEvent,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         if let Err(err) = agent.handle(self.event, ctx).await {

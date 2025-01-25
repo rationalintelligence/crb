@@ -44,7 +44,7 @@ impl Agent for FileWatcher {
 
     fn interrupt(&mut self, ctx: &mut Context<Self>) {
         self.watcher.take().ok();
-        self.debouncer.off();
+        self.debouncer.stop();
         ctx.shutdown();
     }
 }
@@ -96,7 +96,7 @@ impl OnEvent<EventResult> for FileWatcher {
     async fn handle(&mut self, result: EventResult, _ctx: &mut Context<Self>) -> Result<()> {
         let _event = result?;
         self.counter += 1;
-        self.debouncer.on();
+        self.debouncer.start();
         Ok(())
     }
 }
@@ -107,7 +107,7 @@ struct Tick;
 #[async_trait]
 impl OnEvent<Tick> for FileWatcher {
     async fn handle(&mut self, _: Tick, _ctx: &mut Context<Self>) -> Result<()> {
-        self.debouncer.off();
+        self.debouncer.stop();
         print!("{} file changed.", self.path.display());
         println!(" Debounced events: {}", self.counter);
         self.counter = 0;

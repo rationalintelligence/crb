@@ -22,19 +22,19 @@ where
         self.tx.send(msg).ok();
     }
 
-    pub async fn subscribe<A>(&self, addr: impl ToAddress<A>)
+    pub fn subscribe<A>(&'static self, addr: impl ToAddress<A>)
     where
         A: OnEvent<T>,
     {
-        let rx = self.rx.lock().await.take();
-        if let Some(mut rx) = rx {
-            let address = addr.to_address();
-            // TODO: Use async `Drainer` here?
-            crb_core::spawn(async move {
+        let address = addr.to_address();
+        crb_core::spawn(async move {
+            let rx = self.rx.lock().await.take();
+            if let Some(mut rx) = rx {
+                // TODO: Use async `Drainer` here?
                 while let Some(event) = rx.recv().await {
                     address.event(event).ok();
                 }
-            });
-        }
+            }
+        });
     }
 }

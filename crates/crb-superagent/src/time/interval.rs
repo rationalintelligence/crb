@@ -26,3 +26,12 @@ where
         self.timer.add_listener(address);
     }
 }
+
+impl<T> Default for Interval<T>
+where
+    T: Tag + Clone + Default,
+{
+    fn default() -> Self {
+        Self::new(T::default(), Duration::from_secs(1))
+    }
+}

@@ -199,13 +199,15 @@ where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
-    pub fn schedule<A>(&mut self, agent: A, group: S::GroupBy)
+    pub fn schedule<A>(&mut self, agent: A, group: S::GroupBy) -> Address<A>
     where
         A: Agent,
         A::Context: Default,
     {
         let runtime = RunAgent::<A>::new(agent);
+        let addr = runtime.address();
         self.scheduled.push((Box::new(runtime), group));
+        addr
     }
 
     pub fn spawn_scheduled(&mut self) {

@@ -31,7 +31,7 @@ where
         let mut switch = Self::new(event);
         switch.set_duration(duration);
         switch.add_listener(address);
-        switch.on();
+        switch.start();
         TimerHandle {
             job: switch.job.take(),
         }
@@ -59,7 +59,12 @@ where
         self.task.repeat = repeat;
     }
 
-    pub fn on(&mut self) {
+    pub fn restart(&mut self) {
+        self.stop();
+        self.start();
+    }
+
+    pub fn start(&mut self) {
         if !self.is_active() {
             let task = self.task.clone();
             let mut job = RunAgent::new(task).spawn().job();
@@ -68,7 +73,7 @@ where
         }
     }
 
-    pub fn off(&mut self) {
+    pub fn stop(&mut self) {
         self.job.take();
     }
 

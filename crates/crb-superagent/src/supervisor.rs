@@ -28,6 +28,7 @@ pub struct SupervisorSession<S: Supervisor> {
     #[deref_mut]
     pub session: AgentSession<S>,
     pub tracker: Tracker<S>,
+    pub scheduled: Vec<(Box<dyn Runtime>, S::GroupBy)>,
 }
 
 impl<S: Supervisor> Default for SupervisorSession<S> {
@@ -35,6 +36,7 @@ impl<S: Supervisor> Default for SupervisorSession<S> {
         Self {
             session: AgentSession::default(),
             tracker: Tracker::new(),
+            scheduled: Vec::new(),
         }
     }
 }
@@ -197,16 +199,32 @@ where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
+    pub fn schedule<A>(&mut self, agent: A, group: S::GroupBy)
+    where
+        A: Agent,
+        A::Context: Default,
+    {
+        let runtime = RunAgent::<A>::new(agent);
+        self.scheduled.push((Box::new(runtime), group));
+    }
+
+    pub fn spawn_scheduled(&mut self) {
+        let runtimes: Vec<_> = self.scheduled.drain(..).collect();
+        for (runtime, group) in runtimes {
+            self.spawn_trackable(runtime, group);
+        }
+    }
+
     pub fn spawn_agent<A>(
         &mut self,
-        input: A,
+        agent: A,
         group: S::GroupBy,
     ) -> (<A::Context as ReachableContext>::Address, Relation<S>)
     where
         A: Agent,
         A::Context: Default,
     {
-        let runtime = RunAgent::<A>::new(input);
+        let runtime = RunAgent::<A>::new(agent);
         self.spawn_runtime(runtime, group)
     }
 

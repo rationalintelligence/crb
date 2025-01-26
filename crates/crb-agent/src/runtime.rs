@@ -7,7 +7,9 @@ use crb_runtime::{
     InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, ReachableContext, Runtime,
     Task,
 };
-use futures::stream::Abortable;
+use futures::{stream::Abortable, FutureExt};
+use std::future::{Future, IntoFuture};
+use std::pin::Pin;
 
 pub struct RunAgent<A: Agent> {
     pub agent: Option<A>,
@@ -23,6 +25,10 @@ impl<A: Agent> RunAgent<A> {
             agent: Some(agent),
             context: Context::wrap(A::Context::default()),
         }
+    }
+
+    pub async fn operate(mut self) {
+        self.perform_and_report().await;
     }
 
     pub fn report(&mut self, interrupted: bool) {
@@ -145,5 +151,14 @@ impl<A: Agent> InteractiveRuntime for RunAgent<A> {
 
     fn address(&self) -> <Self::Context as ReachableContext>::Address {
         self.context.address().clone()
+    }
+}
+
+impl<A: Agent> IntoFuture for RunAgent<A> {
+    type Output = ();
+    type IntoFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
+
+    fn into_future(self) -> Self::IntoFuture {
+        self.operate().boxed()
     }
 }

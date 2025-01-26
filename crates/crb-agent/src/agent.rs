@@ -60,18 +60,15 @@ pub trait Standalone: Agent {
     // TODO: spawn_with_context()
 }
 
-#[async_trait]
 pub trait Runnable: Agent {
-    async fn run(self);
+    fn run(self) -> RunAgent<Self>;
 }
 
-#[async_trait]
 impl<A: Agent> Runnable for A
 where
     Self::Context: Default,
 {
-    async fn run(self) {
-        let mut runtime = RunAgent::new(self);
-        runtime.perform_and_report().await;
+    fn run(self) -> RunAgent<Self> {
+        RunAgent::new(self)
     }
 }

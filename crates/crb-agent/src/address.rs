@@ -71,7 +71,7 @@ where
     A: Agent,
     M: MessageFor<A>,
 {
-    fn send(&self, input: M) -> Result<(), Error> {
+    fn send(&self, input: M) -> Result<()> {
         Address::send(self, input)
     }
 }

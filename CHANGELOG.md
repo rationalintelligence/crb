@@ -18,6 +18,7 @@
 - **Drainer** - A special task-agent in the superagent crate to drain events sources.
 - **ToRecipient** - A trait to produce a recipient for events.
 - **Ping** - A ping extension has been added.
+- **Operable** - A trait to execute a `Mission` to get the `Goal` result.
 
 ## Improved
 

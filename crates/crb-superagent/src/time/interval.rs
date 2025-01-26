@@ -24,6 +24,7 @@ where
         A: OnEvent<T>,
     {
         self.timer.add_listener(address);
+        self.timer.start();
     }
 }
 

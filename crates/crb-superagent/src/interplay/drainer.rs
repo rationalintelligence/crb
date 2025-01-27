@@ -2,7 +2,7 @@ use crate::attach::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
-use crb_core::Tag;
+use crb_core::{Msg, Tag};
 use crb_send::{Recipient, Sender};
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
@@ -13,7 +13,7 @@ pub struct Drainer<ITEM> {
 
 impl<ITEM> Drainer<ITEM>
 where
-    ITEM: Tag,
+    ITEM: Msg,
 {
     pub fn new<S>(stream: S) -> Self
     where
@@ -27,29 +27,32 @@ where
 
 impl<A, ITEM, T> ForwardTo<A, T> for Drainer<ITEM>
 where
-    A: OnItem<ITEM>,
-    ITEM: Tag,
-    T: Tag,
+    A: OnItem<ITEM, T>,
+    ITEM: Msg,
+    T: Tag + Clone,
 {
-    type Runtime = RunAgent<DrainerTask<ITEM>>;
+    type Runtime = RunAgent<DrainerTask<ITEM, T>>;
 
     fn into_trackable(self, address: Address<A>, tag: T) -> Self::Runtime {
         let task = DrainerTask {
             recipient: address.sender(),
             stream: self.stream,
+            tag,
         };
         RunAgent::new(task)
     }
 }
 
-pub struct DrainerTask<ITEM> {
-    recipient: Recipient<Item<ITEM>>,
+pub struct DrainerTask<ITEM, T> {
+    recipient: Recipient<Item<ITEM, T>>,
     stream: Pin<Box<dyn Stream<Item = ITEM> + Send>>,
+    tag: T,
 }
 
-impl<ITEM> Agent for DrainerTask<ITEM>
+impl<ITEM, T> Agent for DrainerTask<ITEM, T>
 where
-    ITEM: Tag,
+    ITEM: Msg,
+    T: Tag + Clone,
 {
     type Context = AgentSession<Self>;
 
@@ -59,13 +62,17 @@ where
 }
 
 #[async_trait]
-impl<ITEM> DoAsync for DrainerTask<ITEM>
+impl<ITEM, T> DoAsync for DrainerTask<ITEM, T>
 where
-    ITEM: Tag,
+    ITEM: Msg,
+    T: Tag + Clone,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
         if let Some(item) = self.stream.next().await {
-            let item = Item { item, tag: () };
+            let item = Item {
+                item,
+                tag: self.tag.clone(),
+            };
             self.recipient.send(item)?;
             Ok(None)
         } else {
@@ -75,21 +82,21 @@ where
 }
 
 #[async_trait]
-pub trait OnItem<OUT, ITEM = ()>: Agent {
-    async fn on_item(&mut self, item: OUT, tag: ITEM, ctx: &mut Context<Self>) -> Result<()>;
+pub trait OnItem<ITEM, T = ()>: Agent {
+    async fn on_item(&mut self, item: ITEM, tag: T, ctx: &mut Context<Self>) -> Result<()>;
 }
 
-struct Item<OUT, ITEM = ()> {
-    item: OUT,
-    tag: ITEM,
+struct Item<ITEM, T> {
+    item: ITEM,
+    tag: T,
 }
 
 #[async_trait]
-impl<A, OUT, ITEM> MessageFor<A> for Item<OUT, ITEM>
+impl<A, ITEM, T> MessageFor<A> for Item<ITEM, T>
 where
-    A: OnItem<OUT, ITEM>,
-    OUT: Tag,
-    ITEM: Tag,
+    A: OnItem<ITEM, T>,
+    ITEM: Msg,
+    T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
         agent.on_item(self.item, self.tag, ctx).await

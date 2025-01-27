@@ -2,7 +2,7 @@ use crate::attach::ForwardTo;
 use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
-use crb_core::{Slot, Tag};
+use crb_core::{Msg, Slot, Tag};
 use crb_send::{Recipient, Sender};
 use derive_more::From;
 use futures::channel::oneshot::{self, Canceled};
@@ -89,7 +89,7 @@ impl<OUT> Future for Fetcher<OUT> {
 impl<A, OUT, T> ForwardTo<A, T> for Fetcher<OUT>
 where
     A: OnResponse<OUT, T>,
-    OUT: Tag,
+    OUT: Msg,
     T: Tag,
 {
     type Runtime = RunAgent<FetcherTask<OUT, T>>;
@@ -112,7 +112,7 @@ pub struct FetcherTask<OUT, T> {
 
 impl<OUT, T> Agent for FetcherTask<OUT, T>
 where
-    OUT: Tag,
+    OUT: Msg,
     T: Tag,
 {
     type Context = AgentSession<Self>;
@@ -125,7 +125,7 @@ where
 #[async_trait]
 impl<OUT, T> DoAsync for FetcherTask<OUT, T>
 where
-    OUT: Tag,
+    OUT: Msg,
     T: Tag,
 {
     async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
@@ -166,7 +166,7 @@ struct Response<OUT, T> {
 impl<A, OUT, T> MessageFor<A> for Response<OUT, T>
 where
     A: OnResponse<OUT, T>,
-    OUT: Tag,
+    OUT: Msg,
     T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {

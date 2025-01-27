@@ -16,3 +16,8 @@ impl<T: Send + 'static> Tag for T {}
 pub trait SyncTag: Sync + Send + 'static {}
 
 impl<T: Sync + Send + 'static> SyncTag for T {}
+
+/// A message that can be sent between threads.
+pub trait Msg: Send + 'static {}
+
+impl<T: Send + 'static> Msg for T {}

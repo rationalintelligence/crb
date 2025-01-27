@@ -1,33 +1,47 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Agent, AgentSession, DoAsync, Next, ToRecipient};
+use crb_agent::{Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent, ToAddress};
 use crb_core::Tag;
+use crb_runtime::Task;
 use crb_send::{Recipient, Sender};
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
 
 pub struct Drainer<T> {
-    recipient: Option<Recipient<T>>,
     stream: Pin<Box<dyn Stream<Item = T> + Send>>,
 }
 
-impl<T> Drainer<T> {
+impl<T> Drainer<T>
+where
+    T: Tag,
+{
     pub fn new<S>(stream: S) -> Self
     where
         S: Stream<Item = T> + Send + 'static,
     {
         Self {
-            recipient: None,
             stream: Box::pin(stream),
         }
     }
 
-    pub fn drain_to(&mut self, recipient: impl ToRecipient<T>) {
-        self.recipient = Some(recipient.to_recipient());
+    pub fn drain_to<A>(self, recipient: impl ToAddress<A>)
+    where
+        A: OnItem<T>,
+    {
+        let task = DrainerTask {
+            recipient: recipient.to_address().sender(),
+            stream: self.stream,
+        };
+        RunAgent::new(task).spawn();
     }
 }
 
-impl<T> Agent for Drainer<T>
+pub struct DrainerTask<T> {
+    recipient: Recipient<Item<T>>,
+    stream: Pin<Box<dyn Stream<Item = T> + Send>>,
+}
+
+impl<T> Agent for DrainerTask<T>
 where
     T: Tag,
 {
@@ -39,22 +53,39 @@ where
 }
 
 #[async_trait]
-impl<T> DoAsync for Drainer<T>
+impl<T> DoAsync for DrainerTask<T>
 where
     T: Tag,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
-        if let Some(recipient) = self.recipient.as_mut() {
-            if let Some(item) = self.stream.next().await {
-                recipient.send(item)?;
-                Ok(None)
-            } else {
-                Ok(Some(Next::done()))
-            }
+        if let Some(item) = self.stream.next().await {
+            let item = Item { item, tag: () };
+            self.recipient.send(item)?;
+            Ok(None)
         } else {
-            Ok(Some(Next::fail(anyhow!(
-                "Recepient is not set for a drainer."
-            ))))
+            Ok(Some(Next::done()))
         }
+    }
+}
+
+#[async_trait]
+pub trait OnItem<OUT, T = ()>: Agent {
+    async fn on_item(&mut self, item: OUT, tag: T, ctx: &mut Context<Self>) -> Result<()>;
+}
+
+struct Item<OUT, T = ()> {
+    item: OUT,
+    tag: T,
+}
+
+#[async_trait]
+impl<A, OUT, T> MessageFor<A> for Item<OUT, T>
+where
+    A: OnItem<OUT, T>,
+    OUT: Send + 'static,
+    T: Tag,
+{
+    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
+        agent.on_item(self.item, self.tag, ctx).await
     }
 }

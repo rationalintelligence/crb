@@ -62,7 +62,7 @@ impl<OUT> Fetcher<OUT> {
         Fetcher { rx }
     }
 
-    pub fn forwardable(self) -> ForwardableFetcher<OUT> {
+    pub fn forwardable(self) -> FetcherTask<OUT> {
         self.into()
     }
 }
@@ -89,11 +89,11 @@ impl<OUT> Future for Fetcher<OUT> {
 }
 
 #[derive(Deref, DerefMut, From, Into)]
-pub struct ForwardableFetcher<OUT> {
+pub struct FetcherTask<OUT> {
     pub fetcher: Fetcher<OUT>,
 }
 
-impl<OUT> ForwardableFetcher<OUT> {
+impl<OUT> FetcherTask<OUT> {
     pub fn forward_to<A, T>(self, recipient: impl ToAddress<A>, tag: T)
     where
         A: OnResponse<OUT, T>,
@@ -110,7 +110,7 @@ impl<OUT> ForwardableFetcher<OUT> {
     }
 }
 
-impl<OUT> IntoFuture for ForwardableFetcher<OUT> {
+impl<OUT> IntoFuture for FetcherTask<OUT> {
     type Output = Output<OUT>;
     type IntoFuture = Fetcher<OUT>;
 

@@ -1,10 +1,7 @@
-use super::{Fetcher, Interplay, Output};
+use super::{Fetcher, Interplay};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, Context, MessageFor, ToAddress};
-use crb_core::Tag;
-use derive_more::{Deref, DerefMut, From, Into};
-use std::future::IntoFuture;
+use crb_agent::{Address, Agent, Context, MessageFor};
 
 pub trait InteractExt<R: Request> {
     fn interact(&self, request: R) -> Fetcher<R::Response>;
@@ -62,63 +59,5 @@ pub trait OnRequest<R: Request>: Agent {
 
     async fn on_request(&mut self, _request: R, _ctx: &mut Context<Self>) -> Result<R::Response> {
         Err(anyhow!("The on_request method in not implemented."))
-    }
-}
-
-#[derive(Deref, DerefMut, From, Into)]
-pub struct ForwardableFetcher<OUT> {
-    pub fetcher: Fetcher<OUT>,
-}
-
-impl<OUT> ForwardableFetcher<OUT> {
-    pub fn forward_to<A, T>(self, recipient: impl ToAddress<A>, tag: T)
-    where
-        A: OnResponse<OUT, T>,
-        OUT: Send + 'static,
-        T: Tag,
-    {
-        let address = recipient.to_address();
-        crb_core::spawn(async move {
-            let response = self.fetcher.await;
-            if let Err(err) = address.send(Response { response, tag }) {
-                log::error!("Can't send a reponse: {err}");
-            }
-        });
-    }
-}
-
-impl<OUT> IntoFuture for ForwardableFetcher<OUT> {
-    type Output = Output<OUT>;
-    type IntoFuture = Fetcher<OUT>;
-
-    fn into_future(self) -> Self::IntoFuture {
-        self.fetcher
-    }
-}
-
-#[async_trait]
-pub trait OnResponse<OUT, T = ()>: Agent {
-    async fn on_response(
-        &mut self,
-        response: Output<OUT>,
-        tag: T,
-        ctx: &mut Context<Self>,
-    ) -> Result<()>;
-}
-
-struct Response<OUT, T = ()> {
-    response: Output<OUT>,
-    tag: T,
-}
-
-#[async_trait]
-impl<A, OUT, T> MessageFor<A> for Response<OUT, T>
-where
-    A: OnResponse<OUT, T>,
-    OUT: Send + 'static,
-    T: Tag,
-{
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
-        agent.on_response(self.response, self.tag, ctx).await
     }
 }

@@ -2,7 +2,7 @@ use crate::attach::ForwardTo;
 use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
-use crb_core::Tag;
+use crb_core::{Slot, Tag};
 use crb_send::{Recipient, Sender};
 use derive_more::From;
 use futures::channel::oneshot::{self, Canceled};
@@ -88,29 +88,32 @@ impl<OUT> Future for Fetcher<OUT> {
 
 impl<A, OUT, T> ForwardTo<A, T> for Fetcher<OUT>
 where
-    A: OnResponse<OUT, ()>,
+    A: OnResponse<OUT, T>,
     OUT: Tag,
     T: Tag,
 {
-    type Runtime = RunAgent<FetcherTask<OUT>>;
+    type Runtime = RunAgent<FetcherTask<OUT, T>>;
 
     fn into_trackable(self, address: Address<A>, tag: T) -> Self::Runtime {
         let task = FetcherTask {
             recipient: address.sender(),
             fetcher: self,
+            tag: Slot::filled(tag),
         };
         RunAgent::new(task)
     }
 }
 
-pub struct FetcherTask<OUT> {
-    recipient: Recipient<Response<OUT>>,
+pub struct FetcherTask<OUT, T> {
+    recipient: Recipient<Response<OUT, T>>,
     fetcher: Fetcher<OUT>,
+    tag: Slot<T>,
 }
 
-impl<OUT> Agent for FetcherTask<OUT>
+impl<OUT, T> Agent for FetcherTask<OUT, T>
 where
     OUT: Tag,
+    T: Tag,
 {
     type Context = AgentSession<Self>;
 
@@ -120,18 +123,22 @@ where
 }
 
 #[async_trait]
-impl<OUT> DoAsync for FetcherTask<OUT>
+impl<OUT, T> DoAsync for FetcherTask<OUT, T>
 where
     OUT: Tag,
+    T: Tag,
 {
     async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
         let response = (&mut self.fetcher).await;
-        self.recipient.send(Response { response, tag: () })?;
+        self.recipient.send(Response {
+            response,
+            tag: self.tag.take()?,
+        })?;
         Ok(Next::done())
     }
 }
 
-impl<OUT> IntoFuture for FetcherTask<OUT> {
+impl<OUT, T> IntoFuture for FetcherTask<OUT, T> {
     type Output = Output<OUT>;
     type IntoFuture = Fetcher<OUT>;
 
@@ -150,7 +157,7 @@ pub trait OnResponse<OUT, T = ()>: Agent {
     ) -> Result<()>;
 }
 
-struct Response<OUT, T = ()> {
+struct Response<OUT, T> {
     response: Output<OUT>,
     tag: T,
 }
@@ -159,7 +166,7 @@ struct Response<OUT, T = ()> {
 impl<A, OUT, T> MessageFor<A> for Response<OUT, T>
 where
     A: OnResponse<OUT, T>,
-    OUT: Send + 'static,
+    OUT: Tag,
     T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {

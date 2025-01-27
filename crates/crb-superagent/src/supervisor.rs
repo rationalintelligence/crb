@@ -2,6 +2,7 @@ use crate::attach::ForwardTo;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
+use crb_core::Tag;
 use crb_runtime::{InteractiveRuntime, Interruptor, ManagedContext, ReachableContext, Runtime};
 use derive_more::{Deref, DerefMut, From, Into};
 use std::cmp::Ordering;
@@ -266,12 +267,13 @@ where
         rel
     }
 
-    pub fn assign<T>(&mut self, trackable: T, group: S::GroupBy) -> Relation<S>
+    pub fn assign<R, T>(&mut self, trackable: R, group: S::GroupBy, tag: T) -> Relation<S>
     where
-        T: ForwardTo<S>,
+        R: ForwardTo<S, T>,
+        T: Tag,
     {
         let address = self.address().clone();
-        let trackable = trackable.into_trackable(address);
+        let trackable = trackable.into_trackable(address, tag);
         self.spawn_trackable(trackable, group)
     }
 }

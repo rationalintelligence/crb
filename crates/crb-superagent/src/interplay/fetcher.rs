@@ -86,14 +86,15 @@ impl<OUT> Future for Fetcher<OUT> {
     }
 }
 
-impl<A, OUT> ForwardTo<A> for Fetcher<OUT>
+impl<A, OUT, T> ForwardTo<A, T> for Fetcher<OUT>
 where
     A: OnResponse<OUT, ()>,
     OUT: Tag,
+    T: Tag,
 {
     type Runtime = RunAgent<FetcherTask<OUT>>;
 
-    fn into_trackable(self, address: Address<A>) -> Self::Runtime {
+    fn into_trackable(self, address: Address<A>, tag: T) -> Self::Runtime {
         let task = FetcherTask {
             recipient: address.sender(),
             fetcher: self,

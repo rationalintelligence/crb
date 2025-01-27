@@ -20,6 +20,7 @@
 - **Ping** - A ping extension has been added.
 - **Operable** - A trait to execute a `Mission` to get the `Goal` result.
 - **ForwardTo** - A special trait to assign tasks to the actor itself.
+- **Stacker** - A pool for delayed spawning agents.
 
 ## Improved
 

@@ -1,3 +1,7 @@
+pub mod stacker;
+
+pub use stacker::Stacker;
+
 use crate::attach::ForwardTo;
 use anyhow::Error;
 use async_trait::async_trait;
@@ -30,7 +34,6 @@ pub struct SupervisorSession<S: Supervisor> {
     #[deref_mut]
     pub session: AgentSession<S>,
     pub tracker: Tracker<S>,
-    pub scheduled: Vec<(Box<dyn Runtime>, S::GroupBy)>,
 }
 
 impl<S: Supervisor> Default for SupervisorSession<S> {
@@ -38,7 +41,6 @@ impl<S: Supervisor> Default for SupervisorSession<S> {
         Self {
             session: AgentSession::default(),
             tracker: Tracker::new(),
-            scheduled: Vec::new(),
         }
     }
 }
@@ -201,24 +203,6 @@ where
     S: Supervisor,
     S::Context: SupervisorContext<S>,
 {
-    pub fn schedule<A>(&mut self, agent: A, group: S::GroupBy) -> Address<A>
-    where
-        A: Agent,
-        A::Context: Default,
-    {
-        let runtime = RunAgent::<A>::new(agent);
-        let addr = runtime.address();
-        self.scheduled.push((Box::new(runtime), group));
-        addr
-    }
-
-    pub fn spawn_scheduled(&mut self) {
-        let runtimes: Vec<_> = self.scheduled.drain(..).collect();
-        for (runtime, group) in runtimes {
-            self.spawn_trackable(runtime, group);
-        }
-    }
-
     pub fn spawn_agent<A>(
         &mut self,
         agent: A,

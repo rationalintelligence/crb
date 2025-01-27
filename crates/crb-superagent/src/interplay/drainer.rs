@@ -1,8 +1,8 @@
+use crate::attach::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent, ToAddress};
+use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
 use crb_core::Tag;
-use crb_runtime::Task;
 use crb_send::{Recipient, Sender};
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
@@ -23,16 +23,21 @@ where
             stream: Box::pin(stream),
         }
     }
+}
 
-    pub fn drain_to<A>(self, recipient: impl ToAddress<A>)
-    where
-        A: OnItem<T>,
-    {
+impl<A, T> ForwardTo<A> for Drainer<T>
+where
+    A: OnItem<T>,
+    T: Tag,
+{
+    type Runtime = RunAgent<DrainerTask<T>>;
+
+    fn into_trackable(self, address: Address<A>) -> Self::Runtime {
         let task = DrainerTask {
-            recipient: recipient.to_address().sender(),
+            recipient: address.sender(),
             stream: self.stream,
         };
-        RunAgent::new(task).spawn();
+        RunAgent::new(task)
     }
 }
 

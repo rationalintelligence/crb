@@ -1,3 +1,4 @@
+use crate::attach::ForwardTo;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
@@ -263,6 +264,15 @@ where
         };
         crb_core::spawn(fut);
         rel
+    }
+
+    pub fn assign<T>(&mut self, trackable: T, group: S::GroupBy) -> Relation<S>
+    where
+        T: ForwardTo<S>,
+    {
+        let address = self.address().clone();
+        let trackable = trackable.into_trackable(address);
+        self.spawn_trackable(trackable, group)
     }
 }
 

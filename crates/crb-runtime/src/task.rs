@@ -38,7 +38,7 @@ pub trait Task<T = ()>: Runtime + Sized {
 }
 
 #[derive(Deref, DerefMut)]
-pub struct TaskHandle<T> {
+pub struct TaskHandle<T = ()> {
     #[deref]
     #[deref_mut]
     job: JobHandle,

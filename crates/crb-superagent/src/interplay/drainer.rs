@@ -87,7 +87,7 @@ struct Item<OUT, T = ()> {
 impl<A, OUT, T> MessageFor<A> for Item<OUT, T>
 where
     A: OnItem<OUT, T>,
-    OUT: Send + 'static,
+    OUT: Tag,
     T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {

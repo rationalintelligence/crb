@@ -1,8 +1,10 @@
+use crate::attach::ForwardTo;
 use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
-use crb_agent::{Agent, Context, MessageFor, ToAddress};
+use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
 use crb_core::Tag;
-use derive_more::{Deref, DerefMut, From, Into};
+use crb_send::{Recipient, Sender};
+use derive_more::From;
 use futures::channel::oneshot::{self, Canceled};
 use futures::{
     task::{Context as FutContext, Poll},
@@ -61,10 +63,6 @@ impl<OUT> Fetcher<OUT> {
         tx.send(Err(err)).ok();
         Fetcher { rx }
     }
-
-    pub fn forwardable(self) -> FetcherTask<OUT> {
-        self.into()
-    }
 }
 
 #[derive(Error, Debug)]
@@ -88,25 +86,47 @@ impl<OUT> Future for Fetcher<OUT> {
     }
 }
 
-#[derive(Deref, DerefMut, From, Into)]
-pub struct FetcherTask<OUT> {
-    pub fetcher: Fetcher<OUT>,
+impl<A, OUT> ForwardTo<A> for Fetcher<OUT>
+where
+    A: OnResponse<OUT, ()>,
+    OUT: Tag,
+{
+    type Runtime = RunAgent<FetcherTask<OUT>>;
+
+    fn into_trackable(self, address: Address<A>) -> Self::Runtime {
+        let task = FetcherTask {
+            recipient: address.sender(),
+            fetcher: self,
+        };
+        RunAgent::new(task)
+    }
 }
 
-impl<OUT> FetcherTask<OUT> {
-    pub fn forward_to<A, T>(self, recipient: impl ToAddress<A>, tag: T)
-    where
-        A: OnResponse<OUT, T>,
-        OUT: Send + 'static,
-        T: Tag,
-    {
-        let address = recipient.to_address();
-        crb_core::spawn(async move {
-            let response = self.fetcher.await;
-            if let Err(err) = address.send(Response { response, tag }) {
-                log::error!("Can't send a reponse: {err}");
-            }
-        });
+pub struct FetcherTask<OUT> {
+    recipient: Recipient<Response<OUT>>,
+    fetcher: Fetcher<OUT>,
+}
+
+impl<OUT> Agent for FetcherTask<OUT>
+where
+    OUT: Tag,
+{
+    type Context = AgentSession<Self>;
+
+    fn begin(&mut self) -> Next<Self> {
+        Next::do_async(())
+    }
+}
+
+#[async_trait]
+impl<OUT> DoAsync for FetcherTask<OUT>
+where
+    OUT: Tag,
+{
+    async fn once(&mut self, _: &mut ()) -> Result<Next<Self>> {
+        let response = (&mut self.fetcher).await;
+        self.recipient.send(Response { response, tag: () })?;
+        Ok(Next::done())
     }
 }
 

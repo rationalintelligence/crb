@@ -1,8 +1,9 @@
+pub mod forward;
 pub mod stacker;
 
+pub use forward::ForwardTo;
 pub use stacker::Stacker;
 
-use crate::attach::ForwardTo;
 use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};

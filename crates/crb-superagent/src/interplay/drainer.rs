@@ -1,4 +1,4 @@
-use crate::attach::ForwardTo;
+use crate::supervisor::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};

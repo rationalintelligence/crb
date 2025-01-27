@@ -1,4 +1,3 @@
-pub mod attach;
 pub mod bridge;
 pub mod interplay;
 pub mod mission;
@@ -8,7 +7,6 @@ pub mod subagent;
 pub mod supervisor;
 pub mod time;
 
-pub use attach::*;
 pub use bridge::*;
 pub use interplay::*;
 pub use mission::*;

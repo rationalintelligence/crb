@@ -42,10 +42,13 @@ impl<A: Agent> RunAgent<A> {
     }
 
     pub async fn perform(&mut self) {
+        let name = std::any::type_name::<A>();
+        log::info!("Agent {name} started.");
         let result = self.perform_abortable_task().await;
         if let Err(err) = result {
             A::rollback(self.agent.as_mut(), err, &mut self.context).await;
         }
+        log::info!("Agent {name} finished.");
     }
 
     pub async fn perform_abortable_task(&mut self) -> Result<()> {

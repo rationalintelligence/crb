@@ -1,0 +1,13 @@
+[package]
+name = "crb-system"
+description = "CRB | Composable Runtime Blocks | System Integration"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+crb-agent.workspace = true
+tokio.workspace = true

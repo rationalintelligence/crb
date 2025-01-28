@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use chrono::{Duration, Utc};
-use crb::agent::{Agent, AgentSession, DoAsync, DoSync, Next};
+use crb::agent::{Agent, AgentSession, DoAsync, DoSync, Next, Standalone};
 use csv::Writer;
 use db_dump::{crates::Row, Loader};
 use futures::StreamExt;
@@ -22,6 +22,8 @@ impl CratesLoader {
         Self { path: PATH.into() }
     }
 }
+
+impl Standalone for CratesLoader {}
 
 impl Agent for CratesLoader {
     type Context = AgentSession<Self>;

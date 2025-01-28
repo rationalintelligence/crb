@@ -24,6 +24,7 @@
 
 ## Improved
 
+- **Interruptor** - Runtimes interruption was significantly improves. It has some issues that were fixed.
 - **Timer** - Both `Timeout` and `Interval` joined into a single worker `Timer`.
 - **Unique** - `UniqueId` has been renamed to `Unique`.
 

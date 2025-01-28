@@ -140,8 +140,7 @@ where
     A: Agent,
 {
     fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        // TODO: Use address or combined instead
-        Box::new(self.context.session().controller.stopper.clone())
+        Box::new(self.context.session().address().clone())
     }
 
     async fn routine(&mut self) {

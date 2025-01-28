@@ -1,5 +1,5 @@
 use crate::context::ReachableContext;
-use crate::controller::Stopper;
+use crate::interruptor::Interruptor;
 use crate::runtime::{InteractiveRuntime, Runtime};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
@@ -17,12 +17,12 @@ pub trait InteractiveTask<T>: Task<T> + InteractiveRuntime {
 #[async_trait]
 pub trait Task<T = ()>: Runtime + Sized {
     fn spawn(mut self) -> TaskHandle<T> {
-        let stopper = self.get_interruptor();
+        let interruptor = self.get_interruptor();
         let handle = crb_core::spawn(async move {
             self.routine().await;
         });
         let job = JobHandle {
-            stopper,
+            interruptor,
             handle,
             cancel_on_drop: false,
         };
@@ -58,7 +58,7 @@ impl<T> From<TaskHandle<T>> for JobHandle {
 }
 
 pub struct JobHandle {
-    stopper: Stopper,
+    interruptor: Box<dyn Interruptor>,
     handle: JoinHandle<()>,
     cancel_on_drop: bool,
 }
@@ -69,7 +69,7 @@ impl JobHandle {
     }
 
     pub fn interrupt(&mut self) {
-        self.stopper.stop(true);
+        self.interruptor.interrupt();
     }
 }
 

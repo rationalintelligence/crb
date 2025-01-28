@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use crb_agent::performers::{ConsumptionReason, Next, StatePerformer, Transition};
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, RunAgent};
-use crb_runtime::{Controller, ManagedContext, ReachableContext, Runtime, Stopper, Task};
+use crb_runtime::{Controller, Interruptor, ManagedContext, ReachableContext, Runtime, Task};
 use std::marker::PhantomData;
 
 pub trait NextExt<A> {
@@ -119,8 +119,8 @@ impl Task for MoltAgent {}
 
 #[async_trait]
 impl Runtime for MoltAgent {
-    fn get_interruptor(&mut self) -> Stopper {
-        self.controller.stopper.clone()
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
+        Box::new(self.controller.stopper.clone())
     }
 
     async fn routine(&mut self) {

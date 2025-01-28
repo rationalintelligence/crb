@@ -8,7 +8,7 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
 use crb_core::Tag;
-use crb_runtime::{InteractiveRuntime, ManagedContext, ReachableContext, Runtime, Stopper};
+use crb_runtime::{InteractiveRuntime, Interruptor, ManagedContext, ReachableContext, Runtime};
 use derive_more::{Deref, DerefMut, From, Into};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashSet};
@@ -144,10 +144,14 @@ impl<S: Supervisor> Tracker<S> {
         self.try_terminate_next();
     }
 
-    fn register_activity(&mut self, group: S::GroupBy, stopper: Stopper) -> Relation<S> {
+    fn register_activity(
+        &mut self,
+        group: S::GroupBy,
+        interruptor: Box<dyn Interruptor>,
+    ) -> Relation<S> {
         let activity = Activity {
             group: group.clone(),
-            stopper,
+            interruptor,
         };
         let id = self.activities.insert(activity);
         let group_record = self.groups.entry(group.clone()).or_default();
@@ -236,8 +240,8 @@ where
     where
         B: Runtime,
     {
-        let stopper = trackable.get_interruptor();
-        let rel = self.tracker.register_activity(group, stopper);
+        let interruptor = trackable.get_interruptor();
+        let rel = self.tracker.register_activity(group, interruptor);
         let detacher = DetacherFor {
             supervisor: self.address().clone(),
             rel: rel.clone(),
@@ -273,13 +277,12 @@ where
 
 struct Activity<S: Supervisor> {
     group: S::GroupBy,
-    // TODO: Consider to use JobHandle here
-    stopper: Stopper,
+    interruptor: Box<dyn Interruptor>,
 }
 
 impl<S: Supervisor> Activity<S> {
     fn interrupt(&mut self) {
-        self.stopper.stop(false);
+        self.interruptor.interrupt();
     }
 }
 

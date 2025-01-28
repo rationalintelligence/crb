@@ -3,7 +3,7 @@ use crate::pipeline::{Pipeline, RoutePoint, RuntimeGenerator, StageReport};
 use crate::stage::{Stage, StageDestination, StageKey, StageSource};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, RunAgent};
-use crb_runtime::{Runtime, Stopper};
+use crb_runtime::{Interruptor, Runtime};
 
 pub mod stage {
     use super::*;
@@ -72,7 +72,7 @@ where
     A: Agent + Stage,
     A::Context: Default,
 {
-    fn get_interruptor(&mut self) -> Stopper {
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
         self.runtime.get_interruptor()
     }
 

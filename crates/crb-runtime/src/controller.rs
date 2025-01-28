@@ -1,3 +1,4 @@
+use crate::interruptor::Interruptor;
 use derive_more::Deref;
 use futures::stream::{AbortHandle, AbortRegistration};
 use std::sync::{
@@ -50,6 +51,12 @@ impl Stopper {
         if force {
             self.handle.abort();
         }
+    }
+}
+
+impl Interruptor for Stopper {
+    fn interrupt(&self) {
+        self.stop(false);
     }
 }
 

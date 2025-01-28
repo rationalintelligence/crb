@@ -1,7 +1,7 @@
 //! A runtime for composable blocks.
 
 use crate::context::ReachableContext;
-use crate::controller::Stopper;
+use crate::interruptor::Interruptor;
 use async_trait::async_trait;
 use std::ops::DerefMut;
 
@@ -10,7 +10,7 @@ use std::ops::DerefMut;
 pub trait Runtime: Send + 'static {
     /// Used by a lifetime tracker of the supervisor to stop it.
     /// It's the separate type that wraps address made by a runtime.
-    fn get_interruptor(&mut self) -> Stopper;
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor>;
 
     async fn routine(&mut self);
 }
@@ -24,7 +24,7 @@ pub trait InteractiveRuntime: Runtime {
 
 #[async_trait]
 impl Runtime for Box<dyn Runtime> {
-    fn get_interruptor(&mut self) -> Stopper {
+    fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
         self.deref_mut().get_interruptor()
     }
 

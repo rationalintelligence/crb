@@ -20,7 +20,7 @@ use typed_slab::TypedSlab;
 pub struct ActivityId(usize);
 
 pub trait Supervisor: Agent {
-    type GroupBy: Ord + Clone + Send + Eq + Hash;
+    type GroupBy: Debug + Ord + Clone + Send + Eq + Hash;
 
     fn finished(&mut self, _rel: &Relation<Self>, _ctx: &mut Context<Self>) {}
 }
@@ -182,6 +182,8 @@ impl<S: Supervisor> Tracker<S> {
         self.terminating = true;
         for group_name in self.existing_groups() {
             if let Some(group) = self.groups.get_mut(&group_name) {
+                let name = std::any::type_name::<S>();
+                log::trace!("Agent {name} is terminating group: {:?}", group_name);
                 if !group.interrupted {
                     group.interrupted = true;
                     // Send an interruption signal to all active members of the group.
@@ -242,14 +244,16 @@ where
         };
 
         let fut = async move {
+            let name = std::any::type_name::<S>();
+            let rn_name = std::any::type_name::<B>();
             trackable.routine().await;
             // This notification equals calling `detach_trackable`
             if let Err(err) = detacher.detach() {
-                let name = std::any::type_name::<S>();
-                let rn_name = std::any::type_name::<B>();
                 log::error!(
                     "Can't notify a supervisor {name} from {rn_name} to detach an activity: {err}"
                 );
+            } else {
+                log::debug!("A supervisor {name} notified about termination of {rn_name}.");
             }
         };
         crb_core::spawn(fut);

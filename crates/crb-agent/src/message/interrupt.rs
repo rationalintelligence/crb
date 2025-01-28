@@ -15,6 +15,8 @@ struct Interrupt;
 #[async_trait]
 impl<A: Agent> MessageFor<A> for Interrupt {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
+        let name = std::any::type_name::<A>();
+        log::trace!("Interrupting agent: {name}");
         agent.interrupt(ctx);
         Ok(())
     }

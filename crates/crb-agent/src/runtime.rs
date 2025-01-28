@@ -1,6 +1,5 @@
 use crate::agent::Agent;
 use crate::context::{AgentContext, Context};
-use crate::interruptor::AgentInterruptor;
 use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
@@ -143,9 +142,7 @@ where
     fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
         let session = self.context.session();
         let address = session.address().clone();
-        let stopper = session.controller.stopper.clone();
-        let interruptor = AgentInterruptor::new(address, stopper);
-        Box::new(interruptor)
+        Box::new(address)
     }
 
     async fn routine(&mut self) {

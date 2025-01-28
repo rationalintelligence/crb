@@ -27,4 +27,18 @@ impl<A: Agent> Interruptor for Address<A> {
     fn interrupt(&self) {
         Address::interrupt(self).ok();
     }
+
+    fn interrupt_with_level(&self, level: u8) {
+        match level {
+            0 => {
+                Address::interrupt(&self).ok();
+            }
+            1 => {
+                self.stopper().stop(false);
+            }
+            _ => {
+                self.stopper().stop(true);
+            }
+        }
+    }
 }

@@ -2,7 +2,6 @@ pub mod address;
 pub mod address_ext;
 pub mod agent;
 pub mod context;
-pub mod interruptor;
 pub mod message;
 pub mod performers;
 pub mod runtime;

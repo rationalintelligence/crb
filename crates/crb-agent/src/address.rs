@@ -3,6 +3,7 @@ use crate::context::Context;
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::{mpsc, watch};
+use crb_runtime::Stopper;
 use crb_send::{Recipient, Sender};
 
 pub struct AddressJoint<A: Agent + ?Sized> {
@@ -11,10 +12,14 @@ pub struct AddressJoint<A: Agent + ?Sized> {
 }
 
 impl<A: Agent> AddressJoint<A> {
-    pub fn new_pair() -> (Address<A>, AddressJoint<A>) {
+    pub fn new_pair(stopper: Stopper) -> (Address<A>, AddressJoint<A>) {
         let (msg_tx, msg_rx) = mpsc::unbounded_channel();
         let (status_tx, status_rx) = watch::channel(AgentStatus::Active);
-        let address = Address { msg_tx, status_rx };
+        let address = Address {
+            msg_tx,
+            status_rx,
+            stopper,
+        };
         let joint = AddressJoint { msg_rx, status_tx };
         (address, joint)
     }
@@ -41,6 +46,7 @@ impl<A: Agent> AddressJoint<A> {
 pub struct Address<A: Agent + ?Sized> {
     msg_tx: mpsc::UnboundedSender<Envelope<A>>,
     status_rx: watch::Receiver<AgentStatus>,
+    stopper: Stopper,
 }
 
 impl<A: Agent> Address<A> {
@@ -55,6 +61,10 @@ impl<A: Agent> Address<A> {
         let status = self.status_rx.wait_for(AgentStatus::is_finished).await?;
         Ok(status.clone())
     }
+
+    pub(crate) fn stopper(&self) -> &Stopper {
+        &self.stopper
+    }
 }
 
 impl<A: Agent> Clone for Address<A> {
@@ -62,6 +72,7 @@ impl<A: Agent> Clone for Address<A> {
         Self {
             msg_tx: self.msg_tx.clone(),
             status_rx: self.status_rx.clone(),
+            stopper: self.stopper.clone(),
         }
     }
 }

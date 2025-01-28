@@ -55,14 +55,7 @@ pub trait Standalone: Agent {
     where
         Self::Context: Default,
     {
-        self.runtime().spawn_connected()
-    }
-
-    fn runtime(self) -> RunAgent<Self>
-    where
-        Self::Context: Default,
-    {
-        RunAgent::new(self)
+        RunAgent::new(self).spawn_connected()
     }
 
     // TODO: spawn_with_context()

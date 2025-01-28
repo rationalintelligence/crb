@@ -62,7 +62,8 @@ impl<A: Agent> AgentSession<A> {
 impl<A: Agent> Default for AgentSession<A> {
     fn default() -> Self {
         let controller = Controller::default();
-        let (address, joint) = AddressJoint::new_pair();
+        let stopper = controller.stopper.clone();
+        let (address, joint) = AddressJoint::new_pair(stopper);
         Self {
             controller,
             next_state: None,

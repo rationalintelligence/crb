@@ -5,6 +5,7 @@ pub mod context;
 pub mod message;
 pub mod performers;
 pub mod runtime;
+pub mod interruptor;
 
 pub use address::{Address, MessageFor};
 pub use address_ext::{Equip, StopAddress, StopRecipient, ToAddress, ToRecipient, UniAddress};

@@ -1,3 +1,4 @@
+use crate::interruptor::AgentInterruptor;
 use crate::agent::Agent;
 use crate::context::{AgentContext, Context};
 use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCommand};
@@ -140,7 +141,10 @@ where
     A: Agent,
 {
     fn get_interruptor(&mut self) -> Box<dyn Interruptor> {
-        Box::new(self.context.session().address().clone())
+        let address = self.context.session().address().clone();
+        let stopper = self.context.session().controller.stopper.clone();
+        let interruptor = AgentInterruptor::new(address, stopper);
+        Box::new(interruptor)
     }
 
     async fn routine(&mut self) {

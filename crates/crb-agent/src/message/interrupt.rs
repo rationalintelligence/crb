@@ -25,8 +25,6 @@ impl<A: Agent> MessageFor<A> for Interrupt {
 
 impl<A: Agent> Interruptor for Address<A> {
     fn interrupt(&self) {
-        // TODO: How about using flags or abort handle if
-        // an actor can't be reached by the address?
         Address::interrupt(self).ok();
     }
 }

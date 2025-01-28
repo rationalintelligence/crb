@@ -58,6 +58,11 @@ impl Interruptor for Stopper {
     fn interrupt(&self) {
         self.stop(false);
     }
+
+    fn interrupt_with_level(&self, level: u8) {
+        let force = level > 0;
+        self.stop(force);
+    }
 }
 
 #[derive(Debug, Clone)]

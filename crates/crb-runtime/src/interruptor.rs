@@ -14,19 +14,19 @@ pub struct RegistrationTaken;
 pub struct Controller {
     pub registration: Option<AbortRegistration>,
     #[deref]
-    pub interruptor: Interruptor,
+    pub stopper: Stopper,
 }
 
 impl Default for Controller {
     fn default() -> Self {
         let (handle, registration) = AbortHandle::new_pair();
-        let interruptor = Interruptor {
+        let stopper = Stopper {
             active: ActiveFlag::default(),
             handle,
         };
         Self {
             registration: Some(registration),
-            interruptor,
+            stopper,
         }
     }
 }
@@ -38,13 +38,13 @@ impl Controller {
 }
 
 #[derive(Debug, Clone, Deref)]
-pub struct Interruptor {
+pub struct Stopper {
     #[deref]
     active: ActiveFlag,
     handle: AbortHandle,
 }
 
-impl Interruptor {
+impl Stopper {
     pub fn stop(&self, force: bool) {
         self.active.flag.store(false, Ordering::Relaxed);
         if force {

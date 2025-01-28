@@ -3,7 +3,7 @@ use crate::context::{AgentContext, Context};
 use crate::performers::{AgentState, Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb_runtime::Interruptor;
+use crb_runtime::Stopper;
 use std::marker::PhantomData;
 
 impl<T> Next<T>
@@ -25,8 +25,8 @@ where
 
 #[async_trait]
 pub trait DoAsync<S: Send + 'static = ()>: Agent {
-    async fn perform(&mut self, mut state: S, interruptor: Interruptor) -> Next<Self> {
-        while interruptor.is_active() {
+    async fn perform(&mut self, mut state: S, stopper: Stopper) -> Next<Self> {
+        while stopper.is_active() {
             let result = self.repeat(&mut state).await;
             match result {
                 Ok(Some(state)) => {
@@ -72,9 +72,9 @@ where
     S: AgentState,
 {
     async fn perform(&mut self, mut agent: T, ctx: &mut Context<T>) -> Transition<T> {
-        let interruptor = ctx.session().controller.interruptor.clone();
+        let stopper = ctx.session().controller.stopper.clone();
         let state = self.state.take().unwrap();
-        let next_state = agent.perform(state, interruptor).await;
+        let next_state = agent.perform(state, stopper).await;
         let command = TransitionCommand::Next(next_state);
         Transition::Continue { agent, command }
     }

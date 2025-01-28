@@ -2,9 +2,7 @@ use super::{Mission, Observer};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_agent::RunAgent;
-use crb_runtime::{
-    InteractiveRuntime, InteractiveTask, Interruptor, ReachableContext, Runtime, Task,
-};
+use crb_runtime::{InteractiveRuntime, InteractiveTask, ReachableContext, Runtime, Stopper, Task};
 use futures::FutureExt;
 use std::any::type_name;
 use std::future::{Future, IntoFuture};
@@ -59,7 +57,7 @@ impl<T> Runtime for RunMission<T>
 where
     T: Mission,
 {
-    fn get_interruptor(&mut self) -> Interruptor {
+    fn get_interruptor(&mut self) -> Stopper {
         self.runtime.get_interruptor()
     }
 

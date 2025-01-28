@@ -1,5 +1,5 @@
 use crate::context::ReachableContext;
-use crate::interruptor::Interruptor;
+use crate::interruptor::Stopper;
 use crate::runtime::{InteractiveRuntime, Runtime};
 use async_trait::async_trait;
 use crb_core::JoinHandle;
@@ -58,7 +58,7 @@ impl<T> From<TaskHandle<T>> for JobHandle {
 }
 
 pub struct JobHandle {
-    interruptor: Interruptor,
+    interruptor: Stopper,
     handle: JoinHandle<()>,
     cancel_on_drop: bool,
 }

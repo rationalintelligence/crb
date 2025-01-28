@@ -4,8 +4,7 @@ use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCom
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
-    InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, ReachableContext, Runtime,
-    Task,
+    InteractiveRuntime, InteractiveTask, ManagedContext, ReachableContext, Runtime, Stopper, Task,
 };
 use futures::{stream::Abortable, FutureExt};
 use std::future::{Future, IntoFuture};
@@ -139,8 +138,8 @@ impl<A> Runtime for RunAgent<A>
 where
     A: Agent,
 {
-    fn get_interruptor(&mut self) -> Interruptor {
-        self.context.session().controller.interruptor.clone()
+    fn get_interruptor(&mut self) -> Stopper {
+        self.context.session().controller.stopper.clone()
     }
 
     async fn routine(&mut self) {

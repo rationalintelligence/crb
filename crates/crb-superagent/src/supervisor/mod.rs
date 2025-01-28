@@ -245,7 +245,8 @@ where
             trackable.routine().await;
             // This notification equals calling `detach_trackable`
             if let Err(err) = detacher.detach() {
-                log::error!("Can't notify a supervisor to detach an activity: {err}");
+                let name = std::any::type_name::<S>();
+                log::error!("Can't notify a supervisor {name} to detach an activity: {err}");
             }
         };
         crb_core::spawn(fut);

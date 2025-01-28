@@ -10,4 +10,5 @@ repository.workspace = true
 anyhow.workspace = true
 async-trait.workspace = true
 crb-agent.workspace = true
+crb-runtime.workspace = true
 tokio.workspace = true

@@ -2,10 +2,10 @@ pub mod address;
 pub mod address_ext;
 pub mod agent;
 pub mod context;
+pub mod interruptor;
 pub mod message;
 pub mod performers;
 pub mod runtime;
-pub mod interruptor;
 
 pub use address::{Address, MessageFor};
 pub use address_ext::{Equip, StopAddress, StopRecipient, ToAddress, ToRecipient, UniAddress};

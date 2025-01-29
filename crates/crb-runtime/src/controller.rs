@@ -1,4 +1,4 @@
-use crate::interruptor::Interruptor;
+use crate::interruptor::{InterruptionLevel, Interruptor};
 use derive_more::Deref;
 use futures::stream::{AbortHandle, AbortRegistration};
 use std::sync::{
@@ -59,8 +59,8 @@ impl Interruptor for Stopper {
         self.stop(false);
     }
 
-    fn interrupt_with_level(&self, level: u8) {
-        let force = level > 0;
+    fn interrupt_with_level(&self, level: InterruptionLevel) {
+        let force = level > InterruptionLevel::default();
         self.stop(force);
     }
 }

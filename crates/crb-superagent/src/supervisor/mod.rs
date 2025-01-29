@@ -8,7 +8,9 @@ use anyhow::Error;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
 use crb_core::Tag;
-use crb_runtime::{InteractiveRuntime, Interruptor, ManagedContext, ReachableContext, Runtime};
+use crb_runtime::{
+    InteractiveRuntime, InterruptionLevel, Interruptor, ManagedContext, ReachableContext, Runtime,
+};
 use derive_more::{Deref, DerefMut, From, Into};
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashSet};
@@ -144,15 +146,8 @@ impl<S: Supervisor> Tracker<S> {
         self.try_terminate_next();
     }
 
-    fn register_activity(
-        &mut self,
-        group: S::GroupBy,
-        interruptor: Box<dyn Interruptor>,
-    ) -> Relation<S> {
-        let activity = Activity {
-            group: group.clone(),
-            interruptor,
-        };
+    fn register_activity(&mut self, activity: Activity<S>) -> Relation<S> {
+        let group = activity.group.clone();
         let id = self.activities.insert(activity);
         let group_record = self.groups.entry(group.clone()).or_default();
         group_record.ids.insert(id);
@@ -240,8 +235,12 @@ where
     where
         B: Runtime,
     {
-        let interruptor = trackable.get_interruptor();
-        let rel = self.tracker.register_activity(group, interruptor);
+        let activity = Activity {
+            group,
+            interruptor: trackable.get_interruptor(),
+            level: trackable.interruption_level(),
+        };
+        let rel = self.tracker.register_activity(activity);
         let detacher = DetacherFor {
             supervisor: self.address().clone(),
             rel: rel.clone(),
@@ -278,11 +277,12 @@ where
 struct Activity<S: Supervisor> {
     group: S::GroupBy,
     interruptor: Box<dyn Interruptor>,
+    level: InterruptionLevel,
 }
 
 impl<S: Supervisor> Activity<S> {
     fn interrupt(&mut self) {
-        self.interruptor.interrupt();
+        self.interruptor.interrupt_with_level(self.level);
     }
 }
 

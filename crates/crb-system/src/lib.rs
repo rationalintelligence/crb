@@ -21,7 +21,7 @@ where
         loop {
             select! {
                 _ = signal::ctrl_c() => {
-                    address.interrupt_with_level(level);
+                    address.interrupt_with_level(level.into());
                     level += 1;
                 }
                 _ = address.join() => {

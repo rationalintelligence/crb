@@ -14,6 +14,7 @@
 
 ## Added
 
+- **Interruption levels** - Allow to interrupt activities using a partcular strategy.
 - **Main** - A trait to run an agent as a program's entrypoint. Interrupts an agent with levels.
 - **Supervisor scheduling** - Schedule an actor spawning.
 - **Drainer** - A special task-agent in the superagent crate to drain events sources.

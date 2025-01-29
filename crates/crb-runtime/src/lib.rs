@@ -8,6 +8,6 @@ pub mod task;
 pub use context::{ManagedContext, ReachableContext};
 pub use controller::{Controller, RegistrationTaken, Stopper};
 pub use error::Failures;
-pub use interruptor::Interruptor;
+pub use interruptor::{InterruptionLevel, Interruptor};
 pub use runtime::{InteractiveRuntime, Runtime};
 pub use task::{InteractiveTask, JobHandle, Task, TaskHandle};

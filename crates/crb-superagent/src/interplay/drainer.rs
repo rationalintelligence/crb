@@ -42,7 +42,10 @@ where
             stream: self.stream,
             tag,
         };
-        RunAgent::new(task)
+        let mut runtime = RunAgent::new(task);
+        // TODO: Constants here?
+        runtime.level = 3.into();
+        runtime
     }
 }
 

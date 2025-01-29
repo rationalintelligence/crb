@@ -4,8 +4,8 @@ use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCom
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_runtime::{
-    InteractiveRuntime, InteractiveTask, Interruptor, ManagedContext, ReachableContext, Runtime,
-    Task,
+    InteractiveRuntime, InteractiveTask, InterruptionLevel, Interruptor, ManagedContext,
+    ReachableContext, Runtime, Task,
 };
 use futures::{stream::Abortable, FutureExt};
 use std::future::{Future, IntoFuture};
@@ -14,6 +14,7 @@ use std::pin::Pin;
 pub struct RunAgent<A: Agent> {
     pub agent: Option<A>,
     pub context: Context<A>,
+    pub level: InterruptionLevel,
 }
 
 impl<A: Agent> RunAgent<A> {
@@ -24,6 +25,7 @@ impl<A: Agent> RunAgent<A> {
         Self {
             agent: Some(agent),
             context: Context::wrap(A::Context::default()),
+            level: InterruptionLevel::default(),
         }
     }
 
@@ -143,6 +145,10 @@ where
         let session = self.context.session();
         let address = session.address().clone();
         Box::new(address)
+    }
+
+    fn interruption_level(&self) -> InterruptionLevel {
+        self.level
     }
 
     async fn routine(&mut self) {

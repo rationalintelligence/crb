@@ -20,4 +20,5 @@ anyhow.workspace = true
 async-trait.workspace = true
 console-subscriber = "0.4.1"
 derive_more.workspace = true
+futures.workspace = true
 tokio.workspace = true

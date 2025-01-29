@@ -2,7 +2,10 @@ use crate::supervisor::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
-use crb_core::{Msg, Tag};
+use crb_core::{
+    time::{timeout, Duration},
+    Msg, Tag,
+};
 use crb_send::{Recipient, Sender};
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
@@ -68,15 +71,25 @@ where
     T: Tag + Clone,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
-        if let Some(item) = self.stream.next().await {
-            let item = Item {
-                item,
-                tag: self.tag.clone(),
-            };
-            self.recipient.send(item)?;
-            Ok(None)
-        } else {
-            Ok(Some(Next::done()))
+        let duration = Duration::from_secs(5);
+        match timeout(Some(duration), self.stream.next()).await {
+            Ok(Some(item)) => {
+                // The next item forwarding
+                let item = Item {
+                    item,
+                    tag: self.tag.clone(),
+                };
+                self.recipient.send(item)?;
+                Ok(None)
+            }
+            Ok(None) => {
+                // Stream is ended
+                Ok(Some(Next::done()))
+            }
+            Err(_) => {
+                // Timeout, try again
+                Ok(None)
+            }
         }
     }
 }

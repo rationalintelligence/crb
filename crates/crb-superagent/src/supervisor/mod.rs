@@ -62,7 +62,7 @@ impl<S: Supervisor> AsRef<Address<S>> for SupervisorSession<S> {
 
 impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
     fn is_alive(&self) -> bool {
-        self.session.is_alive()
+        self.session.is_alive() && !self.tracker.is_terminated()
     }
 
     fn shutdown(&mut self) {

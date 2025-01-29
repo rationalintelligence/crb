@@ -25,6 +25,7 @@ impl<A: Agent> MessageFor<A> for Interrupt {
 
 impl<A: Agent> Interruptor for Address<A> {
     fn interrupt(&self) {
+        self.interrupt_with_level(0);
         self.interrupt_with_level(1);
     }
 

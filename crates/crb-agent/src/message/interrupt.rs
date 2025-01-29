@@ -25,24 +25,21 @@ impl<A: Agent> MessageFor<A> for Interrupt {
 
 impl<A: Agent> Interruptor for Address<A> {
     fn interrupt(&self) {
-        self.interrupt_with_level(0.into());
-        self.interrupt_with_level(1.into());
+        self.interrupt_with_level(InterruptionLevel::FLAG);
     }
 
     fn interrupt_with_level(&self, level: InterruptionLevel) {
-        match level.into() {
-            0 => {
-                // 0 - Interrupts an actor
-                Address::interrupt(&self).ok();
-            }
-            1 => {
-                // 1 - Interrupts a state-machine
-                self.stopper().stop(false);
-            }
-            _ => {
-                // 2 - Interrupts an async routine
-                self.stopper().stop(true);
-            }
+        if level == InterruptionLevel::EVENT {
+            // 0 - Interrupts an actor
+            Address::interrupt(&self).ok();
+        }
+        if level == InterruptionLevel::FLAG {
+            // 1 - Interrupts a state-machine
+            self.stopper().stop(false);
+        }
+        if level >= InterruptionLevel::ABORT {
+            // 2 - Interrupts an async routine
+            self.stopper().stop(true);
         }
     }
 }

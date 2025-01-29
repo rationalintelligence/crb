@@ -3,6 +3,7 @@ use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
 use crb_core::{Msg, Slot, Tag};
+use crb_runtime::InterruptionLevel;
 use crb_send::{Recipient, Sender};
 use derive_more::From;
 use futures::channel::oneshot::{self, Canceled};
@@ -101,8 +102,7 @@ where
             tag: Slot::filled(tag),
         };
         let mut runtime = RunAgent::new(task);
-        // TODO: Constants here?
-        runtime.level = 3.into();
+        runtime.level = InterruptionLevel::ABORT;
         runtime
     }
 }

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb_agent::Standalone;
-use crb_runtime::Interruptor;
+use crb_runtime::{InterruptionLevel, Interruptor};
 use tokio::{select, signal};
 
 #[async_trait]
@@ -17,12 +17,12 @@ where
 {
     async fn main(self) -> Result<()> {
         let mut address = self.spawn();
-        let mut level = 0;
+        let mut level = InterruptionLevel::EVENT;
         loop {
             select! {
                 _ = signal::ctrl_c() => {
-                    address.interrupt_with_level(level.into());
-                    level += 1;
+                    address.interrupt_with_level(level);
+                    level = level.next();
                 }
                 _ = address.join() => {
                     break;

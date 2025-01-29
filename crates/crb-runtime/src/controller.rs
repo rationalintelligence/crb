@@ -60,7 +60,7 @@ impl Interruptor for Stopper {
     }
 
     fn interrupt_with_level(&self, level: InterruptionLevel) {
-        let force = level > InterruptionLevel::default();
+        let force = level > InterruptionLevel::FLAG;
         self.stop(force);
     }
 }

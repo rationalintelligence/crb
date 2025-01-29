@@ -13,7 +13,7 @@ pub trait Runtime: Send + 'static {
     fn get_interruptor(&mut self) -> Box<dyn Interruptor>;
 
     fn interruption_level(&self) -> InterruptionLevel {
-        InterruptionLevel::default()
+        InterruptionLevel::EVENT
     }
 
     async fn routine(&mut self);

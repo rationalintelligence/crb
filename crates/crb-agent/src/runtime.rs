@@ -25,7 +25,7 @@ impl<A: Agent> RunAgent<A> {
         Self {
             agent: Some(agent),
             context: Context::wrap(A::Context::default()),
-            level: InterruptionLevel::default(),
+            level: InterruptionLevel::EVENT,
         }
     }
 

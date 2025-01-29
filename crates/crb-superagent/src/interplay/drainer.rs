@@ -6,6 +6,7 @@ use crb_core::{
     time::{timeout, Duration},
     Msg, Tag,
 };
+use crb_runtime::InterruptionLevel;
 use crb_send::{Recipient, Sender};
 use futures::{Stream, StreamExt};
 use std::pin::Pin;
@@ -43,8 +44,7 @@ where
             tag,
         };
         let mut runtime = RunAgent::new(task);
-        // TODO: Constants here?
-        runtime.level = 3.into();
+        runtime.level = InterruptionLevel::ABORT;
         runtime
     }
 }

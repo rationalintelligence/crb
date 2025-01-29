@@ -54,16 +54,14 @@ impl<T> fmt::Debug for TransitionCommand<T> {
 
 pub enum StopReason {
     Failed(Error),
-    Interrupted,
-    Done,
+    Stopped,
 }
 
 impl fmt::Debug for StopReason {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let value = match self {
             Self::Failed(_) => "Failed(_)",
-            Self::Interrupted => "Interrupted",
-            Self::Done => "Done",
+            Self::Stopped => "Stopped",
         };
         write!(f, "StopReason::{}", value)
     }

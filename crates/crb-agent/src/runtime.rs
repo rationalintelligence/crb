@@ -89,7 +89,7 @@ impl<A: Agent> RunAgent<A> {
                                     StopReason::Failed(err) => {
                                         agent.failed(err, &mut self.context);
                                     }
-                                    StopReason::Interrupted | StopReason::Done => {}
+                                    StopReason::Stopped => {}
                                 }
                                 pair = (agent, None);
                                 break;

@@ -1,6 +1,6 @@
 use anyhow::{Error, Result};
 use async_trait::async_trait;
-use crb::agent::{Agent, AgentSession, Context, DoAsync, Duty, ManagedContext, Next, Standalone};
+use crb::agent::{Agent, AgentSession, DoAsync, Next, Standalone};
 
 enum State {
     First,
@@ -57,17 +57,7 @@ struct Third;
 #[async_trait]
 impl DoAsync<Third> for Task {
     async fn once(&mut self, _: &mut Third) -> Result<Next<Self>> {
-        Ok(Next::duty(Terminate))
-    }
-}
-
-struct Terminate;
-
-#[async_trait]
-impl Duty<Terminate> for Task {
-    async fn handle(&mut self, _: Terminate, ctx: &mut Context<Self>) -> Result<Next<Self>> {
-        ctx.shutdown();
-        Ok(Next::events())
+        Ok(Next::done())
     }
 }
 

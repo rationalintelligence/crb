@@ -1,8 +1,10 @@
 use crate::agent::Agent;
 use crate::context::{AgentContext, Context};
+use crate::global::CRB;
 use crate::performers::{AgentState, Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
+use crb_core::time::Instant;
 use crb_runtime::Stopper;
 use std::marker::PhantomData;
 
@@ -27,6 +29,8 @@ where
 pub trait DoAsync<S: Send + 'static = ()>: Agent {
     async fn perform(&mut self, mut state: S, stopper: Stopper) -> Next<Self> {
         while stopper.is_active() {
+            let iteration = Instant::now();
+
             let result = self.repeat(&mut state).await;
             match result {
                 Ok(Some(state)) => {
@@ -38,6 +42,15 @@ pub trait DoAsync<S: Send + 'static = ()>: Agent {
                         return self.fallback(err).await;
                     }
                 }
+            }
+
+            if iteration.elapsed().as_millis() as usize >= CRB.get_long_threshold() {
+                use std::any::type_name;
+                log::warn!(
+                    "DoAsync<{}> for {} is too long!",
+                    type_name::<S>(),
+                    type_name::<Self>()
+                );
             }
         }
         Next::interrupt()

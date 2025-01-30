@@ -1,7 +1,7 @@
 use crate::agent::Agent;
 use crate::context::{AgentContext, Context};
 use crate::performers::{ConsumptionReason, StopReason, Transition, TransitionCommand};
-use anyhow::{Error, Result};
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_runtime::{
     InteractiveRuntime, InteractiveTask, InterruptionLevel, Interruptor, ManagedContext,
@@ -128,7 +128,7 @@ impl<A: Agent> RunAgent<A> {
             self.agent = Some(agent);
             Ok(())
         } else {
-            Err(Error::msg("Agent's agent has consumed already."))
+            Err(anyhow!("Agent's agent has consumed already."))
         }
     }
 }

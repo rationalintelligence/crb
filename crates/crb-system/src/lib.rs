@@ -1,30 +1,29 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::Standalone;
+use crb_agent::{Address, Agent};
 use crb_runtime::{InterruptionLevel, Interruptor};
 use tokio::{select, signal};
 
 #[async_trait]
 pub trait Main {
-    async fn main(self) -> Result<()>;
+    async fn join_or_signal(self) -> Result<()>;
 }
 
 #[async_trait]
-impl<A> Main for A
+impl<A> Main for Address<A>
 where
-    A: Standalone,
+    A: Agent,
     A::Context: Default,
 {
-    async fn main(self) -> Result<()> {
-        let mut address = self.spawn();
+    async fn join_or_signal(mut self) -> Result<()> {
         let mut level = InterruptionLevel::EVENT;
         loop {
             select! {
                 _ = signal::ctrl_c() => {
-                    address.interrupt_with_level(level);
+                    self.interrupt_with_level(level);
                     level = level.next();
                 }
-                _ = address.join() => {
+                _ = self.join() => {
                     break;
                 }
             }

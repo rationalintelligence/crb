@@ -5,7 +5,6 @@ use crate::performers::{AgentState, Next, StatePerformer, Transition, Transition
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 use crb_core::time::Instant;
-use crb_runtime::Stopper;
 use std::marker::PhantomData;
 
 impl<T> Next<T>
@@ -27,20 +26,19 @@ where
 
 #[async_trait]
 pub trait DoAsync<S: Send + 'static = ()>: Agent {
-    async fn perform(&mut self, mut state: S, stopper: Stopper) -> Next<Self> {
+    async fn handle(&mut self, mut state: S, ctx: &mut Context<Self>) -> Result<Next<Self>> {
+        let stopper = ctx.session().controller.stopper.clone();
         while stopper.is_active() {
             let iteration = Instant::now();
 
             let result = self.repeat(&mut state).await;
             match result {
                 Ok(Some(state)) => {
-                    return state;
+                    return Ok(state);
                 }
                 Ok(None) => {}
                 Err(err) => {
-                    if let Err(err) = self.repair(err).await {
-                        return self.fallback(err).await;
-                    }
+                    self.repair(err).await?;
                 }
             }
 
@@ -53,7 +51,7 @@ pub trait DoAsync<S: Send + 'static = ()>: Agent {
                 );
             }
         }
-        Next::interrupt()
+        Ok(Next::interrupt())
     }
 
     async fn repeat(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
@@ -66,6 +64,10 @@ pub trait DoAsync<S: Send + 'static = ()>: Agent {
 
     async fn repair(&mut self, err: Error) -> Result<(), Error> {
         Err(err)
+    }
+
+    async fn fallback_with_context(&mut self, err: Error, _ctx: &mut Context<Self>) -> Next<Self> {
+        self.fallback(err).await
     }
 
     async fn fallback(&mut self, err: Error) -> Next<Self> {
@@ -85,9 +87,11 @@ where
     S: AgentState,
 {
     async fn perform(&mut self, mut agent: T, ctx: &mut Context<T>) -> Transition<T> {
-        let stopper = ctx.session().controller.stopper.clone();
         let state = self.state.take().unwrap();
-        let next_state = agent.perform(state, stopper).await;
+        let next_state = match agent.handle(state, ctx).await {
+            Ok(next) => next,
+            Err(err) => agent.fallback_with_context(err, ctx).await,
+        };
         let command = TransitionCommand::Next(next_state);
         Transition::Continue { agent, command }
     }

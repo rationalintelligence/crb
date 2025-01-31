@@ -29,20 +29,18 @@ where
 }
 
 pub trait DoSync<S = ()>: Agent {
-    fn perform(&mut self, mut state: S, stopper: Stopper) -> Next<Self> {
+    fn perform(&mut self, mut state: S, stopper: Stopper) -> Result<Next<Self>> {
         while stopper.is_active() {
             let iteration = Instant::now();
 
             let result = self.repeat(&mut state);
             match result {
                 Ok(Some(state)) => {
-                    return state;
+                    return Ok(state);
                 }
                 Ok(None) => {}
                 Err(err) => {
-                    if let Err(err) = self.repair(err) {
-                        return self.fallback(err);
-                    }
+                    self.repair(err)?;
                 }
             }
 
@@ -55,7 +53,7 @@ pub trait DoSync<S = ()>: Agent {
                 );
             }
         }
-        Next::interrupt()
+        Ok(Next::interrupt())
     }
 
     fn repeat(&mut self, state: &mut S) -> Result<Option<Next<Self>>> {
@@ -90,7 +88,10 @@ where
         let stopper = ctx.session().controller.stopper.clone();
         let state = self.state.take().unwrap();
         let handle = spawn_blocking(move || {
-            let next_state = agent.perform(state, stopper);
+            let next_state = match agent.perform(state, stopper) {
+                Ok(next) => next,
+                Err(err) => agent.fallback(err),
+            };
             let command = TransitionCommand::Next(next_state);
             Transition::Continue { agent, command }
         });

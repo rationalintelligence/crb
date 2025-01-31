@@ -4,6 +4,10 @@ use crate::performers::{Next, StatePerformer, Transition, TransitionCommand};
 use anyhow::{Error, Result};
 use async_trait::async_trait;
 
+#[deprecated(
+    since = "0.0.29",
+    note = "use `DoAsync` instead which methods are compatible now"
+)]
 #[async_trait]
 pub trait Duty<E>: Agent {
     async fn handle(&mut self, event: E, ctx: &mut Context<Self>) -> Result<Next<Self>>;

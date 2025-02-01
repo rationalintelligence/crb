@@ -19,7 +19,6 @@ async-trait = "0.1.83"
 crb-agent = { version = "0.0.27", path = "crates/crb-agent" }
 crb-superagent = { version = "0.0.27", path = "crates/crb-superagent" }
 crb-core = { version = "0.0.27", path = "crates/crb-core" }
-crb-pipeline = { version = "0.0.27", path = "crates/crb-pipeline" }
 crb-runtime = { version = "0.0.27", path = "crates/crb-runtime" }
 crb-send = { version = "0.0.27", path = "crates/crb-send" }
 crb-system = { version = "0.0.27", path = "crates/crb-system" }

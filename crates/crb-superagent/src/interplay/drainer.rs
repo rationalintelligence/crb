@@ -1,7 +1,7 @@
 use crate::supervisor::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next, RunAgent};
+use crb_agent::{Address, Agent, AgentSession, DoAsync, Next, OnEvent, RunAgent};
 use crb_core::{
     time::{timeout, Duration},
     Msg, Tag,
@@ -31,17 +31,16 @@ where
 
 impl<A, ITEM, T> ForwardTo<A, T> for Drainer<ITEM>
 where
-    A: OnItem<ITEM, T>,
+    A: OnEvent<Item<ITEM>, T>,
     ITEM: Msg,
-    T: Tag + Clone,
+    T: Tag + Sync + Clone,
 {
-    type Runtime = RunAgent<DrainerTask<ITEM, T>>;
+    type Runtime = RunAgent<DrainerTask<ITEM>>;
 
     fn into_trackable(self, address: Address<A>, tag: T) -> Self::Runtime {
         let task = DrainerTask {
-            recipient: address.sender(),
+            recipient: address.recipient_tagged(tag),
             stream: self.stream,
-            tag,
         };
         let mut runtime = RunAgent::new(task);
         runtime.level = InterruptionLevel::ABORT;
@@ -49,16 +48,14 @@ where
     }
 }
 
-pub struct DrainerTask<ITEM, T> {
-    recipient: Recipient<Item<ITEM, T>>,
+pub struct DrainerTask<ITEM> {
+    recipient: Recipient<Item<ITEM>>,
     stream: Pin<Box<dyn Stream<Item = ITEM> + Send>>,
-    tag: T,
 }
 
-impl<ITEM, T> Agent for DrainerTask<ITEM, T>
+impl<ITEM> Agent for DrainerTask<ITEM>
 where
     ITEM: Msg,
-    T: Tag + Clone,
 {
     type Context = AgentSession<Self>;
 
@@ -68,20 +65,16 @@ where
 }
 
 #[async_trait]
-impl<ITEM, T> DoAsync for DrainerTask<ITEM, T>
+impl<ITEM> DoAsync for DrainerTask<ITEM>
 where
     ITEM: Msg,
-    T: Tag + Clone,
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
         let duration = Duration::from_secs(5);
         match timeout(Some(duration), self.stream.next()).await {
             Ok(Some(item)) => {
                 // The next item forwarding
-                let item = Item {
-                    item,
-                    tag: self.tag.clone(),
-                };
+                let item = Item { item };
                 self.recipient.send(item)?;
                 Ok(None)
             }
@@ -97,24 +90,6 @@ where
     }
 }
 
-pub struct Item<ITEM, T = ()> {
-    item: ITEM,
-    tag: T,
-}
-
-#[async_trait]
-pub trait OnItem<ITEM, T = ()>: Agent {
-    async fn on_item(&mut self, item: ITEM, tag: T, ctx: &mut Context<Self>) -> Result<()>;
-}
-
-#[async_trait]
-impl<A, ITEM, T> MessageFor<A> for Item<ITEM, T>
-where
-    A: OnItem<ITEM, T>,
-    ITEM: Msg,
-    T: Tag,
-{
-    async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
-        agent.on_item(self.item, self.tag, ctx).await
-    }
+pub struct Item<ITEM> {
+    pub item: ITEM,
 }

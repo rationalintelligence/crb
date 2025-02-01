@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{Agent, AgentSession, Context, Next, Standalone};
-use crb::superagent::{Drainer, OnItem, Supervisor, SupervisorSession};
+use crb::agent::{Agent, AgentSession, Context, Next, OnEvent, Standalone};
+use crb::superagent::{Drainer, Item, Supervisor, SupervisorSession};
 use futures::stream;
 
 struct TestSupervisor;
@@ -31,8 +31,8 @@ impl Agent for TestSupervisor {
 }
 
 #[async_trait]
-impl OnItem<()> for TestSupervisor {
-    async fn on_item(&mut self, _event: (), _tag: (), _ctx: &mut Context<Self>) -> Result<()> {
+impl OnEvent<Item<()>> for TestSupervisor {
+    async fn handle(&mut self, _event: Item<()>, _ctx: &mut Context<Self>) -> Result<()> {
         Ok(())
     }
 }

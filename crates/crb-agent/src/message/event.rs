@@ -59,6 +59,15 @@ impl<A: Agent> Address<A> {
     {
         Recipient::new(self.clone()).reform(Event::new)
     }
+
+    pub fn recipient_tagged<E, T>(&self, tag: T) -> Recipient<E>
+    where
+        A: OnEvent<E, T>,
+        E: TheEvent,
+        T: Tag + Sync + Clone,
+    {
+        Recipient::new(self.clone()).reform(move |event| Event::new_tagged(event, tag.clone()))
+    }
 }
 
 impl<A: Agent> Context<A> {
@@ -85,6 +94,15 @@ impl<A: Agent> Context<A> {
         E: TheEvent,
     {
         self.address().recipient()
+    }
+
+    pub fn recipient_tagged<E, T>(&self, tag: T) -> Recipient<E>
+    where
+        A: OnEvent<E, T>,
+        E: TheEvent,
+        T: Tag + Sync + Clone,
+    {
+        self.address().recipient_tagged(tag)
     }
 }
 

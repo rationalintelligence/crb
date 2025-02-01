@@ -97,14 +97,14 @@ where
     }
 }
 
+pub struct Item<ITEM, T = ()> {
+    item: ITEM,
+    tag: T,
+}
+
 #[async_trait]
 pub trait OnItem<ITEM, T = ()>: Agent {
     async fn on_item(&mut self, item: ITEM, tag: T, ctx: &mut Context<Self>) -> Result<()>;
-}
-
-struct Item<ITEM, T> {
-    item: ITEM,
-    tag: T,
 }
 
 #[async_trait]

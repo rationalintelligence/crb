@@ -1,36 +1,36 @@
-# TODO
+# CRB v0.0.29 - upcoming...
+
+## ToDo
 
 - Epochs example
 - Child expiration example
-
-# CRB v0.0.28 - upcoming...
-
-## In progress
-
 - Signals listening
 - Gracefull shutdown
 - Add `repeat_async` and `repeat_sync` Fut/Fn performers
 - Use repeaters for the `Drainer`
 
+
+# CRB v0.0.28 - 2025-02-01
+
 ## Added
 
-- **Interruption levels** - Allow to interrupt activities using a partcular strategy.
-- **Main** - A trait to run an agent as a program's entrypoint. Interrupts an agent with levels.
-- **Supervisor scheduling** - Schedule an actor spawning.
-- **Drainer** - A special task-agent in the superagent crate to drain events sources.
-- **ToRecipient** - A trait to produce a recipient for events.
-- **Ping** - A ping extension has been added.
-- **Operable** - A trait to execute a `Mission` to get the `Goal` result.
-- **ForwardTo** - A special trait to assign tasks to the actor itself.
-- **Stacker** - A pool for delayed spawning agents.
+- **Interruption levels** - Introduced a mechanism to interrupt activities based on predefined strategies.
+- **`Main` trait** - Added a `Main` trait to run an agent as the program's entry point, allowing interruption with specific levels.
+- **Drainer** - Introduced a special task-agent (`Drainer`) in the `superagent` crate to handle draining event sources.
+- **ToRecipient** - A new trait for generating recipients for events.
+- **Ping Extension** - Added a `Ping` extension that is implemented for all actors.
+- **`Operable` trait** - Introduced `Operable`, a trait for executing a `Mission` and obtaining the `Goal` result.
+- **`ForwardTo` trait** - Added `ForwardTo`, enabling actors to assign tasks to themselves.
+- **Stacker** - A pool for managing delayed agent spawning.
 
 ## Improved
 
-- **Tagging events** - `OnEvent` now support tagging and you can have many handlers for the same event.
-- **DoAsync as Duty** - `DoAsync` has merged with `Duty` trait and implements its interface as well.
-- **Interruptor** - Runtimes interruption was significantly improves. It has some issues that were fixed.
-- **Timer** - Both `Timeout` and `Interval` joined into a single worker `Timer`.
-- **Unique** - `UniqueId` has been renamed to `Unique`.
+- **Event Tagging** - `OnEvent` now supports tagging, allowing multiple handlers for the same event.
+- **`DoAsync` as `Duty`** - Merged `DoAsync` into the `Duty` trait, which now implements its interface.
+- **`Interruptor` enhancements** - Significantly improved runtime interruption handling and fixed related issues.
+- **`Timer` unification** - Merged `Timeout` and `Interval` into a single worker, `Timer`.
+- **Renamed `UniqueId` to `Unique`** - Streamlined naming for clarity.
+
 
 # CRB v0.0.27 - 2025-01-18
 

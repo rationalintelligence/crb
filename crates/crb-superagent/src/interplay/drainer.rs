@@ -31,7 +31,7 @@ where
 
 impl<A, ITEM, T> ForwardTo<A, T> for Drainer<ITEM>
 where
-    A: OnEvent<Item<ITEM>, T>,
+    A: OnEvent<ITEM, T>,
     ITEM: Msg,
     T: Tag + Sync + Clone,
 {
@@ -49,7 +49,7 @@ where
 }
 
 pub struct DrainerTask<ITEM> {
-    recipient: Recipient<Item<ITEM>>,
+    recipient: Recipient<ITEM>,
     stream: Pin<Box<dyn Stream<Item = ITEM> + Send>>,
 }
 
@@ -74,7 +74,6 @@ where
         match timeout(Some(duration), self.stream.next()).await {
             Ok(Some(item)) => {
                 // The next item forwarding
-                let item = Item { item };
                 self.recipient.send(item)?;
                 Ok(None)
             }
@@ -88,8 +87,4 @@ where
             }
         }
     }
-}
-
-pub struct Item<ITEM> {
-    pub item: ITEM,
 }

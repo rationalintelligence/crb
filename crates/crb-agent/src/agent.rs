@@ -6,14 +6,35 @@ use async_trait::async_trait;
 use crb_runtime::{InteractiveTask, ManagedContext, ReachableContext};
 use std::any::type_name;
 
+/// `Agent` is a universal trait of a hybrid (transactional) actor.
+/// It has a rich lifecycle, beginning its execution with the `initialize` method,
+/// which in turn calls the `begin` method. This nesting allows for initialization
+/// with context or simply setting an initial state.
+///
+/// `Agent` is an actor that either reactively processes incoming messages
+/// or executes special states, similar to a finite state machine,
+/// temporarily blocking message processing. This enables the actor to be prepared
+/// for operation or reconfigured in a transactional mode.
 #[async_trait]
 pub trait Agent: Sized + Send + 'static {
     type Context: AgentContext<Self>;
 
+    /// The `initialize` method is called first when the actor starts.
+    /// It should return a `Next` state, which the actor will transition to.
+    ///
+    /// An execution context is passed as a parameter.
+    ///
+    /// By default, the method implementation calls the `begin` method.
     fn initialize(&mut self, _ctx: &mut Context<Self>) -> Next<Self> {
         self.begin()
     }
 
+    /// The `begin` method is an initialization method without context.
+    /// It is usually the most commonly used method to start the actor
+    /// in transactional mode by initiating finite state machine message processing.
+    ///
+    /// If the method is not overridden, it starts the actor's mode—reactive
+    /// message processing. You can achieve this by calling the `Next::events()` method.
     fn begin(&mut self) -> Next<Self> {
         Next::events()
     }

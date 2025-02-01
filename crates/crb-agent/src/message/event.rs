@@ -43,6 +43,15 @@ impl<A: Agent> Address<A> {
         self.send(Event::new(event))
     }
 
+    pub fn event_tagged<E, T>(&self, event: E, tag: T) -> Result<()>
+    where
+        A: OnEvent<E, T>,
+        E: TheEvent,
+        T: Tag,
+    {
+        self.send(Event::new_tagged(event, tag))
+    }
+
     pub fn recipient<E>(&self) -> Recipient<E>
     where
         A: OnEvent<E>,
@@ -59,6 +68,15 @@ impl<A: Agent> Context<A> {
         E: TheEvent,
     {
         self.address().event(event)
+    }
+
+    pub fn event_tagged<E, T>(&self, event: E, tag: T) -> Result<()>
+    where
+        A: OnEvent<E, T>,
+        E: TheEvent,
+        T: Tag,
+    {
+        self.address().event_tagged(event, tag)
     }
 
     pub fn recipient<E>(&self) -> Recipient<E>
@@ -101,7 +119,7 @@ impl<E> Event<E> {
 }
 
 impl<E, T> Event<E, T> {
-    pub fn new_with_tag(event: E, tag: T) -> Self {
+    pub fn new_tagged(event: E, tag: T) -> Self {
         Self { event, tag }
     }
 }

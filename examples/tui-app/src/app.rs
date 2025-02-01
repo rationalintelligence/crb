@@ -2,7 +2,7 @@ use crate::events::EventsDrainer;
 use crate::state::AppState;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{Agent, Context, DoAsync, DoSync, Duty, Next, OnEvent};
+use crb::agent::{Agent, Context, DoAsync, DoSync, Next, OnEvent};
 use crb::core::Slot;
 use crb::superagent::{Supervisor, SupervisorSession};
 use crossterm::event::{Event, KeyCode};
@@ -30,14 +30,14 @@ impl Agent for TuiApp {
     type Context = SupervisorSession<Self>;
 
     fn begin(&mut self) -> Next<Self> {
-        Next::duty(Configure)
+        Next::do_async(Configure)
     }
 }
 
 struct Configure;
 
 #[async_trait]
-impl Duty<Configure> for TuiApp {
+impl DoAsync<Configure> for TuiApp {
     async fn handle(&mut self, _: Configure, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         let terminal = ratatui::try_init()?;
         self.terminal.fill(terminal)?;

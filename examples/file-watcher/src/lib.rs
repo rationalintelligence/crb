@@ -1,7 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Address, Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone,
+    Address, Agent, AgentSession, Context, DoAsync, ManagedContext, Next, OnEvent, Standalone,
     ToAddress,
 };
 use crb::core::{time::Duration, Slot};
@@ -39,7 +39,7 @@ impl Agent for FileWatcher {
     type Context = AgentSession<Self>;
 
     fn begin(&mut self) -> Next<Self> {
-        Next::duty(Initialize)
+        Next::do_async(Initialize)
     }
 
     fn interrupt(&mut self, ctx: &mut Context<Self>) {
@@ -60,7 +60,7 @@ impl FileWatcher {
 struct Initialize;
 
 #[async_trait]
-impl Duty<Initialize> for FileWatcher {
+impl DoAsync<Initialize> for FileWatcher {
     async fn handle(&mut self, _: Initialize, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         self.configure_debouncer(ctx);
         let forwarder = EventsForwarder::new(ctx);

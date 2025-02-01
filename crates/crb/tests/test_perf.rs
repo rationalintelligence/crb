@@ -1,6 +1,8 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use crb::agent::{Agent, AgentSession, Context, Duty, ManagedContext, Next, OnEvent, Standalone};
+use crb::agent::{
+    Agent, AgentSession, Context, DoAsync, ManagedContext, Next, OnEvent, Standalone,
+};
 use std::time::{Duration, Instant};
 
 struct TestTime {
@@ -42,14 +44,14 @@ impl Agent for TestTime {
 
     fn begin(&mut self) -> Next<Self> {
         self.reset();
-        Next::duty(SelfCall)
+        Next::do_async(SelfCall)
     }
 }
 
 struct SelfCall;
 
 #[async_trait]
-impl Duty<SelfCall> for TestTime {
+impl DoAsync<SelfCall> for TestTime {
     async fn handle(&mut self, _: SelfCall, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         if self.is_done() {
             self.report_and_reset("fsm");
@@ -57,7 +59,7 @@ impl Duty<SelfCall> for TestTime {
             Ok(Next::events())
         } else {
             self.inc();
-            Ok(Next::duty(SelfCall))
+            Ok(Next::do_async(SelfCall))
         }
     }
 }

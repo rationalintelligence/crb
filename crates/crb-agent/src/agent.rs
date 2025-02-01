@@ -67,10 +67,6 @@ pub trait Agent: Sized + Send + 'static {
     fn end(&mut self) {}
 }
 
-pub trait Output: Sync + Send + 'static {}
-
-impl<T> Output for T where T: Sync + Send + 'static {}
-
 pub trait Standalone: Agent {
     fn spawn(self) -> <Self::Context as ReachableContext>::Address
     where

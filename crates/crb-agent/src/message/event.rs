@@ -3,6 +3,7 @@ use crate::agent::Agent;
 use crate::context::Context;
 use anyhow::{anyhow, Error, Result};
 use async_trait::async_trait;
+use crb_core::Tag;
 use crb_send::Recipient;
 
 pub trait EventExt<E: TheEvent> {
@@ -71,9 +72,13 @@ impl<A: Agent> Context<A> {
 
 /// Do not introduce tags: use event wrapper instead.
 #[async_trait]
-pub trait OnEvent<E: TheEvent>: Agent {
+pub trait OnEvent<E: TheEvent, T: Tag = ()>: Agent {
     // TODO: Add when RFC 192 will be implemented (associated types defaults)
     // type Error: Into<Error> + Send + 'static;
+
+    async fn handle_tagged(&mut self, event: E, _tag: T, ctx: &mut Context<Self>) -> Result<()> {
+        self.handle(event, ctx).await
+    }
 
     async fn handle(&mut self, _event: E, _ctx: &mut Context<Self>) -> Result<()> {
         Err(anyhow!("The handle method in not implemented."))
@@ -84,24 +89,32 @@ pub trait OnEvent<E: TheEvent>: Agent {
     }
 }
 
-pub struct Event<E> {
+pub struct Event<E, T = ()> {
     event: E,
+    tag: T,
 }
 
 impl<E> Event<E> {
     pub fn new(event: E) -> Self {
-        Self { event }
+        Self { event, tag: () }
+    }
+}
+
+impl<E, T> Event<E, T> {
+    pub fn new_with_tag(event: E, tag: T) -> Self {
+        Self { event, tag }
     }
 }
 
 #[async_trait]
-impl<A, E> MessageFor<A> for Event<E>
+impl<A, E, T> MessageFor<A> for Event<E, T>
 where
-    A: OnEvent<E>,
+    A: OnEvent<E, T>,
     E: TheEvent,
+    T: Tag,
 {
     async fn handle(self: Box<Self>, agent: &mut A, ctx: &mut Context<A>) -> Result<()> {
-        if let Err(err) = agent.handle(self.event, ctx).await {
+        if let Err(err) = agent.handle_tagged(self.event, self.tag, ctx).await {
             agent.fallback(err, ctx).await
         } else {
             Ok(())

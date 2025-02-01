@@ -26,6 +26,8 @@
 
 ## Improved
 
+- **Tagging events** - `OnEvent` now support tagging and you can have many handlers for the same event.
+- **DoAsync as Duty** - `DoAsync` has merged with `Duty` trait and implements its interface as well.
 - **Interruptor** - Runtimes interruption was significantly improves. It has some issues that were fixed.
 - **Timer** - Both `Timeout` and `Interval` joined into a single worker `Timer`.
 - **Unique** - `UniqueId` has been renamed to `Unique`.

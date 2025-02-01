@@ -1,3 +1,6 @@
+info:
+    just -l
+
 version := `toml get Cargo.toml workspace.package.version --raw`
 tag := "v" + version
 

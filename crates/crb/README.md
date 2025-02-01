@@ -46,7 +46,6 @@ Below, you'll find numerous examples of building hybrid activities using the fra
 - The `async_trait` macro is used but not explicitly shown, as exported traits with asynchronous methods are expected in the future.
 - `anyhow::Result` is used instead of the standard `Result` for simplicity.
 - Agent context is not specified, as it is always `AgentSession` in these cases.
-- The output type `Output` is omitted, as it is always `()` here and may become a default in the future.
 
 The examples demonstrate various combinations of states and modes, but in reality, there are many more possibilities, allowing for any sequence or combination.
 
@@ -472,13 +471,13 @@ struct Client {
 
 impl Agent for Client {
     fn begin(&mut self) -> Next<Self> {
-        Next::duty(Configure)
+        Next::do_async(Configure)
     }
 }
 
 struct Configure;
 
-impl Duty<Configure> for Client {
+impl DoAsync<Configure> for Client {
     async fn once(&mut self, _: &mut Configure, ctx: &mut Context<Self>) -> Result<Next<Self>> {
         self.server.request(GetId)?.forward_to(ctx)?;
         Ok(Next::events())

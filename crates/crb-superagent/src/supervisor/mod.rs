@@ -30,6 +30,7 @@ pub trait Supervisor: Agent {
 }
 
 pub trait SupervisorContext<S: Supervisor> {
+    fn tracker(&mut self) -> &mut Tracker<S>;
     fn session(&mut self) -> &mut SupervisorSession<S>;
 }
 
@@ -93,6 +94,10 @@ impl<S: Supervisor> AgentContext<S> for SupervisorSession<S> {
 }
 
 impl<S: Supervisor> SupervisorContext<S> for SupervisorSession<S> {
+    fn tracker(&mut self) -> &mut Tracker<S> {
+        &mut self.tracker
+    }
+
     fn session(&mut self) -> &mut SupervisorSession<S> {
         self
     }
@@ -347,10 +352,10 @@ where
     S::Context: SupervisorContext<S>,
 {
     async fn handle(self: Box<Self>, agent: &mut S, ctx: &mut Context<S>) -> Result<(), Error> {
-        let session = SupervisorContext::session(ctx.deref_mut());
-        session.tracker.unregister_activity(&self.rel);
-        if session.tracker.is_terminated() {
-            session.session.shutdown();
+        let tracker = ctx.tracker();
+        tracker.unregister_activity(&self.rel);
+        if tracker.is_terminated() {
+            ctx.shutdown();
         }
         agent.finished(&self.rel, ctx);
         Ok(())

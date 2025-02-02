@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use crb_agent::performers::{ConsumptionReason, Next, StatePerformer, Transition};
-use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, RunAgent};
+use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, Envelope, RunAgent};
 use crb_runtime::{Controller, Interruptor, ManagedContext, ReachableContext, Runtime, Task};
 use std::marker::PhantomData;
 
@@ -91,9 +91,14 @@ where
     }
 }
 
+#[async_trait]
 impl<A: Agent> AgentContext<A> for MoltingSession<A> {
     fn session(&mut self) -> &mut AgentSession<A> {
         &mut self.session
+    }
+
+    async fn next_envelope(&mut self) -> Option<Envelope<A>> {
+        self.session.next_envelope().await
     }
 }
 

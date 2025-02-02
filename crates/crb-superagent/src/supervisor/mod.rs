@@ -6,7 +6,9 @@ pub use stacker::Stacker;
 
 use anyhow::Error;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentContext, AgentSession, Context, MessageFor, RunAgent};
+use crb_agent::{
+    Address, Agent, AgentContext, AgentSession, Context, Envelope, MessageFor, RunAgent,
+};
 use crb_core::Tag;
 use crb_runtime::{
     InteractiveRuntime, InterruptionLevel, Interruptor, ManagedContext, ReachableContext, Runtime,
@@ -79,9 +81,14 @@ impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
     }
 }
 
+#[async_trait]
 impl<S: Supervisor> AgentContext<S> for SupervisorSession<S> {
     fn session(&mut self) -> &mut AgentSession<S> {
         &mut self.session
+    }
+
+    async fn next_envelope(&mut self) -> Option<Envelope<S>> {
+        self.session.next_envelope().await
     }
 }
 

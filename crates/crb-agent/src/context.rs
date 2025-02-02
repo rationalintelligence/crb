@@ -1,6 +1,7 @@
 use crate::address::{Address, AddressJoint, Envelope};
 use crate::agent::Agent;
 use crate::performers::Next;
+use async_trait::async_trait;
 use crb_runtime::{Controller, ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
 
@@ -24,12 +25,7 @@ where
     }
 }
 
-impl<A: Agent> Context<A> {
-    pub async fn next_envelope(&mut self) -> Option<Envelope<A>> {
-        self.session().joint().next_envelope().await
-    }
-}
-
+#[async_trait]
 pub trait AgentContext<A: Agent>
 where
     Self: ReachableContext<Address = Address<A>>,
@@ -37,6 +33,8 @@ where
 {
     // TODO: Replace with explicit methods
     fn session(&mut self) -> &mut AgentSession<A>;
+
+    async fn next_envelope(&mut self) -> Option<Envelope<A>>;
 }
 
 #[derive(Deref, DerefMut)]
@@ -101,8 +99,13 @@ impl<A: Agent> ManagedContext for AgentSession<A> {
     }
 }
 
+#[async_trait]
 impl<A: Agent> AgentContext<A> for AgentSession<A> {
     fn session(&mut self) -> &mut AgentSession<A> {
         self
+    }
+
+    async fn next_envelope(&mut self) -> Option<Envelope<A>> {
+        self.joint().next_envelope().await
     }
 }

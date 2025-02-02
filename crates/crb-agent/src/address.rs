@@ -6,7 +6,7 @@ use crb_core::{mpsc, watch};
 use crb_runtime::Stopper;
 use crb_send::{Recipient, Sender};
 
-pub struct AddressJoint<A: Agent + ?Sized> {
+pub struct AddressJoint<A: Agent> {
     msg_rx: mpsc::UnboundedReceiver<Envelope<A>>,
     status_tx: watch::Sender<AgentStatus>,
 }
@@ -43,7 +43,7 @@ impl<A: Agent> AddressJoint<A> {
     }
 }
 
-pub struct Address<A: Agent + ?Sized> {
+pub struct Address<A: Agent> {
     msg_tx: mpsc::UnboundedSender<Envelope<A>>,
     status_rx: watch::Receiver<AgentStatus>,
     stopper: Stopper,

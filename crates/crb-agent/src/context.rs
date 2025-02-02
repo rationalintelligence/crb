@@ -30,7 +30,7 @@ impl<A: Agent> Context<A> {
     }
 }
 
-pub trait AgentContext<A: Agent + ?Sized>
+pub trait AgentContext<A: Agent>
 where
     Self: ReachableContext<Address = Address<A>>,
     Self: ManagedContext,
@@ -40,7 +40,7 @@ where
 }
 
 #[derive(Deref, DerefMut)]
-pub struct AgentSession<A: Agent + ?Sized> {
+pub struct AgentSession<A: Agent> {
     pub controller: Controller,
     pub next_state: Option<Next<A>>,
     pub joint: AddressJoint<A>,

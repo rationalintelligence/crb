@@ -6,10 +6,13 @@ pub struct EventBridge<T> {
     rx: Mutex<Option<mpsc::UnboundedReceiver<T>>>,
 }
 
-impl<T> EventBridge<T>
-where
-    T: TheEvent,
-{
+impl<T: TheEvent> Default for EventBridge<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: TheEvent> EventBridge<T> {
     pub fn new() -> Self {
         let (tx, rx) = mpsc::unbounded_channel();
         Self {

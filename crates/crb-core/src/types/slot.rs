@@ -75,7 +75,7 @@ impl<T> Slot<T> {
     /// Set value to the slot.
     pub fn fill(&mut self, value: T) -> Result<(), SlotError> {
         if self.value.is_some() {
-            Err(SlotError::occupied(&self.title))
+            Err(SlotError::occupied(self.title))
         } else {
             self.value = Some(value);
             Ok(())
@@ -86,7 +86,7 @@ impl<T> Slot<T> {
     pub fn take(&mut self) -> Result<T, SlotError> {
         self.value
             .take()
-            .ok_or_else(|| SlotError::empty(&self.title))
+            .ok_or_else(|| SlotError::empty(self.title))
     }
 
     /// Take a value out.
@@ -106,20 +106,20 @@ impl<T> Slot<T> {
     {
         self.value
             .clone()
-            .ok_or_else(|| SlotError::empty(&self.title))
+            .ok_or_else(|| SlotError::empty(self.title))
     }
 
     /// Get a reference to a value.
     pub fn get(&mut self) -> Result<&T, SlotError> {
         self.value
             .as_ref()
-            .ok_or_else(|| SlotError::empty(&self.title))
+            .ok_or_else(|| SlotError::empty(self.title))
     }
 
     /// Get a mutable reference to a value.
     pub fn get_mut(&mut self) -> Result<&mut T, SlotError> {
         self.value
             .as_mut()
-            .ok_or_else(|| SlotError::empty(&self.title))
+            .ok_or_else(|| SlotError::empty(self.title))
     }
 }

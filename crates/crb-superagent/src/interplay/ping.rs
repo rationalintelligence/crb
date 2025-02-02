@@ -14,8 +14,7 @@ impl<A: Agent> PingExt for Address<A> {
         let (interplay, fetcher) = Interplay::new_pair(now);
         let msg = Ping { interplay };
         let res = self.send(msg);
-        let fetcher = fetcher.grasp(res);
-        fetcher
+        fetcher.grasp(res)
     }
 }
 

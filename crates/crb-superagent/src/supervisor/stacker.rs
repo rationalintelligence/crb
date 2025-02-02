@@ -6,6 +6,12 @@ pub struct Stacker<S: Supervisor> {
     scheduled: Vec<(Box<dyn Runtime>, S::GroupBy)>,
 }
 
+impl<S: Supervisor> Default for Stacker<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<S: Supervisor> Stacker<S> {
     pub fn new() -> Self {
         Self {

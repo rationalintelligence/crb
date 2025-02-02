@@ -19,8 +19,7 @@ where
         let (interplay, fetcher) = Interplay::new_pair(sub_id);
         let msg = Subscribe { interplay };
         let res = self.send(msg);
-        let fetcher = fetcher.grasp(res);
-        fetcher
+        fetcher.grasp(res)
     }
 }
 

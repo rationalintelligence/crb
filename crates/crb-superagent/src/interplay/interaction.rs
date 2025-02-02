@@ -16,8 +16,7 @@ where
         let (interplay, fetcher) = Interplay::new_pair(request);
         let msg = Interaction { interplay };
         let res = self.send(msg);
-        let fetcher = fetcher.grasp(res);
-        fetcher
+        fetcher.grasp(res)
     }
 }
 

@@ -8,6 +8,7 @@
 - Gracefull shutdown
 - Add `repeat_async` and `repeat_sync` Fut/Fn performers
 - Use repeaters for the `Drainer`
+- Messages per second limit for the `Drainer`
 
 
 # CRB v0.0.28 - 2025-02-01

@@ -69,7 +69,7 @@ impl<A: Agent> RunAgent<A> {
             let mut pair = (agent, Some(initial_state));
 
             // Events or States
-            while self.context.session().is_alive() {
+            while self.context.is_alive() {
                 let (mut agent, next_state) = pair;
                 if let Some(mut next_state) = next_state {
                     let res = next_state

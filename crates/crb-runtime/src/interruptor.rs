@@ -8,6 +8,7 @@ impl InterruptionLevel {
     pub const EVENT: Self = Self::custom(100);
     pub const FLAG: Self = Self::custom(1_000);
     pub const ABORT: Self = Self::custom(10_000);
+    pub const EXIT: Self = Self::custom(100_000);
 
     pub const fn custom(value: u32) -> Self {
         Self(value)
@@ -21,7 +22,7 @@ impl InterruptionLevel {
         } else if *self < Self::ABORT {
             Self::ABORT
         } else {
-            Self::ABORT
+            Self::EXIT
         }
     }
 }

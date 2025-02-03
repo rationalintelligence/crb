@@ -12,7 +12,7 @@ pub use address_ext::{Equip, StopAddress, StopRecipient, ToAddress, ToRecipient,
 pub use agent::{Agent, Runnable, Standalone};
 pub use context::{AgentContext, AgentSession, Context};
 pub use global::{Global, CRB};
-pub use message::event::{EventExt, OnEvent, TheEvent};
+pub use message::event::{Event, EventExt, OnEvent, TheEvent};
 pub use performers::async_performer::DoAsync;
 pub use performers::Next;
 pub use runtime::RunAgent;

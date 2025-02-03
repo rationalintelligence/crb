@@ -1,7 +1,8 @@
+use crate::stream::EnvelopeStream;
 use crate::supervisor::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentSession, DoAsync, Next, OnEvent, RunAgent};
+use crb_agent::{Address, Agent, AgentSession, DoAsync, Event, Next, OnEvent, RunAgent};
 use crb_core::{
     time::{timeout, Duration},
     Msg, Tag,
@@ -26,6 +27,18 @@ where
         Self {
             stream: Box::pin(stream),
         }
+    }
+}
+
+impl<ITEM> Drainer<ITEM>
+where
+    ITEM: Msg,
+{
+    pub fn into_events_stream<A>(self) -> impl EnvelopeStream<A>
+    where
+        A: OnEvent<ITEM>,
+    {
+        self.stream.map(Event::envelope::<A>)
     }
 }
 

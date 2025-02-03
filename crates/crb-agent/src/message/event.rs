@@ -1,4 +1,4 @@
-use crate::address::{Address, MessageFor};
+use crate::address::{Address, Envelope, MessageFor};
 use crate::agent::Agent;
 use crate::context::Context;
 use anyhow::{anyhow, Error, Result};
@@ -134,11 +134,32 @@ impl<E> Event<E> {
     pub fn new(event: E) -> Self {
         Self { event, tag: () }
     }
+
+    pub fn envelope<A>(event: E) -> Envelope<A>
+    where
+        A: OnEvent<E>,
+        E: TheEvent,
+    {
+        Self::new(event).into_envelope::<A>()
+    }
 }
 
 impl<E, T> Event<E, T> {
     pub fn new_tagged(event: E, tag: T) -> Self {
         Self { event, tag }
+    }
+}
+
+impl<E, T> Event<E, T>
+where
+    E: TheEvent,
+    T: Tag,
+{
+    pub fn into_envelope<A>(self) -> Envelope<A>
+    where
+        A: OnEvent<E, T>,
+    {
+        Box::new(self)
     }
 }
 

@@ -15,6 +15,7 @@ crb-runtime.workspace = true
 crb-send.workspace = true
 derive_more.workspace = true
 futures.workspace = true
+futures-util.workspace = true
 log.workspace = true
 thiserror.workspace = true
 typed-slab.workspace = true

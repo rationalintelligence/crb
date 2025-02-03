@@ -39,6 +39,17 @@ pub trait Agent: Sized + Send + 'static {
         Next::events()
     }
 
+    /// The method is called when an attempt is made to interrupt the agent's execution.
+    /// It is triggered only in actor mode. If the agent is in finite state machine mode,
+    /// it will not be called until it transitions to a reactive state
+    /// by invoking `Next::events()`.
+    ///
+    /// The default implementation interrupts the agent's execution by calling
+    /// the `Context::shutdown()` method.
+    ///
+    /// By overriding this method, you can define your own termination rules,
+    /// for example, initiating a finalization process that determines whether
+    /// the agent should actually be terminated.
     fn interrupt(&mut self, ctx: &mut Context<Self>) {
         ctx.shutdown();
     }

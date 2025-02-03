@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Envelope};
 use crb_runtime::{ManagedContext, ReachableContext};
+use derive_more::{Deref, DerefMut};
 use futures::{future::select, Stream, StreamExt};
 use futures_util::stream::SelectAll;
 
@@ -8,7 +9,10 @@ pub trait EnvelopeStream<A>: Stream<Item = Envelope<A>> + Unpin + Send + 'static
 
 impl<A, T> EnvelopeStream<A> for T where Self: Stream<Item = Envelope<A>> + Unpin + Send + 'static {}
 
+#[derive(Deref, DerefMut)]
 pub struct StreamSession<A: Agent> {
+    #[deref]
+    #[deref_mut]
     session: AgentSession<A>,
     streams: SelectAll<Box<dyn EnvelopeStream<A>>>,
 }

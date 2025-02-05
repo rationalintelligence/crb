@@ -9,19 +9,19 @@ repository.workspace = true
 [dependencies]
 anyhow.workspace = true
 derive_more.workspace = true
-event-listener = "5.3.1"
+event-listener = "5.4.0"
 futures.workspace = true
 thiserror.workspace = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { version = "1.42.0", features = ["sync", "rt", "time"] }
-uuid = { version = "1.11.0", default-features = false, features = ["v4", "v5", "serde"] }
+tokio = { version = "1.43.0", features = ["sync", "rt", "time"] }
+uuid = { version = "1.13.1", default-features = false, features = ["v4", "v5", "serde"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-tokio = { version = "1.42.0", features = ["sync"] }
+tokio = { version = "1.43.0", features = ["sync"] }
 gloo-timers = { version = "0.3.0", features = ["futures"] }
-ordered-float = { version = "4.5.0", default-features = false }
-uuid = { version = "1.11.0", default-features = false, features = ["v4", "v5", "serde", "js"] }
-wasm-bindgen-futures = "0.4.49"
-js-sys = "0.3.76"
-web-sys = { version = "0.3.76", features = ["Performance", "Window"] }
+ordered-float = { version = "4.6.0", default-features = false }
+uuid = { version = "1.13.1", default-features = false, features = ["v4", "v5", "serde", "js"] }
+wasm-bindgen-futures = "0.4.50"
+js-sys = "0.3.77"
+web-sys = { version = "0.3.77", features = ["Performance", "Window"] }

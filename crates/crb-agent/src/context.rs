@@ -14,14 +14,14 @@ pub struct Context<A: Agent> {
     #[deref]
     #[deref_mut]
     context: A::Context,
-    extensions: HashMap<TypeId, Box<dyn Any + Send>>,
+    extensions: Option<HashMap<TypeId, Box<dyn Any + Send>>>,
 }
 
 impl<A: Agent> Context<A> {
     pub fn wrap(context: A::Context) -> Self {
         Self {
             context,
-            extensions: HashMap::new(),
+            extensions: None,
         }
     }
 
@@ -29,7 +29,9 @@ impl<A: Agent> Context<A> {
     where
         E: ExtensionFor<A>,
     {
-        self.extensions.insert(TypeId::of::<E>(), Box::new(ext));
+        self.extensions
+            .get_or_insert_default()
+            .insert(TypeId::of::<E>(), Box::new(ext));
     }
 
     pub fn be<E>(&mut self) -> Result<E::View<'_>>
@@ -39,6 +41,7 @@ impl<A: Agent> Context<A> {
         let type_id = TypeId::of::<E>();
         let ext = self
             .extensions
+            .get_or_insert_default()
             .get_mut(&type_id)
             .and_then(|boxed| boxed.downcast_mut::<E>())
             .ok_or_else(|| anyhow!("Extension {:?} is not available.", type_id))?;

@@ -1,5 +1,3 @@
-# CRB v0.0.29 - upcoming...
-
 ## ToDo
 
 - Epochs example
@@ -10,6 +8,11 @@
 - Use repeaters for the `Drainer`
 - Messages per second limit for the `Drainer`
 
+# CRB v0.0.29 - upcoming...
+
+## Added
+
+- **IntoEvents trait** - A trait to turn a generator into a stream of events for an agent.
 
 # CRB v0.0.28 - 2025-02-01
 

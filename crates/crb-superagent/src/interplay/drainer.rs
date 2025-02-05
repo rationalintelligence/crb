@@ -1,8 +1,8 @@
-use crate::stream::EnvelopeStream;
+use crate::stream::IntoEvents;
 use crate::supervisor::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
-use crb_agent::{Address, Agent, AgentSession, DoAsync, Event, Next, OnEvent, RunAgent};
+use crb_agent::{Address, Agent, AgentSession, DoAsync, Next, OnEvent, RunAgent};
 use crb_core::{
     time::{timeout, Duration},
     Msg, Tag,
@@ -30,15 +30,14 @@ where
     }
 }
 
-impl<ITEM> Drainer<ITEM>
+impl<ITEM> IntoEvents<ITEM> for Drainer<ITEM>
 where
-    ITEM: Msg,
+    ITEM: 'static,
 {
-    pub fn into_events_stream<A>(self) -> impl EnvelopeStream<A>
-    where
-        A: OnEvent<ITEM>,
-    {
-        self.stream.map(Event::envelope::<A>)
+    type Stream = Pin<Box<dyn Stream<Item = ITEM> + Send>>;
+
+    fn into_events(self) -> Self::Stream {
+        self.stream
     }
 }
 

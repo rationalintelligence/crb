@@ -1,11 +1,12 @@
 use crate::address::{Address, AddressJoint, Envelope};
 use crate::agent::Agent;
-use crate::extension::Extension;
+use crate::extension::ExtensionFor;
 use crate::performers::Next;
+use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use crb_runtime::{Controller, ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
-use std::any::TypeId;
+use std::any::{Any, TypeId};
 use std::collections::HashMap;
 
 #[derive(Deref, DerefMut)]
@@ -13,7 +14,7 @@ pub struct Context<A: Agent> {
     #[deref]
     #[deref_mut]
     context: A::Context,
-    extensions: HashMap<TypeId, Box<dyn Extension>>,
+    extensions: HashMap<TypeId, Box<dyn Any + Send>>,
 }
 
 impl<A: Agent> Context<A> {
@@ -26,9 +27,22 @@ impl<A: Agent> Context<A> {
 
     pub fn add_extension<E>(&mut self, ext: E)
     where
-        E: Extension,
+        E: ExtensionFor<A>,
     {
         self.extensions.insert(TypeId::of::<E>(), Box::new(ext));
+    }
+
+    pub fn be<E>(&mut self) -> Result<E::View<'_>>
+    where
+        E: ExtensionFor<A>,
+    {
+        let type_id = TypeId::of::<E>();
+        let ext = self
+            .extensions
+            .get_mut(&type_id)
+            .and_then(|boxed| boxed.downcast_mut::<E>())
+            .ok_or_else(|| anyhow!("Extension {:?} is not available.", type_id))?;
+        Ok(ext.extend(&mut self.context))
     }
 }
 

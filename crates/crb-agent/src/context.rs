@@ -1,18 +1,34 @@
 use crate::address::{Address, AddressJoint, Envelope};
 use crate::agent::Agent;
+use crate::extension::Extension;
 use crate::performers::Next;
 use async_trait::async_trait;
 use crb_runtime::{Controller, ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
+use std::any::TypeId;
+use std::collections::HashMap;
 
 #[derive(Deref, DerefMut)]
 pub struct Context<A: Agent> {
+    #[deref]
+    #[deref_mut]
     context: A::Context,
+    extensions: HashMap<TypeId, Box<dyn Extension>>,
 }
 
 impl<A: Agent> Context<A> {
     pub fn wrap(context: A::Context) -> Self {
-        Self { context }
+        Self {
+            context,
+            extensions: HashMap::new(),
+        }
+    }
+
+    pub fn add_extension<E>(&mut self, ext: E)
+    where
+        E: Extension,
+    {
+        self.extensions.insert(TypeId::of::<E>(), Box::new(ext));
     }
 }
 

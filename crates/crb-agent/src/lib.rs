@@ -2,6 +2,7 @@ pub mod address;
 pub mod address_ext;
 pub mod agent;
 pub mod context;
+pub mod extension;
 pub mod global;
 pub mod message;
 pub mod performers;

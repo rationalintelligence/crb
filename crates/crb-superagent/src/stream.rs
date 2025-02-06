@@ -72,6 +72,7 @@ impl<A: Agent> AgentContext<A> for StreamSession<A> {
 }
 
 impl<A: Agent> StreamSession<A> {
+    // TODO: Consume streams here
     pub fn consume<E>(&mut self, stream: impl IntoEvents<E>)
     where
         A: OnEvent<E>,

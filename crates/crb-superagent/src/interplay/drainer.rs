@@ -30,6 +30,7 @@ where
     }
 }
 
+// TODO: Implement `Stream` instead
 impl<ITEM> IntoEvents<ITEM> for Drainer<ITEM>
 where
     ITEM: 'static,

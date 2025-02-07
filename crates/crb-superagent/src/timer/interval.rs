@@ -13,7 +13,8 @@ pub struct Interval {
 }
 
 impl Interval {
-    pub fn set_interval(&self, interval: Duration) -> Result<()> {
+    pub fn set_interval_ms(&self, ms: u64) -> Result<()> {
+        let interval = Duration::from_millis(ms);
         self.command_tx
             .send(IntervalCommand::SetInterval(interval))
             .map_err(|_| anyhow!("Can't set the interval."))

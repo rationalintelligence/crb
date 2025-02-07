@@ -16,3 +16,4 @@ pub use routine::*;
 pub use stream::*;
 pub use supervisor::*;
 pub use time::*;
+pub use timer::{Interval, Tick};

@@ -32,7 +32,7 @@ impl Interval {
             sleep,
             command_rx,
         };
-        Interval {
+        Self {
             command_tx,
             stream: Some(stream),
         }
@@ -98,8 +98,9 @@ impl Stream for IntervalStream {
 
             match self.sleep.as_mut().poll(cx) {
                 Poll::Ready(_) => continue,
-                Poll::Pending => return Poll::Pending,
+                Poll::Pending => break,
             }
         }
+        Poll::Pending
     }
 }

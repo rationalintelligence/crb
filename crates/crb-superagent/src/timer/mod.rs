@@ -1,5 +1,5 @@
 pub mod interval;
-// pub mod timer;
+pub mod timer;
 
 pub use interval::*;
-// pub use timer::*;
+pub use timer::*;

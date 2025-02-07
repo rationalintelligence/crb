@@ -5,7 +5,6 @@ pub mod molting;
 pub mod routine;
 pub mod stream;
 pub mod supervisor;
-pub mod time;
 pub mod timer;
 
 pub use bridge::*;
@@ -15,5 +14,4 @@ pub use molting::*;
 pub use routine::*;
 pub use stream::*;
 pub use supervisor::*;
-pub use time::*;
-pub use timer::{Interval, Tick};
+pub use timer::*;

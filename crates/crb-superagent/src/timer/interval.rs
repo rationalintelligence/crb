@@ -12,7 +12,32 @@ pub struct Interval {
     stream: Option<IntervalStream>,
 }
 
+impl Default for Interval {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Interval {
+    pub fn new() -> Self {
+        let initial_interval = Duration::from_secs(1);
+        let now = Instant::now();
+        let next_deadline = now + initial_interval;
+        let sleep = Box::pin(sleep_until(next_deadline.into()));
+        let (command_tx, command_rx) = mpsc::unbounded_channel();
+        let stream = IntervalStream {
+            current_interval: initial_interval,
+            last_tick: now,
+            next_deadline,
+            sleep,
+            command_rx,
+        };
+        Interval {
+            command_tx,
+            stream: Some(stream),
+        }
+    }
+
     pub fn set_interval_ms(&self, ms: u64) -> Result<()> {
         let interval = Duration::from_millis(ms);
         self.command_tx
@@ -37,27 +62,6 @@ pub struct IntervalStream {
     next_deadline: Instant,
     sleep: Pin<Box<Sleep>>,
     command_rx: mpsc::UnboundedReceiver<IntervalCommand>,
-}
-
-impl Interval {
-    pub fn new() -> Self {
-        let initial_interval = Duration::from_secs(1);
-        let now = Instant::now();
-        let next_deadline = now + initial_interval;
-        let sleep = Box::pin(sleep_until(next_deadline.into()));
-        let (command_tx, command_rx) = mpsc::unbounded_channel();
-        let stream = IntervalStream {
-            current_interval: initial_interval,
-            last_tick: now,
-            next_deadline,
-            sleep,
-            command_rx,
-        };
-        Interval {
-            command_tx,
-            stream: Some(stream),
-        }
-    }
 }
 
 impl IntervalStream {

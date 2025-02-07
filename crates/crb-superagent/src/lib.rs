@@ -6,6 +6,7 @@ pub mod routine;
 pub mod stream;
 pub mod supervisor;
 pub mod time;
+pub mod timer;
 
 pub use bridge::*;
 pub use interplay::*;

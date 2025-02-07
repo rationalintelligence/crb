@@ -83,7 +83,7 @@ where
 {
     async fn repeat(&mut self, _: &mut ()) -> Result<Option<Next<Self>>> {
         let duration = Duration::from_secs(5);
-        match timeout(Some(duration), self.stream.next()).await {
+        match timeout(duration, self.stream.next()).await {
             Ok(Some(item)) => {
                 // The next item forwarding
                 self.recipient.send(item)?;

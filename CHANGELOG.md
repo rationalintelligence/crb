@@ -14,6 +14,10 @@
 
 - **Drainer implements Stream** - `StreamSession` can consume any streams.
 
+## Improved
+
+- **Customizable supervisors** - An inner `Context` of the `SupervisorSession` can be replaced.
+
 # CRB v0.0.28 - 2025-02-01
 
 ## Added

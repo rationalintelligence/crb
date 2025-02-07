@@ -47,6 +47,7 @@ impl OnEvent<SendPrint> for Main {
 }
 
 impl Supervisor for Main {
+    type BasedOn = AgentSession<Self>;
     type GroupBy = ();
 }
 

@@ -24,6 +24,7 @@ use typed_slab::TypedSlab;
 pub struct ActivityId(usize);
 
 pub trait Supervisor: Agent {
+    type BasedOn: AgentContext<Self>;
     type GroupBy: Debug + Ord + Clone + Send + Eq + Hash;
 
     fn finished(&mut self, _rel: &Relation<Self>, _ctx: &mut Context<Self>) {}
@@ -38,14 +39,18 @@ pub trait SupervisorContext<S: Supervisor> {
 pub struct SupervisorSession<S: Supervisor> {
     #[deref]
     #[deref_mut]
-    pub session: AgentSession<S>,
+    pub session: S::BasedOn,
     pub tracker: Tracker<S>,
 }
 
-impl<S: Supervisor> Default for SupervisorSession<S> {
+impl<S> Default for SupervisorSession<S>
+where
+    S: Supervisor,
+    S::BasedOn: Default,
+{
     fn default() -> Self {
         Self {
-            session: AgentSession::default(),
+            session: S::BasedOn::default(),
             tracker: Tracker::new(),
         }
     }
@@ -85,7 +90,7 @@ impl<S: Supervisor> ManagedContext for SupervisorSession<S> {
 #[async_trait]
 impl<S: Supervisor> AgentContext<S> for SupervisorSession<S> {
     fn session(&mut self) -> &mut AgentSession<S> {
-        &mut self.session
+        self.session.session()
     }
 
     async fn next_envelope(&mut self) -> Option<Envelope<S>> {

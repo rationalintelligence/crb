@@ -9,6 +9,7 @@ struct TestSupervisor;
 impl Standalone for TestSupervisor {}
 
 impl Supervisor for TestSupervisor {
+    type BasedOn = AgentSession<Self>;
     type GroupBy = ();
 }
 

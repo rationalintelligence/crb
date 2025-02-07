@@ -67,10 +67,12 @@ impl IntervalStream {
     }
 }
 
-impl Stream for IntervalStream {
-    type Item = Instant;
+pub struct Tick(pub Instant);
 
-    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Instant>> {
+impl Stream for IntervalStream {
+    type Item = Tick;
+
+    fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         loop {
             while let Poll::Ready(cmd) = Pin::new(&mut self.command_rx).poll_recv(cx) {
                 if let Some(IntervalCommand::SetInterval(new_interval)) = cmd {
@@ -86,7 +88,7 @@ impl Stream for IntervalStream {
             if now >= self.next_deadline {
                 self.last_tick = now;
                 self.update_deadline();
-                return Poll::Ready(Some(now));
+                return Poll::Ready(Some(Tick(now)));
             }
 
             match self.sleep.as_mut().poll(cx) {

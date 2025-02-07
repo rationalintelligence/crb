@@ -1,11 +1,11 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use crb::agent::{
-    Address, Agent, AgentSession, Context, DoAsync, ManagedContext, Next, OnEvent, Standalone,
+    Address, Agent, Context, DoAsync, ManagedContext, Next, OnEvent, Standalone,
     ToAddress,
 };
 use crb::core::{time::Duration, Slot};
-use crb::superagent::Timer;
+use crb::superagent::{Timer, StreamSession, Timeout};
 use notify::{
     recommended_watcher, Event, EventHandler, RecommendedWatcher, RecursiveMode, Watcher,
 };
@@ -18,7 +18,7 @@ const DEFAULT_PATH: &str = "Cargo.toml";
 pub struct FileWatcher {
     path: PathBuf,
     watcher: Slot<RecommendedWatcher>,
-    debouncer: Timer<Tick>,
+    debouncer: Timer,
     counter: usize,
 }
 
@@ -27,7 +27,7 @@ impl FileWatcher {
         Self {
             path: DEFAULT_PATH.into(),
             watcher: Slot::empty(),
-            debouncer: Timer::new(Tick),
+            debouncer: Timer::new(),
             counter: 0,
         }
     }
@@ -36,7 +36,7 @@ impl FileWatcher {
 impl Standalone for FileWatcher {}
 
 impl Agent for FileWatcher {
-    type Context = AgentSession<Self>;
+    type Context = StreamSession<Self>;
 
     fn begin(&mut self) -> Next<Self> {
         Next::do_async(Initialize)
@@ -44,16 +44,8 @@ impl Agent for FileWatcher {
 
     fn interrupt(&mut self, ctx: &mut Context<Self>) {
         self.watcher.take().ok();
-        self.debouncer.stop();
+        self.debouncer.cancel().ok();
         ctx.shutdown();
-    }
-}
-
-impl FileWatcher {
-    fn configure_debouncer(&mut self, ctx: &mut Context<Self>) {
-        let duration = Duration::from_millis(DEBOUNCE_MS);
-        self.debouncer.set_duration(duration);
-        self.debouncer.add_listener(ctx);
     }
 }
 
@@ -62,7 +54,7 @@ struct Initialize;
 #[async_trait]
 impl DoAsync<Initialize> for FileWatcher {
     async fn handle(&mut self, _: Initialize, ctx: &mut Context<Self>) -> Result<Next<Self>> {
-        self.configure_debouncer(ctx);
+        ctx.consume(self.debouncer.events()?);
         let forwarder = EventsForwarder::new(ctx);
         let mut watcher = recommended_watcher(forwarder)?;
         watcher.watch(&self.path, RecursiveMode::NonRecursive)?;
@@ -96,18 +88,16 @@ impl OnEvent<EventResult> for FileWatcher {
     async fn handle(&mut self, result: EventResult, _ctx: &mut Context<Self>) -> Result<()> {
         let _event = result?;
         self.counter += 1;
-        self.debouncer.start();
+        let duration = Duration::from_millis(DEBOUNCE_MS);
+        self.debouncer.schedule(duration)?;
         Ok(())
     }
 }
 
-#[derive(Clone)]
-struct Tick;
-
 #[async_trait]
-impl OnEvent<Tick> for FileWatcher {
-    async fn handle(&mut self, _: Tick, _ctx: &mut Context<Self>) -> Result<()> {
-        self.debouncer.stop();
+impl OnEvent<Timeout> for FileWatcher {
+    async fn handle(&mut self, _: Timeout, _ctx: &mut Context<Self>) -> Result<()> {
+        self.debouncer.cancel()?;
         print!("{} file changed.", self.path.display());
         println!(" Debounced events: {}", self.counter);
         self.counter = 0;

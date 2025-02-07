@@ -14,6 +14,7 @@ pub struct Timeout {
 #[derive(Debug)]
 pub enum ScheduleCommand {
     Schedule { delay: Duration },
+    Cancel,
 }
 
 struct PendingEvent {
@@ -52,6 +53,12 @@ impl Timer {
             .map_err(|_| anyhow!("Can't schedule the task."))
     }
 
+    pub fn cancel(&self) -> Result<()> {
+        self.command_tx
+            .send(ScheduleCommand::Cancel)
+            .map_err(|_| anyhow!("Can't cancel the task."))
+    }
+
     pub fn events(&mut self) -> Result<TimerStream> {
         self.stream
             .take()
@@ -74,32 +81,39 @@ impl Stream for TimerStream {
     fn poll_next(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         loop {
             while let Poll::Ready(cmd) = Pin::new(&mut self.command_rx).poll_recv(cx) {
-                if let Some(ScheduleCommand::Schedule { delay }) = cmd {
-                    let now = Instant::now();
-                    if let Some(pending) = &mut self.pending {
-                        pending.delay = delay;
-                    } else {
-                        self.pending = Some(PendingEvent {
-                            baseline: now,
-                            delay,
-                        });
-                    }
-
-                    if let Some(pending) = &self.pending {
-                        let scheduled_at = pending.baseline + pending.delay;
-                        if scheduled_at <= now {
-                            return self.timeout(scheduled_at);
+                match cmd {
+                    Some(ScheduleCommand::Schedule { delay }) => {
+                        let now = Instant::now();
+                        if let Some(pending) = &mut self.pending {
+                            pending.delay = delay;
                         } else {
-                            if let Some(sleep) = &mut self.sleep {
-                                sleep.as_mut().reset(scheduled_at.into());
+                            self.pending = Some(PendingEvent {
+                                baseline: now,
+                                delay,
+                            });
+                        }
+
+                        if let Some(pending) = &self.pending {
+                            let scheduled_at = pending.baseline + pending.delay;
+                            if scheduled_at <= now {
+                                return self.timeout(scheduled_at);
                             } else {
-                                self.sleep = Some(Box::pin(sleep_until(scheduled_at.into())));
+                                if let Some(sleep) = &mut self.sleep {
+                                    sleep.as_mut().reset(scheduled_at.into());
+                                } else {
+                                    self.sleep = Some(Box::pin(sleep_until(scheduled_at.into())));
+                                }
                             }
                         }
                     }
-                } else {
-                    // The handle was closed
-                    return Poll::Ready(None);
+                    Some(ScheduleCommand::Cancel) => {
+                        self.pending = None;
+                        self.sleep = None;
+                    }
+                    None => {
+                        // The handle was closed
+                        return Poll::Ready(None);
+                    }
                 }
             }
 

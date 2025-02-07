@@ -130,9 +130,10 @@ impl Stream for TimerStream {
                     Poll::Ready(_) => continue,
                     Poll::Pending => break,
                 }
+            } else {
+                break;
             }
         }
-
         Poll::Pending
     }
 }

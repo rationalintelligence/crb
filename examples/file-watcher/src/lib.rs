@@ -59,6 +59,7 @@ impl DoAsync<Initialize> for FileWatcher {
         let mut watcher = recommended_watcher(forwarder)?;
         watcher.watch(&self.path, RecursiveMode::NonRecursive)?;
         self.watcher.fill(watcher)?;
+        println!("Watching: {}", self.path.display());
         Ok(Next::events())
     }
 }

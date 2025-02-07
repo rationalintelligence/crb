@@ -12,7 +12,7 @@
 
 ## Added
 
-- **IntoEvents trait** - A trait to turn a generator into a stream of events for an agent.
+- **Drainer implements Stream** - `StreamSession` can consume any streams.
 
 # CRB v0.0.28 - 2025-02-01
 

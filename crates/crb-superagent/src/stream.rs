@@ -2,25 +2,15 @@ use async_trait::async_trait;
 use crb_agent::{Address, Agent, AgentContext, AgentSession, Envelope, Event, OnEvent, TheEvent};
 use crb_runtime::{ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
-use futures::{future::select, Stream, StreamExt};
+use futures::{future::select, stream::BoxStream, Stream, StreamExt};
 use futures_util::stream::SelectAll;
-
-pub trait IntoEvents<E> {
-    type Stream: Stream<Item = E> + Unpin + Send + 'static;
-
-    fn into_events(self) -> Self::Stream;
-}
-
-pub trait EnvelopeStream<A>: Stream<Item = Envelope<A>> + Unpin + Send + 'static {}
-
-impl<A, T> EnvelopeStream<A> for T where Self: Stream<Item = Envelope<A>> + Unpin + Send + 'static {}
 
 #[derive(Deref, DerefMut)]
 pub struct StreamSession<A: Agent> {
     #[deref]
     #[deref_mut]
     session: AgentSession<A>,
-    streams: SelectAll<Box<dyn EnvelopeStream<A>>>,
+    streams: SelectAll<BoxStream<'static, Envelope<A>>>,
 }
 
 impl<A: Agent> Default for StreamSession<A> {
@@ -72,13 +62,13 @@ impl<A: Agent> AgentContext<A> for StreamSession<A> {
 }
 
 impl<A: Agent> StreamSession<A> {
-    // TODO: Consume streams here
-    pub fn consume<E>(&mut self, stream: impl IntoEvents<E>)
+    pub fn consume<E, S>(&mut self, stream: S)
     where
         A: OnEvent<E>,
         E: TheEvent,
+        S: Stream<Item = E> + Send + Unpin + 'static,
     {
-        let stream = stream.into_events().map(Event::envelope::<A>);
-        self.streams.push(Box::new(stream));
+        let stream = stream.map(Event::envelope::<A>);
+        self.streams.push(stream.boxed());
     }
 }

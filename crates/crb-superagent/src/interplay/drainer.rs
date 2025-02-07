@@ -1,4 +1,3 @@
-use crate::stream::IntoEvents;
 use crate::supervisor::ForwardTo;
 use anyhow::Result;
 use async_trait::async_trait;
@@ -9,11 +8,15 @@ use crb_core::{
 };
 use crb_runtime::InterruptionLevel;
 use crb_send::{Recipient, Sender};
-use futures::{Stream, StreamExt};
-use std::pin::Pin;
+use futures::{
+    stream::BoxStream,
+    task::{Context, Poll},
+    Stream, StreamExt,
+};
+use std::pin::{pin, Pin};
 
 pub struct Drainer<ITEM> {
-    stream: Pin<Box<dyn Stream<Item = ITEM> + Send>>,
+    stream: BoxStream<'static, ITEM>,
 }
 
 impl<ITEM> Drainer<ITEM>
@@ -25,20 +28,16 @@ where
         S: Stream<Item = ITEM> + Send + 'static,
     {
         Self {
-            stream: Box::pin(stream),
+            stream: stream.boxed(),
         }
     }
 }
 
-// TODO: Implement `Stream` instead
-impl<ITEM> IntoEvents<ITEM> for Drainer<ITEM>
-where
-    ITEM: 'static,
-{
-    type Stream = Pin<Box<dyn Stream<Item = ITEM> + Send>>;
+impl<ITEM> Stream for Drainer<ITEM> {
+    type Item = ITEM;
 
-    fn into_events(self) -> Self::Stream {
-        self.stream
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        pin!(&mut self.get_mut().stream).poll_next(cx)
     }
 }
 

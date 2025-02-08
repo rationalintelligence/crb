@@ -3,7 +3,7 @@ use crb_agent::{Address, Agent, AgentContext, AgentSession, Envelope, Event, OnE
 use crb_runtime::{ManagedContext, ReachableContext};
 use derive_more::{Deref, DerefMut};
 use futures::{future::select, stream::BoxStream, Stream, StreamExt};
-use futures_util::stream::SelectAll;
+use futures_util::{future::Either, stream::SelectAll};
 
 #[derive(Deref, DerefMut)]
 pub struct StreamSession<A: Agent> {
@@ -56,7 +56,15 @@ impl<A: Agent> AgentContext<A> for StreamSession<A> {
             next_fut.await
         } else {
             let event = self.streams.next();
-            select(next_fut, event).await.factor_first().0
+            let either = select(next_fut, event).await;
+            match either {
+                Either::Left((None, _)) => {
+                    self.streams.clear();
+                    None
+                }
+                Either::Left((event, _)) => event,
+                Either::Right((event, _)) => event,
+            }
         }
     }
 }

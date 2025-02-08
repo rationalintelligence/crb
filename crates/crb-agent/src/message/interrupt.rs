@@ -29,11 +29,11 @@ impl<A: Agent> Interruptor for Address<A> {
     }
 
     fn interrupt_with_level(&self, level: InterruptionLevel) {
-        if level == InterruptionLevel::EVENT {
+        if level >= InterruptionLevel::EVENT {
             // 0 - Interrupts an actor
             Address::interrupt(self).ok();
         }
-        if level == InterruptionLevel::FLAG {
+        if level >= InterruptionLevel::FLAG {
             // 1 - Interrupts a state-machine
             self.stopper().stop(false);
         }

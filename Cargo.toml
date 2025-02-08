@@ -28,4 +28,5 @@ futures-util = "0.3.31"
 log = "0.4.25"
 thiserror = "2.0.11"
 tokio = { version = "1.43.0", features = ["full"] }
+tokio-stream = "0.1.17"
 typed-slab = "0.2.1"

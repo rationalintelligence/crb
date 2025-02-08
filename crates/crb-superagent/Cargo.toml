@@ -18,4 +18,5 @@ futures.workspace = true
 futures-util.workspace = true
 log.workspace = true
 thiserror.workspace = true
+tokio-stream.workspace = true
 typed-slab.workspace = true

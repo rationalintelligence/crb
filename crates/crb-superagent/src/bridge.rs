@@ -1,5 +1,9 @@
-use crb_agent::{OnEvent, TheEvent, ToAddress};
+use anyhow::{anyhow, Result};
+use crb_agent::TheEvent;
 use crb_core::{mpsc, sync::Mutex};
+// TODO: Move to the core
+use futures::Stream;
+use tokio_stream::wrappers::UnboundedReceiverStream;
 
 pub struct EventBridge<T> {
     tx: mpsc::UnboundedSender<T>,
@@ -25,19 +29,12 @@ impl<T: TheEvent> EventBridge<T> {
         self.tx.send(msg).ok();
     }
 
-    pub fn subscribe<A>(&'static self, addr: impl ToAddress<A>)
-    where
-        A: OnEvent<T>,
-    {
-        let address = addr.to_address();
-        crb_core::spawn(async move {
-            let rx = self.rx.lock().await.take();
-            if let Some(mut rx) = rx {
-                // TODO: Use async `Drainer` here?
-                while let Some(event) = rx.recv().await {
-                    address.event(event).ok();
-                }
-            }
-        });
+    pub async fn events(&self) -> Result<impl Stream<Item = T>> {
+        self.rx
+            .lock()
+            .await
+            .take()
+            .ok_or_else(|| anyhow!("Receiver of the EventBridge has consumed already."))
+            .map(UnboundedReceiverStream::new)
     }
 }

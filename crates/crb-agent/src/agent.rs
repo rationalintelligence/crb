@@ -30,6 +30,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     /// The `begin` method is an initialization method without context.
+    ///
     /// It is usually the most commonly used method to start the actor
     /// in transactional mode by initiating finite state machine message processing.
     ///
@@ -40,6 +41,7 @@ pub trait Agent: Sized + Send + 'static {
     }
 
     /// The method is called when an attempt is made to interrupt the agent's execution.
+    ///
     /// It is triggered only in actor mode. If the agent is in finite state machine mode,
     /// it will not be called until it transitions to a reactive state
     /// by invoking `Next::events()`.
@@ -54,6 +56,14 @@ pub trait Agent: Sized + Send + 'static {
         ctx.shutdown();
     }
 
+    /// The method responsible for handling messages in actor mode.
+    ///
+    /// The default implementation calls the `next_envelope()` method of the agent's context,
+    /// thereby retrieving a message with a handler and executing it by calling the `handle()` method.
+    ///
+    /// If the channel has been closed, the `stop()` method of the context will be called,
+    /// immediately halting execution. The request message for interrupting the actor is received
+    /// through the same mechanism and closes the channel.
     async fn event(&mut self, ctx: &mut Context<Self>) -> Result<()> {
         let envelope = ctx.next_envelope();
         if let Some(envelope) = envelope.await {

@@ -75,6 +75,10 @@ pub trait Agent: Sized + Send + 'static {
         Ok(())
     }
 
+    /// This method is called every time a handler call ends with an unhandled error.
+    ///
+    /// By default, it simply logs the error, but you can also define additional actions
+    /// since the method has access to the agent's context.
     fn failed(&mut self, err: Error, _ctx: &mut Context<Self>) {
         log::error!("Agent [{}] failed: {err}", type_name::<Self>());
     }

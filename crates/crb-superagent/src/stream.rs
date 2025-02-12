@@ -79,4 +79,11 @@ impl<A: Agent> StreamSession<A> {
         let stream = stream.map(Event::envelope::<A>);
         self.streams.push(stream.boxed());
     }
+
+    pub fn consume_events<S>(&mut self, stream: S)
+    where
+        S: Stream<Item = Envelope<A>> + Send + Unpin + 'static,
+    {
+        self.streams.push(stream.boxed());
+    }
 }

@@ -5,7 +5,6 @@ use crb_agent::{Address, Agent, AgentSession, Context, DoAsync, MessageFor, Next
 use crb_core::{Msg, Slot, Tag};
 use crb_runtime::InterruptionLevel;
 use crb_send::{Recipient, Sender};
-use derive_more::From;
 use futures::channel::oneshot::{self, Canceled};
 use futures::{
     task::{Context as FutContext, Poll},

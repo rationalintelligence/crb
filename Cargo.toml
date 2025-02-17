@@ -22,7 +22,7 @@ crb-core = { version = "0.0.28", path = "crates/crb-core" }
 crb-runtime = { version = "0.0.28", path = "crates/crb-runtime" }
 crb-send = { version = "0.0.28", path = "crates/crb-send" }
 crb-system = { version = "0.0.28", path = "crates/crb-system" }
-derive_more = { version = "1.0.0", features = ["full"] }
+derive_more = { version = "2.0.1", features = ["full"] }
 futures = "0.3.31"
 futures-util = "0.3.31"
 log = "0.4.25"
